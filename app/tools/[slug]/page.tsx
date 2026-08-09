@@ -1,13 +1,13 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TOOLS } from '@/lib/tools';
+import { TOOLS, getToolBySlug } from '@/lib/tools';
 import { ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import ToolCard from '@/components/tools/ToolCard';
 import Link from 'next/link';
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
@@ -19,7 +19,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const tool = TOOLS.find((t) => t.slug === params.slug && t.enabled);
+  const { slug } = await params;
+  const tool = getToolBySlug(slug);
   if (!tool) return {};
 
   return {
@@ -35,8 +36,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function DynamicToolPage({ params }: PageProps) {
-  const tool = TOOLS.find((t) => t.slug === params.slug && t.enabled);
+export default async function DynamicToolPage({ params }: PageProps) {
+  const { slug } = await params;
+  const tool = getToolBySlug(slug);
 
   if (!tool) {
     notFound();
@@ -78,7 +80,7 @@ export default function DynamicToolPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Render Tool or Category Specific UI */}
+        {/* Render Tool Workspace Component */}
         <section className="my-8">
           <ImageResizeTool tool={toolConfig} />
         </section>

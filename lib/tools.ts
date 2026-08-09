@@ -201,3 +201,9 @@ export const TOOLS: Tool[] = [
     seoDescription: 'Compress PDF files online for free.'
   }
 ];
+
+export function getToolBySlug(slug: string): Tool | undefined {
+  if (!slug) return undefined;
+  const normalizedSlug = decodeURIComponent(slug).trim().toLowerCase();
+  return TOOLS.find((tool) => tool.slug.toLowerCase() === normalizedSlug && tool.enabled);
+}
