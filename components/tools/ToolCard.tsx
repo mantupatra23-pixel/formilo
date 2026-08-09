@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { ToolConfig } from '@/config/tools';
+import { Tool } from '@/lib/tools';
 
 interface ToolCardProps {
-  tool: ToolConfig;
+  tool: Tool | any;
 }
 
 export default function ToolCard({ tool }: ToolCardProps) {
