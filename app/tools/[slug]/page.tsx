@@ -80,7 +80,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Render Tool Workspace Component */}
+        {/* Tool Component Workspace */}
         <section className="my-8">
           <ImageResizeTool tool={toolConfig} />
         </section>

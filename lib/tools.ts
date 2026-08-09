@@ -205,5 +205,15 @@ export const TOOLS: Tool[] = [
 export function getToolBySlug(slug: string): Tool | undefined {
   if (!slug) return undefined;
   const normalizedSlug = decodeURIComponent(slug).trim().toLowerCase();
-  return TOOLS.find((tool) => tool.slug.toLowerCase() === normalizedSlug && tool.enabled);
+  
+  // Strict match first, then fallback to alias mapping
+  const found = TOOLS.find((tool) => tool.slug.toLowerCase() === normalizedSlug && tool.enabled);
+  if (found) return found;
+
+  // Handles alias legacy mapping if any link calls image-resizer instead of image-pixel-resizer
+  if (normalizedSlug === 'image-resizer') {
+    return TOOLS.find((tool) => tool.slug === 'image-pixel-resizer');
+  }
+
+  return undefined;
 }
