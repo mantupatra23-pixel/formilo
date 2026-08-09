@@ -6,9 +6,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/tools`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/photo-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/image-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/pdf-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/form-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/signature-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
@@ -17,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const toolRoutes: MetadataRoute.Sitemap = TOOL_REGISTRY.filter((t) => t.enabled).map((tool) => ({
-    url: `${baseUrl}/${tool.slug}`,
+    url: `${baseUrl}/tools/${tool.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.9,

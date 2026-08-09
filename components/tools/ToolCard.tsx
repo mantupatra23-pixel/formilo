@@ -8,7 +8,7 @@ interface ToolCardProps {
 export default function ToolCard({ tool }: ToolCardProps) {
   return (
     <Link
-      href={`/${tool.slug}`}
+      href={`/tools/${tool.slug}`}
       className="group block p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 transition shadow-sm hover:shadow-md"
     >
       <div className="flex items-start justify-between">
