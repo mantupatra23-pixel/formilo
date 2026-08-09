@@ -1,7 +1,9 @@
+export type ToolCategory = 'photo' | 'image' | 'pdf' | 'signature' | 'form';
+
 export interface Tool {
   slug: string;
   name: string;
-  category: 'photo' | 'image' | 'pdf' | 'signature' | 'form';
+  category: ToolCategory;
   description: string;
   shortDescription: string;
   targetKB?: number;

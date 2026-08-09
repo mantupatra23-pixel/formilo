@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TOOLS } from '@/lib/tools';
+import { ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import ToolCard from '@/components/tools/ToolCard';
 import Link from 'next/link';
@@ -45,11 +46,10 @@ export default function DynamicToolPage({ params }: PageProps) {
     (t) => tool.relatedTools.includes(t.slug) && t.enabled
   );
 
-  // Map tool config format for tool runner component
-  const toolConfig = {
+  const toolConfig: ToolConfig = {
     ...tool,
     icon: 'ImageIcon',
-    toolType: 'image-target-kb' as const,
+    toolType: 'image-target-kb',
     keywords: [],
   };
 
@@ -68,7 +68,7 @@ export default function DynamicToolPage({ params }: PageProps) {
           <span className="text-slate-900 dark:text-slate-200 font-medium">{tool.name}</span>
         </nav>
 
-        {/* Hero */}
+        {/* Hero Header */}
         <div className="text-center space-y-3">
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
             {tool.name}
@@ -78,7 +78,7 @@ export default function DynamicToolPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Tool Component */}
+        {/* Render Tool or Category Specific UI */}
         <section className="my-8">
           <ImageResizeTool tool={toolConfig} />
         </section>
@@ -120,7 +120,7 @@ export default function DynamicToolPage({ params }: PageProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {relatedTools.map((relTool) => (
-                <ToolCard key={relTool.slug} tool={{ ...relTool, icon: '', toolType: 'image-target-kb', keywords: [] }} />
+                <ToolCard key={relTool.slug} tool={relTool} />
               ))}
             </div>
           </section>

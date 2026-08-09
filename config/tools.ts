@@ -1,7 +1,9 @@
+export type ToolCategory = 'photo' | 'image' | 'pdf' | 'signature' | 'form';
+
 export interface ToolConfig {
   slug: string;
   name: string;
-  category: 'photo' | 'pdf' | 'image' | 'signature' | 'calculators';
+  category: ToolCategory;
   description: string;
   shortDescription: string;
   icon: string;
