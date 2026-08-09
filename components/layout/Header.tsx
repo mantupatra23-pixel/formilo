@@ -27,17 +27,20 @@ export default function Header() {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
-          <Link href="/photo-tools" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+          <Link href="/tools/photo" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
             Photo Tools
           </Link>
-          <Link href="/image-tools" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+          <Link href="/tools/image" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
             Image Tools
           </Link>
-          <Link href="/pdf-tools" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+          <Link href="/tools/pdf" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
             PDF Tools
           </Link>
-          <Link href="/signature-tools" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+          <Link href="/tools/signature" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
             Signature Tools
+          </Link>
+          <Link href="/tools/form" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+            Form Tools
           </Link>
         </nav>
 
@@ -61,32 +64,39 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-2 pb-4 space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
           <Link
-            href="/photo-tools"
+            href="/tools/photo"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             Photo Tools
           </Link>
           <Link
-            href="/image-tools"
+            href="/tools/image"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             Image Tools
           </Link>
           <Link
-            href="/pdf-tools"
+            href="/tools/pdf"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             PDF Tools
           </Link>
           <Link
-            href="/signature-tools"
+            href="/tools/signature"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             Signature Tools
+          </Link>
+          <Link
+            href="/tools/form"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            Form Tools
           </Link>
         </div>
       )}
