@@ -59,16 +59,17 @@ export default async function DynamicToolPage({ params }: PageProps) {
   };
 
   const renderToolWorkspace = () => {
-    switch (tool.slug) {
-      case 'jpg-to-pdf':
-        return <JpgToPdfTool />;
-      case 'pdf-to-jpg':
-        return <PdfToJpgTool />;
-      case 'pdf-compressor':
-        return <PdfCompressorTool />;
-      default:
-        return <ImageResizeTool tool={toolConfig} />;
+    const s = tool.slug.toLowerCase().trim();
+    if (s === 'jpg-to-pdf') {
+      return <JpgToPdfTool />;
     }
+    if (s === 'pdf-to-jpg') {
+      return <PdfToJpgTool />;
+    }
+    if (s === 'pdf-compressor') {
+      return <PdfCompressorTool />;
+    }
+    return <ImageResizeTool tool={toolConfig} />;
   };
 
   return (
