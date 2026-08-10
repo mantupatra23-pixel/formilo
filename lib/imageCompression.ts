@@ -17,33 +17,86 @@ export interface CompressionResult {
 
 export async function compressImageToTarget(
   file: File,
-  options: CompressionOptions = {}
+  options: CompressionOptions = {},
+  onProgress?: (msg: string) => void
 ): Promise<CompressionResult> {
-  const targetBytes = options.targetKB ? options.targetKB * 1024 : undefined;
+  // Format check for HEIC/HEIF
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'heic' || ext === 'heif' || file.type.includes('heic') || file.type.includes('heif')) {
+    throw new Error('This camera photo uses HEIC/HEIF format, which your browser cannot decode directly. Please convert it to JPG or change camera output to JPG.');
+  }
 
-  const imageBitmap = await createImageBitmap(file);
+  onProgress?.('Reading image...');
+
+  let imageBitmap: ImageBitmap | null = null;
+  
+  // Target Bounding Setup before full decoding
+  let targetMaxDim = options.maxDimension;
+  if (!targetMaxDim && options.targetKB) {
+    if (options.targetKB <= 20) targetMaxDim = 1200;
+    else if (options.targetKB <= 50) targetMaxDim = 1800;
+    else if (options.targetKB <= 100) targetMaxDim = 2400;
+  }
+
+  try {
+    // Attempt memory-safe downscaled bitmap decoding
+    if ('createImageBitmap' in window) {
+      if (targetMaxDim) {
+        imageBitmap = await createImageBitmap(file, {
+          resizeWidth: targetMaxDim,
+          resizeQuality: 'high',
+        }).catch(() => null);
+      }
+      if (!imageBitmap) {
+        imageBitmap = await createImageBitmap(file).catch(() => null);
+      }
+    }
+  } catch {
+    imageBitmap = null;
+  }
+
+  // Fallback to HTMLImageElement if ImageBitmap fails
+  if (!imageBitmap) {
+    onProgress?.('Preparing camera photo...');
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = objectUrl;
+    
+    await new Promise((resolve, reject) => {
+      img.onload = () => resolve(true);
+      img.onerror = () => reject(new Error('Unable to decode camera image. File may be corrupted or unsupported.'));
+    });
+
+    URL.revokeObjectURL(objectUrl);
+    
+    // Canvas conversion
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = img.naturalWidth;
+    tempCanvas.height = img.naturalHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) throw new Error('Browser canvas allocation failed.');
+    tempCtx.drawImage(img, 0, 0);
+
+    imageBitmap = await createImageBitmap(tempCanvas);
+  }
+
+  onProgress?.('Optimizing dimensions...');
+
   let currentWidth = imageBitmap.width;
   let currentHeight = imageBitmap.height;
 
-  // Step 1: Bounding dimensions based on target KB
-  let maxDim = options.maxDimension;
-  if (!maxDim && options.targetKB) {
-    if (options.targetKB <= 20) maxDim = 1200;
-    else if (options.targetKB <= 50) maxDim = 1800;
-    else if (options.targetKB <= 100) maxDim = 2400;
-  }
-
-  if (maxDim && (currentWidth > maxDim || currentHeight > maxDim)) {
-    const ratio = Math.min(maxDim / currentWidth, maxDim / currentHeight);
+  if (targetMaxDim && (currentWidth > targetMaxDim || currentHeight > targetMaxDim)) {
+    const ratio = Math.min(targetMaxDim / currentWidth, targetMaxDim / currentHeight);
     currentWidth = Math.round(currentWidth * ratio);
     currentHeight = Math.round(currentHeight * ratio);
   }
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not initialize canvas context.');
+  if (!ctx) throw new Error('Browser memory was insufficient for rendering.');
 
   const exportMime = (options.forceJpeg || file.type !== 'image/png') ? 'image/jpeg' : 'image/png';
+  const targetBytes = options.targetKB ? options.targetKB * 1024 : undefined;
 
   const renderToBlob = async (w: number, h: number, q: number): Promise<Blob> => {
     canvas.width = w;
@@ -51,7 +104,7 @@ export async function compressImageToTarget(
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(imageBitmap, 0, 0, w, h);
+    ctx.drawImage(imageBitmap!, 0, 0, w, h);
 
     return new Promise((resolve, reject) => {
       canvas.toBlob(
@@ -66,6 +119,7 @@ export async function compressImageToTarget(
   };
 
   if (!targetBytes) {
+    onProgress?.('Compressing image...');
     const q = options.quality ?? 0.85;
     const blob = await renderToBlob(currentWidth, currentHeight, q);
     imageBitmap.close();
@@ -79,17 +133,18 @@ export async function compressImageToTarget(
     };
   }
 
+  onProgress?.('Finding best quality under target...');
+
   let bestBlob: Blob | null = null;
   let finalWidth = currentWidth;
   let finalHeight = currentHeight;
   let finalQuality = 0.9;
   let iterations = 0;
-  const maxIterations = 12;
+  const maxIterations = 14;
 
   while (iterations < maxIterations) {
     iterations++;
 
-    // Step 2: Binary Search Quality
     let lowQ = 0.05;
     let highQ = 0.95;
     let localBestBlob: Blob | null = null;
@@ -102,9 +157,9 @@ export async function compressImageToTarget(
       if (testBlob.size <= targetBytes) {
         localBestBlob = testBlob;
         localBestQ = midQ;
-        lowQ = midQ; // Attempt higher quality
+        lowQ = midQ;
       } else {
-        highQ = midQ; // Reduce quality
+        highQ = midQ;
       }
     }
 
@@ -114,7 +169,7 @@ export async function compressImageToTarget(
       break;
     }
 
-    // Step 3: Reduce dimensions by 15% if quality alone is insufficient
+    // Downscale dimensions by 15% if quality tuning wasn't enough
     finalWidth = Math.round(finalWidth * 0.85);
     finalHeight = Math.round(finalHeight * 0.85);
 
@@ -130,6 +185,7 @@ export async function compressImageToTarget(
   }
 
   imageBitmap.close();
+  onProgress?.('Verifying final size...');
 
   return {
     blob: bestBlob,

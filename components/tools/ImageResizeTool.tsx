@@ -12,6 +12,7 @@ interface ImageResizeToolProps {
 export default function ImageResizeTool({ tool }: ImageResizeToolProps) {
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
+  const [progressStage, setProgressStage] = useState<string>('Processing...');
   const [result, setResult] = useState<(CompressionResult & { dataUrl?: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,19 +23,23 @@ export default function ImageResizeTool({ tool }: ImageResizeToolProps) {
     setProcessing(true);
 
     try {
-      const res = await compressImageToTarget(selectedFile, {
-        targetKB: tool.targetKB,
-        forceJpeg: tool.isSignature || tool.targetKB !== undefined,
-      });
+      const res = await compressImageToTarget(
+        selectedFile,
+        {
+          targetKB: tool.targetKB,
+          forceJpeg: tool.isSignature || tool.targetKB !== undefined,
+        },
+        (stage) => setProgressStage(stage)
+      );
 
       if (tool.targetKB && res.sizeBytes > tool.targetKB * 1024) {
-        setError(`Could not reach the ${tool.targetKB} KB target with this image after multiple optimization passes. Please try a different image.`);
+        setError(`Could not reach the ${tool.targetKB} KB target with this image. Please try another image.`);
       } else {
         const dataUrl = URL.createObjectURL(res.blob);
         setResult({ ...res, dataUrl });
       }
     } catch (err: any) {
-      setError(err?.message || 'Processing failed. Please upload a valid JPG, PNG, or WebP image.');
+      setError(err?.message || 'Failed to process image file.');
     } finally {
       setProcessing(false);
     }
@@ -62,15 +67,18 @@ export default function ImageResizeTool({ tool }: ImageResizeToolProps) {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
       {!file ? (
-        <Dropzone onFileSelect={handleFileSelect} accept="image/jpeg,image/png,image/webp" />
+        <Dropzone
+          onFileSelect={handleFileSelect}
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+        />
       ) : (
         <div className="space-y-6">
           {/* Status Indicator */}
           {processing && (
             <div className="py-12 text-center space-y-3">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-              <p className="text-sm font-medium text-blue-600">
-                Optimizing image to stay under {tool.targetKB ? `${tool.targetKB} KB` : 'target size'}...
+              <p className="text-sm font-medium text-blue-600 animate-pulse">
+                {progressStage}
               </p>
             </div>
           )}
@@ -78,13 +86,13 @@ export default function ImageResizeTool({ tool }: ImageResizeToolProps) {
           {/* Error Banner */}
           {error && (
             <div className="p-4 bg-red-50 dark:bg-red-950/50 rounded-xl space-y-3">
-              <p className="font-semibold text-xs text-red-700 dark:text-red-400">Processing Issue</p>
-              <p className="text-xs text-red-600 dark:text-red-300">{error}</p>
+              <p className="font-semibold text-xs text-red-700 dark:text-red-400">Processing Error</p>
+              <p className="text-xs text-red-600 dark:text-red-300 leading-relaxed">{error}</p>
               <button
                 onClick={handleReset}
                 className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition"
               >
-                Try Another Image
+                Try Another Photo
               </button>
             </div>
           )}
