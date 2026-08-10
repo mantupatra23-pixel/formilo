@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { TOOLS, getToolBySlug } from '@/lib/tools';
 import { ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
+import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
 import ToolCard from '@/components/tools/ToolCard';
 import Link from 'next/link';
 
@@ -80,9 +81,13 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Tool Component Workspace */}
+        {/* Route Component Isolation */}
         <section className="my-8">
-          <ImageResizeTool tool={toolConfig} />
+          {tool.slug === 'jpg-to-pdf' ? (
+            <JpgToPdfTool />
+          ) : (
+            <ImageResizeTool tool={toolConfig} />
+          )}
         </section>
 
         {/* Instructions */}
