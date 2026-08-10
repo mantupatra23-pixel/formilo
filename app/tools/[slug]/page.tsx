@@ -4,6 +4,8 @@ import { TOOLS, getToolBySlug } from '@/lib/tools';
 import { ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
+import PdfToJpgTool from '@/components/tools/PdfToJpgTool';
+import PdfCompressorTool from '@/components/tools/PdfCompressorTool';
 import ToolCard from '@/components/tools/ToolCard';
 import Link from 'next/link';
 
@@ -56,6 +58,19 @@ export default async function DynamicToolPage({ params }: PageProps) {
     keywords: [],
   };
 
+  const renderToolWorkspace = () => {
+    switch (tool.slug) {
+      case 'jpg-to-pdf':
+        return <JpgToPdfTool />;
+      case 'pdf-to-jpg':
+        return <PdfToJpgTool />;
+      case 'pdf-compressor':
+        return <PdfCompressorTool />;
+      default:
+        return <ImageResizeTool tool={toolConfig} />;
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-10">
@@ -81,13 +96,9 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Route Component Isolation */}
+        {/* Isolated Processing Workspaces */}
         <section className="my-8">
-          {tool.slug === 'jpg-to-pdf' ? (
-            <JpgToPdfTool />
-          ) : (
-            <ImageResizeTool tool={toolConfig} />
-          )}
+          {renderToolWorkspace()}
         </section>
 
         {/* Instructions */}

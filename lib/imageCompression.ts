@@ -3,6 +3,7 @@ export interface CompressionOptions {
   maxDimension?: number;
   quality?: number;
   forceJpeg?: boolean;
+  isSignature?: boolean;
 }
 
 export interface CompressionResult {
@@ -19,15 +20,21 @@ export async function compressImageToTarget(
   options: CompressionOptions = {}
 ): Promise<CompressionResult> {
   const targetBytes = options.targetKB ? options.targetKB * 1024 : undefined;
-  // Safety margin: target 95% of target size to avoid edge overflows
-  const strictTargetBytes = targetBytes ? Math.floor(targetBytes * 0.95) : undefined;
 
   const imageBitmap = await createImageBitmap(file);
   let currentWidth = imageBitmap.width;
   let currentHeight = imageBitmap.height;
 
-  if (options.maxDimension && (currentWidth > options.maxDimension || currentHeight > options.maxDimension)) {
-    const ratio = Math.min(options.maxDimension / currentWidth, options.maxDimension / currentHeight);
+  // Step 1: Bounding dimensions based on target KB
+  let maxDim = options.maxDimension;
+  if (!maxDim && options.targetKB) {
+    if (options.targetKB <= 20) maxDim = 1200;
+    else if (options.targetKB <= 50) maxDim = 1800;
+    else if (options.targetKB <= 100) maxDim = 2400;
+  }
+
+  if (maxDim && (currentWidth > maxDim || currentHeight > maxDim)) {
+    const ratio = Math.min(maxDim / currentWidth, maxDim / currentHeight);
     currentWidth = Math.round(currentWidth * ratio);
     currentHeight = Math.round(currentHeight * ratio);
   }
@@ -50,7 +57,7 @@ export async function compressImageToTarget(
       canvas.toBlob(
         (blob) => {
           if (blob) resolve(blob);
-          else reject(new Error('Canvas blob generation failed'));
+          else reject(new Error('Canvas rendering failed'));
         },
         exportMime,
         q
@@ -58,9 +65,10 @@ export async function compressImageToTarget(
     });
   };
 
-  if (!strictTargetBytes) {
+  if (!targetBytes) {
     const q = options.quality ?? 0.85;
     const blob = await renderToBlob(currentWidth, currentHeight, q);
+    imageBitmap.close();
     return {
       blob,
       width: currentWidth,
@@ -71,20 +79,19 @@ export async function compressImageToTarget(
     };
   }
 
-  // Iterative quality & dimension reduction loop
   let bestBlob: Blob | null = null;
   let finalWidth = currentWidth;
   let finalHeight = currentHeight;
   let finalQuality = 0.9;
   let iterations = 0;
-  const maxIterations = 15;
+  const maxIterations = 12;
 
   while (iterations < maxIterations) {
     iterations++;
 
-    // Binary search for optimal quality at current dimensions
+    // Step 2: Binary Search Quality
     let lowQ = 0.05;
-    let highQ = 0.92;
+    let highQ = 0.95;
     let localBestBlob: Blob | null = null;
     let localBestQ = lowQ;
 
@@ -92,28 +99,27 @@ export async function compressImageToTarget(
       const midQ = (lowQ + highQ) / 2;
       const testBlob = await renderToBlob(finalWidth, finalHeight, midQ);
 
-      if (testBlob.size <= strictTargetBytes) {
+      if (testBlob.size <= targetBytes) {
         localBestBlob = testBlob;
         localBestQ = midQ;
-        lowQ = midQ; // Try higher quality
+        lowQ = midQ; // Attempt higher quality
       } else {
         highQ = midQ; // Reduce quality
       }
     }
 
-    if (localBestBlob && localBestBlob.size <= strictTargetBytes) {
+    if (localBestBlob && localBestBlob.size <= targetBytes) {
       bestBlob = localBestBlob;
       finalQuality = localBestQ;
       break;
     }
 
-    // If quality alone cannot reach target size, downscale dimensions by 15%
+    // Step 3: Reduce dimensions by 15% if quality alone is insufficient
     finalWidth = Math.round(finalWidth * 0.85);
     finalHeight = Math.round(finalHeight * 0.85);
 
-    if (finalWidth < 80 || finalHeight < 80) {
-      // Force minimal render if dimensions are extremely small
-      bestBlob = await renderToBlob(Math.max(finalWidth, 50), Math.max(finalHeight, 50), 0.05);
+    if (finalWidth < 60 || finalHeight < 60) {
+      bestBlob = await renderToBlob(Math.max(finalWidth, 40), Math.max(finalHeight, 40), 0.05);
       finalQuality = 0.05;
       break;
     }
