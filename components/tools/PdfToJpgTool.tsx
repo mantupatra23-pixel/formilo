@@ -1,17 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import { getAcceptString, validateSelectedFile } from '@/config/fileValidation';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface PageItem {
   pageNumber: number;
   thumbnailUrl: string;
   selected: boolean;
 }
+
+const getPdfJs = async () => {
+  if (typeof window === 'undefined') {
+    throw new Error('PDF.js can only be loaded in the browser environment.');
+  }
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  return pdfjsLib;
+};
 
 export default function PdfToJpgTool() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -37,6 +43,7 @@ export default function PdfToJpgTool() {
     setProgressMsg('Loading PDF pages...');
 
     try {
+      const pdfjsLib = await getPdfJs();
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const pageCount = pdf.numPages;
@@ -94,6 +101,7 @@ export default function PdfToJpgTool() {
     setProgressMsg('Extracting high-resolution pages...');
 
     try {
+      const pdfjsLib = await getPdfJs();
       const arrayBuffer = await selectedFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 

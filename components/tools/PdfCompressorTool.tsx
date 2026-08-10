@@ -1,11 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
 import { getAcceptString, validateSelectedFile } from '@/config/fileValidation';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+const getPdfJs = async () => {
+  if (typeof window === 'undefined') {
+    throw new Error('PDF.js can only be loaded in the browser environment.');
+  }
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  return pdfjsLib;
+};
 
 export default function PdfCompressorTool() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -39,6 +45,7 @@ export default function PdfCompressorTool() {
     setProgressMsg('Reading PDF structure...');
 
     try {
+      const pdfjsLib = await getPdfJs();
       const arrayBuffer = await selectedFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const pageCount = pdf.numPages;
@@ -73,7 +80,6 @@ export default function PdfCompressorTool() {
       let blob = new Blob([outputArrayBuffer], { type: 'application/pdf' });
 
       if (blob.size >= selectedFile.size) {
-        // Fallback: If output is larger than original, return original PDF
         blob = new Blob([arrayBuffer], { type: 'application/pdf' });
         setErrorMsg('Your PDF is already optimized. Original file retained.');
       }
