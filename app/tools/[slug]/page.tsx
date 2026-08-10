@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TOOLS, getToolBySlug } from '@/lib/tools';
-import { ToolConfig } from '@/config/tools';
+import { TOOL_REGISTRY, ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
 import PdfToJpgTool from '@/components/tools/PdfToJpgTool';
@@ -47,26 +47,28 @@ export default async function DynamicToolPage({ params }: PageProps) {
     notFound();
   }
 
+  const currentSlug = (tool.slug || slug || '').toLowerCase().trim();
+  const matchedRegistry = TOOL_REGISTRY.find((t) => t.slug.toLowerCase().trim() === currentSlug);
+
   const relatedTools = TOOLS.filter(
     (t) => tool.relatedTools.includes(t.slug) && t.enabled
   );
 
-  const toolConfig: ToolConfig = {
+  const toolConfig: ToolConfig = matchedRegistry || {
     ...tool,
     icon: 'ImageIcon',
-    toolType: 'image-target-kb',
+    toolType: currentSlug === 'jpg-to-pdf' ? 'jpg-to-pdf' : 'image-target-kb',
     keywords: [],
   };
 
   const renderToolWorkspace = () => {
-    const currentSlug = (tool.slug || '').toLowerCase().trim();
-    if (currentSlug === 'jpg-to-pdf') {
+    if (currentSlug === 'jpg-to-pdf' || toolConfig.toolType === 'jpg-to-pdf') {
       return <JpgToPdfTool />;
     }
-    if (currentSlug === 'pdf-to-jpg') {
+    if (currentSlug === 'pdf-to-jpg' || toolConfig.toolType === 'pdf-to-jpg') {
       return <PdfToJpgTool />;
     }
-    if (currentSlug === 'pdf-compressor') {
+    if (currentSlug === 'pdf-compressor' || toolConfig.toolType === 'pdf-compressor') {
       return <PdfCompressorTool />;
     }
     return <ImageResizeTool tool={toolConfig} />;

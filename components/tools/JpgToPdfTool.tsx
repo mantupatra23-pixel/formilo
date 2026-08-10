@@ -23,7 +23,7 @@ export default function JpgToPdfTool() {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
 
-    const newFilesArray = Array.from(fileList).filter((file) => {
+    const incoming = Array.from(fileList).filter((file) => {
       const type = file.type.toLowerCase();
       const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
       return (
@@ -31,11 +31,14 @@ export default function JpgToPdfTool() {
         type === 'image/jpg' ||
         type === 'image/png' ||
         type === 'image/webp' ||
+        type.startsWith('image/') ||
         ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
       );
     });
 
-    if (newFilesArray.length === 0) {
+    console.log('[JPG TO PDF] selected files:', incoming.map(f => ({ name: f.name, type: f.type, size: f.size })));
+
+    if (incoming.length === 0) {
       setErrorMsg('Please select valid JPG, PNG, or WebP images.');
       return;
     }
@@ -46,7 +49,7 @@ export default function JpgToPdfTool() {
       const existingKeys = new Set(prev.map((item) => `${item.file.name}_${item.file.size}_${item.file.lastModified}`));
       const uniqueNewItems: FileItem[] = [];
 
-      for (const file of newFilesArray) {
+      for (const file of incoming) {
         const key = `${file.name}_${file.size}_${file.lastModified}`;
         if (!existingKeys.has(key)) {
           uniqueNewItems.push({
@@ -102,13 +105,15 @@ export default function JpgToPdfTool() {
     setProgressMsg('Reading images...');
     setErrorMsg(null);
 
+    console.log('[JPG TO PDF] generating PDF from', selectedFiles.length, 'files');
+
     try {
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
       for (let i = 0; i < selectedFiles.length; i++) {
-        if (i > 0) doc.addPage();
+        if (i > 0) doc.addPage('a4', 'p');
         setProgressMsg(`Preparing page ${i + 1} of ${selectedFiles.length}...`);
 
         const file = selectedFiles[i].file;
@@ -163,7 +168,7 @@ export default function JpgToPdfTool() {
         const x = (pageWidth - renderW) / 2;
         const y = (pageHeight - renderH) / 2;
 
-        doc.addImage(imgData, 'JPEG', x, y, renderW, renderH);
+        doc.addImage(imgData, 'JPEG', x, y, renderW, renderH, undefined, 'MEDIUM');
         imageBitmap.close();
       }
 
@@ -179,10 +184,12 @@ export default function JpgToPdfTool() {
         throw new Error('Generated file signature is not a valid PDF.');
       }
 
+      console.log('[JPG TO PDF] PDF generated:', blob.type, blob.size);
+
       setPdfBlob(blob);
       setPdfSize(blob.size);
     } catch {
-      setErrorMsg('Unable to generate PDF from selected files. Please try again.');
+      setErrorMsg('Unable to generate PDF. Please try another image.');
     } finally {
       setIsProcessing(false);
       setProgressMsg('');
@@ -201,15 +208,13 @@ export default function JpgToPdfTool() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  const totalOriginalSize = selectedFiles.reduce((acc, item) => acc + item.file.size, 0);
-
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
       <input
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        accept="image/*,.jpg,.jpeg,.png,.webp"
         onChange={handleFileChange}
         className="hidden"
         id="jpg-to-pdf-input"
@@ -235,7 +240,7 @@ export default function JpgToPdfTool() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              {selectedFiles.length} {selectedFiles.length === 1 ? 'image selected' : 'images selected'}
+              Selected Images: {selectedFiles.length}
             </h3>
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -293,13 +298,13 @@ export default function JpgToPdfTool() {
 
       {pdfBlob && (
         <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Conversion Complete</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">PDF Created Successfully</h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="grid grid-cols-2 gap-4 text-center">
             <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-              <span className="block text-[10px] text-slate-500 font-bold uppercase">Original Size</span>
+              <span className="block text-[10px] text-slate-500 font-bold uppercase">Pages</span>
               <span className="text-sm font-black text-slate-900 dark:text-white">
-                {(totalOriginalSize / (1024 * 1024)).toFixed(2)} MB
+                {selectedFiles.length}
               </span>
             </div>
 
@@ -309,24 +314,10 @@ export default function JpgToPdfTool() {
                 {(pdfSize / (1024 * 1024)).toFixed(2)} MB
               </span>
             </div>
-
-            <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-              <span className="block text-[10px] text-slate-500 font-bold uppercase">Images / Pages</span>
-              <span className="text-sm font-black text-slate-900 dark:text-white">
-                {selectedFiles.length}
-              </span>
-            </div>
-
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900">
-              <span className="block text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Format</span>
-              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                PDF
-              </span>
-            </div>
           </div>
 
           <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold pt-1">
-            ✓ PDF successfully generated
+            Format: PDF
           </p>
 
           <div className="flex gap-3 pt-2">
