@@ -52,17 +52,21 @@ export default function PdfToJpgTool() {
         canvas.height = viewport.height;
 
         if (ctx) {
-          await page.render({ canvasContext: ctx, viewport }).promise;
+          await page.render({
+            canvasContext: ctx,
+            canvas: canvas,
+            viewport: viewport,
+          }).promise;
           const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
           loadedPages.push({ pageNumber: i, thumbnailUrl, selected: true });
         }
       }
 
       setPages(loadedPages);
-    } catch (err) {
+    } catch {
       setErrorMsg('This PDF could not be opened or is password protected.');
       setSelectedFile(null);
-    } finally {
+    } font-bold {
       setIsProcessing(false);
       setProgressMsg('');
     }
@@ -103,7 +107,11 @@ export default function PdfToJpgTool() {
         canvas.height = viewport.height;
 
         if (ctx) {
-          await page.render({ canvasContext: ctx, viewport }).promise;
+          await page.render({
+            canvasContext: ctx,
+            canvas: canvas,
+            viewport: viewport,
+          }).promise;
           canvas.toBlob(
             (blob) => {
               if (blob) {
@@ -133,7 +141,11 @@ export default function PdfToJpgTool() {
           canvas.height = viewport.height;
 
           if (ctx) {
-            await page.render({ canvasContext: ctx, viewport }).promise;
+            await page.render({
+              canvasContext: ctx,
+              canvas: canvas,
+              viewport: viewport,
+            }).promise;
             const blob = await new Promise<Blob | null>((resolve) =>
               canvas.toBlob(resolve, 'image/jpeg', quality)
             );
@@ -152,7 +164,7 @@ export default function PdfToJpgTool() {
         a.click();
         URL.revokeObjectURL(url);
       }
-    } catch (err) {
+    } catch {
       setErrorMsg('Failed to export selected pages.');
     } finally {
       setIsProcessing(false);

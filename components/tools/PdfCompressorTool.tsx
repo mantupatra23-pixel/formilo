@@ -59,7 +59,11 @@ export default function PdfCompressorTool() {
         canvas.height = viewport.height;
 
         if (ctx) {
-          await page.render({ canvasContext: ctx, viewport }).promise;
+          await page.render({
+            canvasContext: ctx,
+            canvas: canvas,
+            viewport: viewport,
+          }).promise;
           const imgData = canvas.toDataURL('image/jpeg', preset);
           doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
         }
@@ -76,7 +80,7 @@ export default function PdfCompressorTool() {
 
       setCompressedBlob(blob);
       setCompressedSize(blob.size);
-    } catch (err) {
+    } catch {
       setErrorMsg('Error optimizing PDF file.');
     } finally {
       setIsProcessing(false);
