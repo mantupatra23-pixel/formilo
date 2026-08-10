@@ -66,7 +66,7 @@ export default function PdfToJpgTool() {
     } catch {
       setErrorMsg('This PDF could not be opened or is password protected.');
       setSelectedFile(null);
-    } font-bold {
+    } finally {
       setIsProcessing(false);
       setProgressMsg('');
     }
