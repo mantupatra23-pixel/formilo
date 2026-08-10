@@ -47,8 +47,14 @@ export default async function DynamicToolPage({ params }: PageProps) {
     notFound();
   }
 
-  const currentSlug = (tool.slug || slug || '').toLowerCase().trim();
-  const matchedRegistry = TOOL_REGISTRY.find((t) => t.slug.toLowerCase().trim() === currentSlug);
+  const rawSlug = (slug || '').toLowerCase().trim();
+  const toolSlug = (tool.slug || '').toLowerCase().trim();
+
+  const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf';
+  const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg';
+  const isPdfCompressor = rawSlug === 'pdf-compressor' || toolSlug === 'pdf-compressor';
+
+  const matchedRegistry = TOOL_REGISTRY.find((t) => t.slug.toLowerCase().trim() === toolSlug);
 
   const relatedTools = TOOLS.filter(
     (t) => tool.relatedTools.includes(t.slug) && t.enabled
@@ -57,18 +63,18 @@ export default async function DynamicToolPage({ params }: PageProps) {
   const toolConfig: ToolConfig = matchedRegistry || {
     ...tool,
     icon: 'ImageIcon',
-    toolType: currentSlug === 'jpg-to-pdf' ? 'jpg-to-pdf' : 'image-target-kb',
+    toolType: isJpgToPdf ? 'jpg-to-pdf' : 'image-target-kb',
     keywords: [],
   };
 
   const renderToolWorkspace = () => {
-    if (currentSlug === 'jpg-to-pdf' || toolConfig.toolType === 'jpg-to-pdf') {
+    if (isJpgToPdf) {
       return <JpgToPdfTool />;
     }
-    if (currentSlug === 'pdf-to-jpg' || toolConfig.toolType === 'pdf-to-jpg') {
+    if (isPdfToJpg) {
       return <PdfToJpgTool />;
     }
-    if (currentSlug === 'pdf-compressor' || toolConfig.toolType === 'pdf-compressor') {
+    if (isPdfCompressor) {
       return <PdfCompressorTool />;
     }
     return <ImageResizeTool tool={toolConfig} />;

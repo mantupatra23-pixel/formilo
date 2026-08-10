@@ -9,6 +9,22 @@ interface FileItem {
   previewUrl: string;
 }
 
+function loadImage(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Unable to load image'));
+    };
+    img.src = url;
+  });
+}
+
 export default function JpgToPdfTool() {
   const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([]);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
@@ -36,7 +52,7 @@ export default function JpgToPdfTool() {
       );
     });
 
-    console.log('[JPG TO PDF] selected files:', incoming.map(f => ({ name: f.name, type: f.type, size: f.size })));
+    console.log('[JPG-TO-PDF] selected files count:', incoming.length);
 
     if (incoming.length === 0) {
       setErrorMsg('Please select valid JPG, PNG, or WebP images.');
@@ -60,7 +76,12 @@ export default function JpgToPdfTool() {
         }
       }
 
-      return [...prev, ...uniqueNewItems];
+      const combined = [...prev, ...uniqueNewItems];
+      if (combined.length > 100) {
+        setErrorMsg('Maximum 100 images allowed. Truncated to first 100 images.');
+        return combined.slice(0, 100);
+      }
+      return combined;
     });
 
     setPdfBlob(null);
@@ -105,91 +126,73 @@ export default function JpgToPdfTool() {
     setProgressMsg('Reading images...');
     setErrorMsg(null);
 
-    console.log('[JPG TO PDF] generating PDF from', selectedFiles.length, 'files');
+    console.log('[JPG-TO-PDF] generating PDF from', selectedFiles.length, 'files');
 
     try {
-      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
+      const firstImg = await loadImage(selectedFiles[0].file);
+      const firstW = firstImg.naturalWidth;
+      const firstH = firstImg.naturalHeight;
+
+      const pdf = new jsPDF({
+        orientation: firstW >= firstH ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [firstW, firstH],
+        compress: true,
+      });
 
       for (let i = 0; i < selectedFiles.length; i++) {
-        if (i > 0) doc.addPage('a4', 'p');
-        setProgressMsg(`Preparing page ${i + 1} of ${selectedFiles.length}...`);
+        setProgressMsg(`Creating PDF page ${i + 1} of ${selectedFiles.length}...`);
 
         const file = selectedFiles[i].file;
-        let imageBitmap: ImageBitmap | null = null;
+        const img = await loadImage(file);
+        let w = img.naturalWidth;
+        let h = img.naturalHeight;
 
-        if ('createImageBitmap' in window) {
-          imageBitmap = await createImageBitmap(file, {
-            resizeWidth: 3000,
-            resizeQuality: 'high',
-          }).catch(() => null);
+        // Bounded dimension optimization for large 10-15MB camera photos
+        if (w > 2500 || h > 2500) {
+          const ratio = Math.min(2500 / w, 2500 / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
         }
 
-        if (!imageBitmap) {
-          const img = new Image();
-          img.src = selectedFiles[i].previewUrl;
-          await new Promise((res) => (img.onload = res));
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = w;
+        tempCanvas.height = h;
+        const ctx = tempCanvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, w, h);
 
-          const tempCanvas = document.createElement('canvas');
-          let w = img.naturalWidth;
-          let h = img.naturalHeight;
+        const imgMime = file.type.toLowerCase() === 'image/png' ? 'PNG' : 'JPEG';
+        const imgData = tempCanvas.toDataURL(`image/${imgMime.toLowerCase()}`, 0.85);
 
-          if (w > 3000 || h > 3000) {
-            const ratio = Math.min(3000 / w, 3000 / h);
-            w = Math.round(w * ratio);
-            h = Math.round(h * ratio);
-          }
-
-          tempCanvas.width = w;
-          tempCanvas.height = h;
-          const ctx = tempCanvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, w, h);
-          imageBitmap = await createImageBitmap(tempCanvas);
+        if (i > 0) {
+          pdf.addPage([w, h], w >= h ? 'landscape' : 'portrait');
         }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = imageBitmap.width;
-        canvas.height = imageBitmap.height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(imageBitmap, 0, 0);
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
-        const imgRatio = imageBitmap.width / imageBitmap.height;
-
-        let renderW = pageWidth - 20;
-        let renderH = renderW / imgRatio;
-
-        if (renderH > pageHeight - 20) {
-          renderH = pageHeight - 20;
-          renderW = renderH * imgRatio;
-        }
-
-        const x = (pageWidth - renderW) / 2;
-        const y = (pageHeight - renderH) / 2;
-
-        doc.addImage(imgData, 'JPEG', x, y, renderW, renderH, undefined, 'MEDIUM');
-        imageBitmap.close();
+        pdf.addImage(imgData, imgMime, 0, 0, w, h, undefined, 'FAST');
       }
 
-      setProgressMsg('Generating PDF file...');
-      const outputArrayBuffer = doc.output('arraybuffer');
-      const blob = new Blob([outputArrayBuffer], { type: 'application/pdf' });
+      setProgressMsg('Exporting PDF document...');
+      const blob = pdf.output('blob');
 
-      // Magic Header Signature Validation (%PDF-)
+      if (!blob || blob.type !== 'application/pdf') {
+        throw new Error('Generated file is not a valid PDF');
+      }
+
+      // Verify %PDF- signature
       const slice = await blob.slice(0, 5).arrayBuffer();
       const signature = new TextDecoder().decode(slice);
 
       if (signature !== '%PDF-') {
-        throw new Error('Generated file signature is not a valid PDF.');
+        throw new Error('Generated file signature is not a valid PDF');
       }
 
-      console.log('[JPG TO PDF] PDF generated:', blob.type, blob.size);
+      console.log('[JPG-TO-PDF] PDF created successfully:', blob.type, blob.size);
 
       setPdfBlob(blob);
       setPdfSize(blob.size);
-    } catch {
-      setErrorMsg('Unable to generate PDF. Please try another image.');
+    } catch (err: any) {
+      console.error('[JPG-TO-PDF] generation error:', err);
+      setErrorMsg('Unable to create PDF. Please try again.');
     } finally {
       setIsProcessing(false);
       setProgressMsg('');
@@ -199,12 +202,12 @@ export default function JpgToPdfTool() {
   const downloadPdf = () => {
     if (!pdfBlob) return;
     const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'formilo-jpg-to-pdf.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'formilo-jpg-to-pdf.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
@@ -214,20 +217,21 @@ export default function JpgToPdfTool() {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*,.jpg,.jpeg,.png,.webp"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         onChange={handleFileChange}
         className="hidden"
         id="jpg-to-pdf-input"
       />
 
       <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
-        <label
-          htmlFor="jpg-to-pdf-input"
-          className="cursor-pointer inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
         >
-          Click to upload or drag & drop files
-        </label>
-        <p className="text-xs text-slate-500">Select multiple JPG, PNG or WebP images</p>
+          Select JPG / PNG Images
+        </button>
+        <p className="text-xs text-slate-500">Supports up to 100 images (JPG, PNG, WebP)</p>
       </div>
 
       {errorMsg && (
@@ -240,9 +244,10 @@ export default function JpgToPdfTool() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Selected Images: {selectedFiles.length}
+              Selected Images: {selectedFiles.length} / 100
             </h3>
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               className="text-xs font-bold text-blue-600 hover:underline"
             >
@@ -250,13 +255,14 @@ export default function JpgToPdfTool() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-1">
             {selectedFiles.map((item, idx) => (
               <div key={item.id} className="relative group border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-slate-50 dark:bg-slate-950 space-y-2">
                 <span className="absolute top-1 left-1 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-10">
                   {idx + 1}
                 </span>
                 <button
+                  type="button"
                   onClick={() => removeFile(item.id)}
                   className="absolute top-1 right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow z-10"
                 >
@@ -266,6 +272,7 @@ export default function JpgToPdfTool() {
                 <img src={item.previewUrl} alt={`Preview ${idx + 1}`} className="w-full h-28 object-cover rounded-lg" />
                 <div className="flex justify-between text-[10px] text-slate-500 pt-1">
                   <button
+                    type="button"
                     disabled={idx === 0}
                     onClick={() => moveFile(idx, 'up')}
                     className="disabled:opacity-30 hover:text-blue-600 font-bold"
@@ -273,6 +280,7 @@ export default function JpgToPdfTool() {
                     ← Move Up
                   </button>
                   <button
+                    type="button"
                     disabled={idx === selectedFiles.length - 1}
                     onClick={() => moveFile(idx, 'down')}
                     className="disabled:opacity-30 hover:text-blue-600 font-bold"
@@ -286,6 +294,7 @@ export default function JpgToPdfTool() {
 
           {!pdfBlob && (
             <button
+              type="button"
               onClick={generatePdf}
               disabled={isProcessing}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-3 rounded-xl text-sm transition"
@@ -317,17 +326,19 @@ export default function JpgToPdfTool() {
           </div>
 
           <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold pt-1">
-            Format: PDF
+            File Type: PDF
           </p>
 
           <div className="flex gap-3 pt-2">
             <button
+              type="button"
               onClick={downloadPdf}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition"
             >
               Download PDF
             </button>
             <button
+              type="button"
               onClick={handleReset}
               className="px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold py-3 rounded-xl text-sm transition"
             >
