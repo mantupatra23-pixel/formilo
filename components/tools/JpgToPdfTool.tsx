@@ -41,10 +41,9 @@ export default function JpgToPdfTool() {
   }, [files]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const targetFiles = event.target.files;
-    if (!targetFiles || targetFiles.length === 0) return;
+    const selected = Array.from(event.target.files ?? []);
+    if (!selected.length) return;
 
-    const selected = Array.from(targetFiles);
     const validFiles = selected.filter((file) => {
       const type = file.type.toLowerCase();
       const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
@@ -58,40 +57,39 @@ export default function JpgToPdfTool() {
     });
 
     if (validFiles.length === 0) {
-      setError('Please select valid JPG, JPEG, PNG, or WebP images.');
-      event.target.value = '';
+      setError('Please select valid JPG, PNG, or WebP images.');
       return;
     }
 
     setError(null);
 
     setFiles((previous) => {
-      const existingKeys = new Set(
-        previous.map((item) => `${item.file.name}_${item.file.size}_${item.file.lastModified}`)
+      const combined = [...previous, ...validFiles.map(file => ({
+        id: Math.random().toString(36).substring(2, 9),
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }))];
+
+      const unique = combined.filter(
+        (item, index, array) =>
+          index === array.findIndex(
+            (other) =>
+              other.file.name === item.file.name &&
+              other.file.size === item.file.size &&
+              other.file.lastModified === item.file.lastModified
+          )
       );
-      const uniqueNew: FileItem[] = [];
 
-      for (const file of validFiles) {
-        const key = `${file.name}_${file.size}_${file.lastModified}`;
-        if (!existingKeys.has(key)) {
-          uniqueNew.push({
-            id: Math.random().toString(36).substring(2, 9),
-            file,
-            previewUrl: URL.createObjectURL(file),
-          });
-        }
-      }
-
-      const combined = [...previous, ...uniqueNew];
-      if (combined.length > 100) {
+      if (unique.length > 100) {
         setError('Maximum 100 images allowed.');
-        return combined.slice(0, 100);
+        return unique.slice(0, 100);
       }
-      return combined;
+
+      return unique;
     });
 
     setPdfBlob(null);
-    event.target.value = '';
+    // DO NOT reset event.target.value = "" to preserve Android native multi-select stability
   };
 
   const removeFile = (id: string) => {
@@ -150,15 +148,14 @@ export default function JpgToPdfTool() {
       });
 
       for (let i = 0; i < files.length; i++) {
-        setProgressText(`Preparing ${i + 1} / ${files.length} images…`);
+        setProgressText(`Processing ${i + 1} / ${files.length} images...`);
 
         const image = await loadImage(files[i].file);
         let w = image.naturalWidth;
         let h = image.naturalHeight;
 
-        // Memory safety downscale for massive camera pictures
-        if (w > 2500 || h > 2500) {
-          const ratio = Math.min(2500 / w, 2500 / h);
+        if (w > 3000 || h > 3000) {
+          const ratio = Math.min(3000 / w, 3000 / h);
           w = Math.round(w * ratio);
           h = Math.round(h * ratio);
         }
@@ -186,6 +183,13 @@ export default function JpgToPdfTool() {
 
       if (blob.type !== 'application/pdf') {
         throw new Error('Generated output is not a valid PDF');
+      }
+
+      const slice = await blob.slice(0, 5).arrayBuffer();
+      const signature = new TextDecoder().decode(slice);
+
+      if (signature !== '%PDF-') {
+        throw new Error('Generated file is not a valid PDF signature');
       }
 
       setPdfBlob(blob);
@@ -217,17 +221,17 @@ export default function JpgToPdfTool() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/*"
         multiple
         onChange={handleFileChange}
-        className="hidden"
+        className="sr-only"
       />
 
       {files.length === 0 ? (
         <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
           <h2 className="text-base font-bold text-slate-900 dark:text-white">JPG to PDF Converter</h2>
           <p className="text-xs text-slate-500">
-            Select 1–100 JPG, JPEG, PNG, or WebP images in one go and combine them into a single PDF.
+            Select 1–100 JPG, JPEG, PNG, or WebP images and combine them into a single PDF.
           </p>
           <button
             type="button"
@@ -237,7 +241,7 @@ export default function JpgToPdfTool() {
             Select Images
           </button>
           <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 pt-2">
-            Selected: 0 / 100
+            Selected Images: 0 / 100
           </div>
         </div>
       ) : (
@@ -245,7 +249,7 @@ export default function JpgToPdfTool() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                {files.length} images selected ({totalSizeMB.toFixed(2)} MB approx.)
+                Selected Images: {files.length} / 100 ({totalSizeMB.toFixed(2)} MB approx.)
               </h3>
             </div>
             <button
@@ -321,7 +325,7 @@ export default function JpgToPdfTool() {
 
       {pdfBlob && (
         <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">PDF ready</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">PDF Ready</h3>
 
           <div className="grid grid-cols-2 gap-4 text-center">
             <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
