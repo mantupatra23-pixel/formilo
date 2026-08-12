@@ -37,7 +37,7 @@ export default function JpgToPdfTool() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files ?? []);
 
-    console.log('[JPG PDF] SELECTED FILE COUNT:', selectedFiles.length);
+    console.log('[JPG PDF] FILE COUNT:', selectedFiles.length);
 
     if (!selectedFiles.length) {
       return;
@@ -184,12 +184,13 @@ export default function JpgToPdfTool() {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
       <input
+        id="jpg-pdf-multi-input"
         ref={fileInputRef}
         type="file"
         accept="image/*"
         multiple
         onChange={handleFileChange}
-        style={{ display: 'none' }}
+        hidden
       />
 
       {files.length === 0 ? (
@@ -200,7 +201,13 @@ export default function JpgToPdfTool() {
           </p>
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              const input = document.getElementById('jpg-pdf-multi-input') as HTMLInputElement | null;
+              console.log('[JPG PDF] MULTIPLE:', input?.multiple);
+              console.log('[JPG PDF] ACCEPT:', input?.accept);
+              console.log('[JPG PDF] TOTAL FILE INPUTS:', document.querySelectorAll('input[type="file"]').length);
+              input?.click();
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
           >
             Select Images
@@ -217,7 +224,10 @@ export default function JpgToPdfTool() {
             </h3>
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                const input = document.getElementById('jpg-pdf-multi-input') as HTMLInputElement | null;
+                input?.click();
+              }}
               className="text-xs font-bold text-blue-600 hover:underline"
             >
               + Add More Images
