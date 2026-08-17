@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
 
 import { TOOLS, getToolBySlug } from '@/lib/tools';
-import { TOOL_REGISTRY, ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
 import PdfToJpgTool from '@/components/tools/PdfToJpgTool';
@@ -19,14 +18,12 @@ interface PageProps {
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
 
-// Pre-render all dynamic tool routes
 export async function generateStaticParams() {
   return TOOLS.map((tool) => ({
     slug: tool.slug,
   }));
 }
 
-// Dynamic SEO Metadata
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const tool = getToolBySlug(slug);
@@ -60,25 +57,22 @@ export default async function DynamicToolPage({ params }: PageProps) {
   const rawSlug = (slug || '').toLowerCase().trim();
   const toolSlug = (tool.slug || '').toLowerCase().trim();
 
-  // Route type checks
   const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf-converter';
   const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg-converter';
   const isPdfCompressor = rawSlug === 'pdf-compressor' || toolSlug === 'pdf-compressor';
-
-  // Merge with Registry config
-  const matchedRegistry = TOOL_REGISTRY.find(
-    (t) => t.slug.toLowerCase().trim() === toolSlug || t.slug.toLowerCase().trim() === rawSlug
-  );
 
   const relatedTools = TOOLS.filter(
     (t) => Array.isArray(tool.relatedTools) && tool.relatedTools.includes(t.slug) && t.enabled
   );
 
-  const toolConfig: ToolConfig = matchedRegistry || {
+  // Type safe pass-through to existing components
+  const toolProps: any = {
     ...tool,
-    icon: 'ImageIcon',
+    title: tool.name,
     toolType: isJpgToPdf ? 'jpg-to-pdf' : 'image-target-kb',
-    keywords: [],
+    icon: tool.icon || 'ImageIcon',
+    keywords: tool.keywords || [],
+    acceptedMime: tool.acceptedMime || ['image/jpeg', 'image/png', 'image/webp'],
   };
 
   const renderToolWorkspace = () => {
@@ -91,17 +85,17 @@ export default async function DynamicToolPage({ params }: PageProps) {
     if (isPdfCompressor) {
       return <PdfCompressorTool />;
     }
-    return <ImageResizeTool tool={toolConfig} />;
+    return <ImageResizeTool tool={toolProps} />;
   };
 
   return (
     <main className="min-h-screen bg-[#09090b] text-zinc-100 py-10 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500 selection:text-black">
-      {/* Background Neon Glow */}
+      {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[550px] h-[280px] bg-emerald-500/10 blur-[130px] pointer-events-none -z-10" />
 
       <div className="max-w-5xl mx-auto space-y-10">
         
-        {/* Navigation & Breadcrumb */}
+        {/* Navigation Breadcrumb */}
         <nav className="flex flex-wrap items-center text-xs text-zinc-400 gap-2">
           <Link href="/" className="hover:text-emerald-400 transition-colors flex items-center gap-1">
             <ArrowLeft className="w-3.5 h-3.5" /> Home
@@ -116,7 +110,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
           <span className="text-emerald-400 font-medium">{tool.name}</span>
         </nav>
 
-        {/* Tool Header */}
+        {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
             <Zap className="w-3.5 h-3.5" /> {tool.category || 'Tool'}
@@ -129,11 +123,10 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Functional Tool Workspace */}
+        {/* Processing Workspace */}
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-8 backdrop-blur-md shadow-2xl">
           {renderToolWorkspace()}
 
-          {/* Privacy Badges */}
           <div className="mt-8 pt-6 border-t border-zinc-800/80 flex flex-wrap gap-6 justify-center text-xs text-zinc-400">
             <div className="flex items-center gap-1.5 text-emerald-400">
               <Zap className="w-4 h-4" /> 100% Client-Side Processing
@@ -160,7 +153,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </section>
         )}
 
-        {/* FAQ Section */}
+        {/* FAQs */}
         {tool.faq && tool.faq.length > 0 && (
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 space-y-4">
             <h2 className="text-lg sm:text-xl font-bold text-white">
@@ -177,7 +170,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </section>
         )}
 
-        {/* Related Tools Grid */}
+        {/* Related Tools */}
         {relatedTools.length > 0 && (
           <section className="space-y-4">
             <h2 className="text-lg sm:text-xl font-bold text-white">
