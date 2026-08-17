@@ -10,7 +10,6 @@ import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
 import PdfToJpgTool from '@/components/tools/PdfToJpgTool';
 import PdfCompressorTool from '@/components/tools/PdfCompressorTool';
-import ToolCard from '@/components/tools/ToolCard';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -29,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const tool = getToolBySlug(slug);
   if (!tool) return {};
 
-  const title = tool.seoTitle || `${tool.name} - Free Online Tool | Formilo`;
+  const title = tool.seoTitle || `${tool.name} — Free Online Tool | Formilo`;
   const description = tool.seoDescription || tool.description;
 
   return {
@@ -42,6 +41,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: `${BASE_URL}/tools/${tool.slug}`,
       siteName: 'Formilo',
       type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
   };
 }
@@ -57,15 +61,14 @@ export default async function DynamicToolPage({ params }: PageProps) {
   const rawSlug = (slug || '').toLowerCase().trim();
   const toolSlug = (tool.slug || '').toLowerCase().trim();
 
-  const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf-converter';
-  const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg-converter';
-  const isPdfCompressor = rawSlug === 'pdf-compressor' || toolSlug === 'pdf-compressor';
+  const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf-converter' || toolSlug.includes('to-pdf');
+  const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg-converter' || toolSlug === 'pdf-to-png';
+  const isPdfCompressor = rawSlug === 'pdf-compressor' || toolSlug.includes('pdf-compress');
 
   const relatedTools = TOOLS.filter(
     (t) => Array.isArray(tool.relatedTools) && tool.relatedTools.includes(t.slug) && t.enabled
-  );
+  ).slice(0, 6);
 
-  // Type safe pass-through to existing components
   const toolProps: any = {
     ...tool,
     title: tool.name,
@@ -76,21 +79,86 @@ export default async function DynamicToolPage({ params }: PageProps) {
   };
 
   const renderToolWorkspace = () => {
-    if (isJpgToPdf) {
-      return <JpgToPdfTool />;
-    }
-    if (isPdfToJpg) {
-      return <PdfToJpgTool />;
-    }
-    if (isPdfCompressor) {
-      return <PdfCompressorTool />;
-    }
+    if (isJpgToPdf) return <JpgToPdfTool />;
+    if (isPdfToJpg) return <PdfToJpgTool />;
+    if (isPdfCompressor) return <PdfCompressorTool />;
     return <ImageResizeTool tool={toolProps} />;
   };
 
+  // ── JSON-LD STRUCTURED DATA SCHEMAS FOR GOOGLE ─────────────────────────────
+  const webAppSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    'name': tool.name,
+    'url': `${BASE_URL}/tools/${tool.slug}`,
+    'description': tool.description,
+    'applicationCategory': 'UtilitiesApplication',
+    'operatingSystem': 'All',
+    'browserRequirements': 'Requires HTML5 Canvas and WASM support',
+    'offers': {
+      '@type': 'Offer',
+      'price': '0',
+      'priceCurrency': 'INR'
+    }
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'Home',
+        'item': BASE_URL
+      },
+      {
+        '@type': 'ListItem',
+        'position': 2,
+        'name': tool.category ? `${tool.category.toUpperCase()} Tools` : 'Tools',
+        'item': `${BASE_URL}/${tool.category ? `${tool.category}-tools` : 'tools'}`
+      },
+      {
+        '@type': 'ListItem',
+        'position': 3,
+        'name': tool.name,
+        'item': `${BASE_URL}/tools/${tool.slug}`
+      }
+    ]
+  };
+
+  const faqSchema = tool.faq && tool.faq.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': tool.faq.map((item) => ({
+      '@type': 'Question',
+      'name': item.question,
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': item.answer
+      }
+    }))
+  } : null;
+
   return (
     <main className="min-h-screen bg-[#09090b] text-zinc-100 py-10 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500 selection:text-black">
-      {/* Background Glow */}
+      {/* Google SEO JSON-LD Scripts */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+
+      {/* Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[550px] h-[280px] bg-emerald-500/10 blur-[130px] pointer-events-none -z-10" />
 
       <div className="max-w-5xl mx-auto space-y-10">
@@ -101,11 +169,9 @@ export default async function DynamicToolPage({ params }: PageProps) {
             <ArrowLeft className="w-3.5 h-3.5" /> Home
           </Link>
           <span className="text-zinc-600">/</span>
-          <Link href="/tools" className="hover:text-emerald-400 transition-colors">
-            Tools
+          <Link href={`/${tool.category ? `${tool.category}-tools` : 'photo-tools'}`} className="hover:text-emerald-400 transition-colors capitalize">
+            {tool.category || 'Tools'}
           </Link>
-          <span className="text-zinc-600">/</span>
-          <span className="capitalize text-zinc-400">{tool.category || 'General'}</span>
           <span className="text-zinc-600">/</span>
           <span className="text-emerald-400 font-medium">{tool.name}</span>
         </nav>
@@ -113,7 +179,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-            <Zap className="w-3.5 h-3.5" /> {tool.category || 'Tool'}
+            <Zap className="w-3.5 h-3.5" /> {tool.badge || tool.category || 'Tool'}
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
             {tool.name}
@@ -137,7 +203,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Instructions */}
+        {/* How to use */}
         {tool.instructions && tool.instructions.length > 0 && (
           <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 space-y-4">
             <h2 className="text-lg sm:text-xl font-bold text-white">
@@ -178,7 +244,15 @@ export default async function DynamicToolPage({ params }: PageProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {relatedTools.map((relTool) => (
-                <ToolCard key={relTool.slug} tool={relTool} />
+                <Link
+                  key={relTool.slug}
+                  href={`/tools/${relTool.slug}`}
+                  className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 hover:border-emerald-500/50 transition-colors block"
+                >
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">{relTool.category}</span>
+                  <h4 className="text-sm font-bold text-white mt-1">{relTool.name}</h4>
+                  <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{relTool.shortDescription || relTool.description}</p>
+                </Link>
               ))}
             </div>
           </section>
