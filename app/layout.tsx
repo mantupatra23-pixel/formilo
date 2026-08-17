@@ -1,5 +1,4 @@
 // app/layout.tsx
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
@@ -75,19 +74,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        {/* Google AdSense Script (Auto-load) */}
+        {/* Official Google AdSense Integration */}
         <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5180587791480026"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
       </head>
       <body className={`${inter.className} min-h-screen bg-[#09090b] text-zinc-100 antialiased flex flex-col justify-between`}>
         <Navbar />
-        <div className="flex-1">
+        <main className="flex-1">
           {children}
-        </div>
+        </main>
         <Footer />
       </body>
     </html>
