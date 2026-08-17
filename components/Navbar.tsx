@@ -18,19 +18,20 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#09090b]/85 backdrop-blur-md border-b border-zinc-800/80">
+    <header className="sticky top-0 z-50 w-full bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo Section */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-emerald-500/30 group-hover:border-emerald-500/80 transition-all shadow-md shadow-emerald-500/10 flex-shrink-0">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-emerald-500/30 group-hover:border-emerald-500/80 transition-all shadow-md shadow-emerald-500/10 flex-shrink-0 bg-zinc-950 flex items-center justify-center">
             <Image 
               src="/logo.png" 
               alt="Formilo Logo" 
-              fill
-              sizes="40px"
-              className="object-cover"
+              width={40}
+              height={40}
+              unoptimized
               priority
+              className="w-full h-full object-contain p-0.5"
             />
           </div>
           <div className="flex flex-col">
@@ -66,7 +67,7 @@ export default function Navbar() {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="md:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-colors"
-          aria-label="Toggle Menu"
+          aria-label="Toggle Navigation"
         >
           {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
