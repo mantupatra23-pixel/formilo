@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Download, RefreshCw, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UploadCloud, Download, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface ConvertedPage {
   pageNumber: number;
@@ -19,8 +19,7 @@ export default function PdfToJpgTool() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadPdfJs = async () => {
-    // Dynamic import for client-side rendering
-    const pdfjsLib = await import('pdfjs-dist');
+    const pdfjsLib: any = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
     return pdfjsLib;
   };
@@ -53,7 +52,6 @@ export default function PdfToJpgTool() {
           setProgress(`Rendering page ${pageNum} of ${totalPages}...`);
           const page = await pdf.getPage(pageNum);
           
-          // Render at 2x scale for crisp quality
           const viewport = page.getViewport({ scale: 2.0 });
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
@@ -65,22 +63,25 @@ export default function PdfToJpgTool() {
             context.fillStyle = '#FFFFFF';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            const renderContext = {
+            const renderContext: any = {
               canvasContext: context,
               viewport: viewport,
+              canvas: canvas,
             };
 
             await page.render(renderContext).promise;
 
-            const blob: Blob = await new Promise((resolve) =>
-              canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.92)
+            const blob: Blob | null = await new Promise((resolve) =>
+              canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.92)
             );
 
-            convertedPages.push({
-              pageNumber: pageNum,
-              dataUrl: URL.createObjectURL(blob),
-              blob: blob,
-            });
+            if (blob) {
+              convertedPages.push({
+                pageNumber: pageNum,
+                dataUrl: URL.createObjectURL(blob),
+                blob: blob,
+              });
+            }
           }
         }
 
@@ -142,7 +143,6 @@ export default function PdfToJpgTool() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Loading Indicator */}
           {loading && (
             <div className="py-12 text-center space-y-3">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
@@ -150,7 +150,6 @@ export default function PdfToJpgTool() {
             </div>
           )}
 
-          {/* Error Banner */}
           {error && (
             <div className="p-4 bg-red-950/40 border border-red-900/60 rounded-xl space-y-3">
               <div className="flex items-center gap-2 text-red-400">
@@ -167,7 +166,6 @@ export default function PdfToJpgTool() {
             </div>
           )}
 
-          {/* Pages Grid */}
           {pages.length > 0 && !loading && (
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
