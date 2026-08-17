@@ -1,5 +1,10 @@
+// app/tools/[slug]/page.tsx
+
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
+
 import { TOOLS, getToolBySlug } from '@/lib/tools';
 import { TOOL_REGISTRY, ToolConfig } from '@/config/tools';
 import ImageResizeTool from '@/components/tools/ImageResizeTool';
@@ -7,7 +12,6 @@ import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
 import PdfToJpgTool from '@/components/tools/PdfToJpgTool';
 import PdfCompressorTool from '@/components/tools/PdfCompressorTool';
 import ToolCard from '@/components/tools/ToolCard';
-import Link from 'next/link';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,26 +19,32 @@ interface PageProps {
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
 
+// Pre-render all dynamic tool routes
 export async function generateStaticParams() {
   return TOOLS.map((tool) => ({
     slug: tool.slug,
   }));
 }
 
+// Dynamic SEO Metadata
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const tool = getToolBySlug(slug);
   if (!tool) return {};
 
+  const title = tool.seoTitle || `${tool.name} - Free Online Tool | Formilo`;
+  const description = tool.seoDescription || tool.description;
+
   return {
-    title: tool.seoTitle,
-    description: tool.seoDescription,
+    title,
+    description,
     alternates: { canonical: `${BASE_URL}/tools/${tool.slug}` },
     openGraph: {
-      title: tool.seoTitle,
-      description: tool.seoDescription,
+      title,
+      description,
       url: `${BASE_URL}/tools/${tool.slug}`,
       siteName: 'Formilo',
+      type: 'website',
     },
   };
 }
@@ -50,14 +60,18 @@ export default async function DynamicToolPage({ params }: PageProps) {
   const rawSlug = (slug || '').toLowerCase().trim();
   const toolSlug = (tool.slug || '').toLowerCase().trim();
 
-  const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf';
-  const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg';
+  // Route type checks
+  const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf-converter';
+  const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg-converter';
   const isPdfCompressor = rawSlug === 'pdf-compressor' || toolSlug === 'pdf-compressor';
 
-  const matchedRegistry = TOOL_REGISTRY.find((t) => t.slug.toLowerCase().trim() === toolSlug);
+  // Merge with Registry config
+  const matchedRegistry = TOOL_REGISTRY.find(
+    (t) => t.slug.toLowerCase().trim() === toolSlug || t.slug.toLowerCase().trim() === rawSlug
+  );
 
   const relatedTools = TOOLS.filter(
-    (t) => tool.relatedTools.includes(t.slug) && t.enabled
+    (t) => Array.isArray(tool.relatedTools) && tool.relatedTools.includes(t.slug) && t.enabled
   );
 
   const toolConfig: ToolConfig = matchedRegistry || {
@@ -81,68 +95,92 @@ export default async function DynamicToolPage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#09090b] text-zinc-100 py-10 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500 selection:text-black">
+      {/* Background Neon Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[550px] h-[280px] bg-emerald-500/10 blur-[130px] pointer-events-none -z-10" />
+
       <div className="max-w-5xl mx-auto space-y-10">
         
-        {/* Breadcrumb */}
-        <nav className="flex items-center text-xs text-slate-500 dark:text-slate-400 gap-2">
-          <Link href="/" className="hover:underline">Home</Link>
-          <span>/</span>
-          <Link href="/tools" className="hover:underline">Tools</Link>
-          <span>/</span>
-          <span className="capitalize">{tool.category}</span>
-          <span>/</span>
-          <span className="text-slate-900 dark:text-slate-200 font-medium">{tool.name}</span>
+        {/* Navigation & Breadcrumb */}
+        <nav className="flex flex-wrap items-center text-xs text-zinc-400 gap-2">
+          <Link href="/" className="hover:text-emerald-400 transition-colors flex items-center gap-1">
+            <ArrowLeft className="w-3.5 h-3.5" /> Home
+          </Link>
+          <span className="text-zinc-600">/</span>
+          <Link href="/tools" className="hover:text-emerald-400 transition-colors">
+            Tools
+          </Link>
+          <span className="text-zinc-600">/</span>
+          <span className="capitalize text-zinc-400">{tool.category || 'General'}</span>
+          <span className="text-zinc-600">/</span>
+          <span className="text-emerald-400 font-medium">{tool.name}</span>
         </nav>
 
-        {/* Hero Header */}
+        {/* Tool Header */}
         <div className="text-center space-y-3">
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+            <Zap className="w-3.5 h-3.5" /> {tool.category || 'Tool'}
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
             {tool.name}
           </h1>
-          <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-600 dark:text-slate-400">
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-zinc-400">
             {tool.description}
           </p>
         </div>
 
-        {/* Isolated Processing Workspaces */}
-        <section className="my-8">
+        {/* Functional Tool Workspace */}
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-8 backdrop-blur-md shadow-2xl">
           {renderToolWorkspace()}
+
+          {/* Privacy Badges */}
+          <div className="mt-8 pt-6 border-t border-zinc-800/80 flex flex-wrap gap-6 justify-center text-xs text-zinc-400">
+            <div className="flex items-center gap-1.5 text-emerald-400">
+              <Zap className="w-4 h-4" /> 100% Client-Side Processing
+            </div>
+            <div className="flex items-center gap-1.5 text-emerald-400">
+              <ShieldCheck className="w-4 h-4" /> Files never leave your browser
+            </div>
+          </div>
         </section>
 
         {/* Instructions */}
-        <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            How to use {tool.name}
-          </h2>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600 dark:text-slate-300">
-            {tool.instructions.map((step, idx) => (
-              <li key={idx} className="pl-1 leading-relaxed">{step}</li>
-            ))}
-          </ol>
-        </section>
+        {tool.instructions && tool.instructions.length > 0 && (
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 space-y-4">
+            <h2 className="text-lg sm:text-xl font-bold text-white">
+              How to use {tool.name}
+            </h2>
+            <ol className="list-decimal list-inside space-y-2.5 text-sm text-zinc-300">
+              {tool.instructions.map((step, idx) => (
+                <li key={idx} className="pl-1 leading-relaxed">
+                  <span className="text-zinc-200">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
-        {/* FAQ */}
-        {tool.faq.length > 0 && (
-          <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+        {/* FAQ Section */}
+        {tool.faq && tool.faq.length > 0 && (
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 space-y-4">
+            <h2 className="text-lg sm:text-xl font-bold text-white">
               Frequently Asked Questions
             </h2>
-            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="space-y-4 divide-y divide-zinc-800">
               {tool.faq.map((item, idx) => (
                 <div key={idx} className={idx > 0 ? 'pt-4' : ''}>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{item.question}</h3>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{item.answer}</p>
+                  <h3 className="text-sm font-semibold text-zinc-100">{item.question}</h3>
+                  <p className="mt-1.5 text-xs sm:text-sm text-zinc-400 leading-relaxed">{item.answer}</p>
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* Related Tools */}
+        {/* Related Tools Grid */}
         {relatedTools.length > 0 && (
           <section className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-lg sm:text-xl font-bold text-white">
               Related Tools
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
