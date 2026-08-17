@@ -1,362 +1,369 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
+import React, { useState, useRef } from 'react';
+import { 
+  UploadCloud, Download, RefreshCw, Trash2, ArrowUp, 
+  ArrowDown, Plus, FileText, CheckCircle2, ShieldCheck, AlertCircle 
+} from 'lucide-react';
+import { PDFDocument } from 'pdf-lib';
 
-interface FileItem {
+interface ImageItem {
   id: string;
   file: File;
   previewUrl: string;
 }
 
-function loadImage(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Unable to load image'));
-    };
-    img.src = url;
-  });
-}
-
 export default function JpgToPdfTool() {
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [generating, setGenerating] = useState<boolean>(false);
-  const [progressText, setProgressText] = useState<string>('');
+  const [images, setImages] = useState<ImageItem[]>([]);
+  const [pageSize, setPageSize] = useState<'fit' | 'a4'>('fit');
+  const [processing, setProcessing] = useState(false);
+  const [progressStage, setProgressStage] = useState('');
+  const [outputBlob, setOutputBlob] = useState<Blob | null>(null);
+  const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    return () => {
-      files.forEach((item) => URL.revokeObjectURL(item.previewUrl));
-    };
-  }, [files]);
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(event.target.files ?? []);
-    if (!selected.length) return;
+    setError(null);
+    const newItems: ImageItem[] = [];
 
-    const validFiles = selected.filter((file) => {
-      const type = file.type.toLowerCase();
-      const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
-      return (
-        type === 'image/jpeg' ||
-        type === 'image/jpg' ||
-        type === 'image/png' ||
-        type === 'image/webp' ||
-        ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
-      );
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        newItems.push({
+          id: `${file.name}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+        });
+      }
     });
 
-    if (validFiles.length === 0) {
-      setError('Please select valid JPG, PNG, or WebP images.');
+    if (newItems.length === 0) {
+      setError('Please select valid image files (JPG, PNG, WebP).');
       return;
     }
 
+    setImages((prev) => [...prev, ...newItems]);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const moveImage = (index: number, direction: 'up' | 'down') => {
+    const newImages = [...images];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newImages.length) return;
+
+    const temp = newImages[index];
+    newImages[index] = newImages[targetIndex];
+    newImages[targetIndex] = temp;
+    setImages(newImages);
+  };
+
+  const removeImage = (index: number) => {
+    const target = images[index];
+    if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const convertToPdf = async () => {
+    if (images.length === 0) return;
+
+    setProcessing(true);
     setError(null);
-
-    setFiles((previous) => {
-      const combined = [...previous, ...validFiles.map(file => ({
-        id: Math.random().toString(36).substring(2, 9),
-        file,
-        previewUrl: URL.createObjectURL(file),
-      }))];
-
-      const unique = combined.filter(
-        (item, index, array) =>
-          index === array.findIndex(
-            (other) =>
-              other.file.name === item.file.name &&
-              other.file.size === item.file.size &&
-              other.file.lastModified === item.file.lastModified
-          )
-      );
-
-      if (unique.length > 100) {
-        setError('Maximum 100 images allowed.');
-        return unique.slice(0, 100);
-      }
-
-      return unique;
-    });
-
-    setPdfBlob(null);
-    // DO NOT reset event.target.value = "" to preserve Android native multi-select stability
-  };
-
-  const removeFile = (id: string) => {
-    setFiles((prev) => {
-      const itemToRemove = prev.find((item) => item.id === id);
-      if (itemToRemove) {
-        URL.revokeObjectURL(itemToRemove.previewUrl);
-      }
-      return prev.filter((item) => item.id !== id);
-    });
-    setPdfBlob(null);
-  };
-
-  const moveFile = (index: number, direction: 'up' | 'down') => {
-    setFiles((prev) => {
-      const newArr = [...prev];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
-      const temp = newArr[index];
-      newArr[index] = newArr[targetIndex];
-      newArr[targetIndex] = temp;
-      return newArr;
-    });
-    setPdfBlob(null);
-  };
-
-  const handleReset = () => {
-    files.forEach((item) => URL.revokeObjectURL(item.previewUrl));
-    setFiles([]);
-    setPdfBlob(null);
-    setError(null);
-    setProgressText('');
-  };
-
-  const generatePdf = async () => {
-    if (files.length === 0) {
-      setError('Please select at least one image.');
-      return;
-    }
-
-    setGenerating(true);
-    setProgressText('Preparing images...');
-    setError(null);
+    setProgressStage('Initializing PDF engine...');
 
     try {
-      const firstImg = await loadImage(files[0].file);
-      const firstW = firstImg.naturalWidth;
-      const firstH = firstImg.naturalHeight;
-      const firstOrientation = firstW >= firstH ? 'landscape' : 'portrait';
+      const pdfDoc = await PDFDocument.create();
 
-      const pdf = new jsPDF({
-        orientation: firstOrientation,
-        unit: 'px',
-        format: [firstW, firstH],
-        compress: true,
-      });
+      for (let i = 0; i < images.length; i++) {
+        setProgressStage(`Processing image ${i + 1} of ${images.length}...`);
+        const item = images[i];
 
-      for (let i = 0; i < files.length; i++) {
-        setProgressText(`Processing ${i + 1} / ${files.length} images...`);
+        // Canvas scaling to prevent memory crash on large 4K images
+        const img = new Image();
+        img.src = item.previewUrl;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
 
-        const image = await loadImage(files[i].file);
-        let w = image.naturalWidth;
-        let h = image.naturalHeight;
+        const maxDimension = 2400;
+        let w = img.width;
+        let h = img.height;
 
-        if (w > 3000 || h > 3000) {
-          const ratio = Math.min(3000 / w, 3000 / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
+        if (w > maxDimension || h > maxDimension) {
+          if (w > h) {
+            h = Math.round((h * maxDimension) / w);
+            w = maxDimension;
+          } else {
+            w = Math.round((w * maxDimension) / h);
+            h = maxDimension;
+          }
         }
 
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = w;
-        tempCanvas.height = h;
-        const ctx = tempCanvas.getContext('2d');
-        ctx?.drawImage(image, 0, 0, w, h);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
 
-        const fileType = files[i].file.type.toLowerCase();
-        const format = fileType === 'image/png' ? 'PNG' : fileType === 'image/webp' ? 'WEBP' : 'JPEG';
-        const imgData = tempCanvas.toDataURL(`image/${format.toLowerCase()}`, 0.85);
-
-        if (i > 0) {
-          const orientation = w >= h ? 'landscape' : 'portrait';
-          pdf.addPage([w, h], orientation);
+        if (ctx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
         }
 
-        pdf.addImage(imgData, format, 0, 0, w, h, undefined, 'FAST');
+        const optimizedJpgUrl = canvas.toDataURL('image/jpeg', 0.88);
+        const imageBytes = await fetch(optimizedJpgUrl).then((r) => r.arrayBuffer());
+        const embeddedImg = await pdfDoc.embedJpg(imageBytes);
+
+        if (pageSize === 'a4') {
+          // Standard A4 Points: 595.28 x 841.89
+          const a4Width = 595.28;
+          const a4Height = 841.89;
+          const page = pdfDoc.addPage([a4Width, a4Height]);
+
+          const scale = Math.min(a4Width / w, a4Height / h) * 0.92;
+          const scaledW = w * scale;
+          const scaledH = h * scale;
+
+          page.drawImage(embeddedImg, {
+            x: (a4Width - scaledW) / 2,
+            y: (a4Height - scaledH) / 2,
+            width: scaledW,
+            height: scaledH,
+          });
+        } else {
+          // Fit to image's native aspect ratio
+          const page = pdfDoc.addPage([w, h]);
+          page.drawImage(embeddedImg, {
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+          });
+        }
       }
 
-      setProgressText('Finalizing PDF...');
-      const blob = pdf.output('blob');
+      setProgressStage('Compiling PDF file...');
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
 
-      if (blob.type !== 'application/pdf') {
-        throw new Error('Generated output is not a valid PDF');
-      }
-
-      const slice = await blob.slice(0, 5).arrayBuffer();
-      const signature = new TextDecoder().decode(slice);
-
-      if (signature !== '%PDF-') {
-        throw new Error('Generated file is not a valid PDF signature');
-      }
-
-      setPdfBlob(blob);
-    } catch (err) {
-      console.error('[JPG TO PDF] ERROR:', err);
-      setError('PDF creation failed. Please try again.');
+      setOutputBlob(blob);
+      setOutputUrl(URL.createObjectURL(blob));
+    } catch (err: any) {
+      console.error(err);
+      setError('Failed to convert images to PDF. Please try again.');
     } finally {
-      setGenerating(false);
-      setProgressText('');
+      setProcessing(false);
     }
   };
 
-  const downloadPdf = () => {
-    if (!pdfBlob) return;
-    const url = URL.createObjectURL(pdfBlob);
+  const handleDownload = () => {
+    if (!outputUrl) return;
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'formilo-images.pdf';
+    a.href = outputUrl;
+    a.download = `formilo_document_${Date.now()}.pdf`;
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    document.body.removeChild(a);
   };
 
-  const totalSizeMB = files.reduce((acc, item) => acc + item.file.size, 0) / (1024 * 1024);
+  const resetAll = () => {
+    images.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    if (outputUrl) URL.revokeObjectURL(outputUrl);
+    setImages([]);
+    setOutputBlob(null);
+    setOutputUrl(null);
+    setError(null);
+  };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+    <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-6 text-zinc-100">
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/*"
         multiple
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
         onChange={handleFileChange}
-        className="sr-only"
       />
 
-      {files.length === 0 ? (
-        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">JPG to PDF Converter</h2>
-          <p className="text-xs text-slate-500">
-            Select 1–100 JPG, JPEG, PNG, or WebP images and combine them into a single PDF.
-          </p>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
-          >
-            Select Images
-          </button>
-          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 pt-2">
-            Selected Images: 0 / 100
+      {images.length === 0 ? (
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/60 rounded-xl p-10 text-center cursor-pointer transition-all bg-zinc-950/40 group"
+        >
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <UploadCloud className="w-7 h-7" />
           </div>
+          <p className="text-base font-semibold text-white">Choose Multiple Images or Drop here</p>
+          <p className="text-xs text-zinc-500 mt-1">Select 1 to 50+ JPG, PNG, or WebP photos</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Selected Images: {files.length} / 100 ({totalSizeMB.toFixed(2)} MB approx.)
-              </h3>
+        <div className="space-y-6">
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
+            <div className="flex items-center gap-2 text-sm font-bold text-white">
+              <FileText className="w-4 h-4 text-emerald-400" />
+              <span>{images.length} Images Selected</span>
             </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-bold text-blue-600 hover:underline"
-            >
-              + Add More Images
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 transition"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add More
+              </button>
+              <button
+                onClick={resetAll}
+                className="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 hover:bg-red-900/50 text-xs font-semibold text-red-300 transition"
+              >
+                Clear All
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-1">
-            {files.map((item, idx) => (
+          {/* Page Orientation Mode */}
+          <div className="flex items-center gap-4 text-xs font-medium text-zinc-400">
+            <span>Page Sizing:</span>
+            <div className="inline-flex rounded-lg border border-zinc-800 p-1 bg-zinc-900/80">
+              <button
+                onClick={() => setPageSize('fit')}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
+                  pageSize === 'fit' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Auto Fit (Original)
+              </button>
+              <button
+                onClick={() => setPageSize('a4')}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
+                  pageSize === 'a4' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Standard A4 Document
+              </button>
+            </div>
+          </div>
+
+          {/* Thumbnail Reorder Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {images.map((item, index) => (
               <div
                 key={item.id}
-                className="relative group border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-slate-50 dark:bg-slate-950 space-y-2"
+                className="relative group p-2.5 bg-zinc-900/60 border border-zinc-800 rounded-xl flex flex-col items-center gap-2"
               >
-                <span className="absolute top-1 left-1 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-10">
-                  {idx + 1}
+                <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-bold text-zinc-200 border border-zinc-700">
+                  #{index + 1}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => removeFile(item.id)}
-                  className="absolute top-1 right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow z-10"
-                >
-                  ✕
-                </button>
-                {/* eslint-disable-next-html-element-suppression */}
-                <img src={item.previewUrl} alt={item.file.name} className="w-full h-28 object-cover rounded-lg" />
-                <p className="text-[10px] text-slate-600 dark:text-slate-400 truncate px-1">
-                  {item.file.name}
-                </p>
-                <div className="flex justify-between text-[10px] text-slate-500 pt-1 px-1">
+
+                <img
+                  src={item.previewUrl}
+                  alt={`Page ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg border border-zinc-800"
+                />
+
+                <div className="w-full flex items-center justify-between pt-1 text-zinc-400">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => moveImage(index, 'up')}
+                      disabled={index === 0}
+                      className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30"
+                      title="Move Left/Up"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveImage(index, 'down')}
+                      disabled={index === images.length - 1}
+                      className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30"
+                      title="Move Right/Down"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <button
-                    type="button"
-                    disabled={idx === 0}
-                    onClick={() => moveFile(idx, 'up')}
-                    className="disabled:opacity-30 hover:text-blue-600 font-bold"
+                    onClick={() => removeImage(index)}
+                    className="p-1 rounded bg-red-950/60 text-red-400 hover:bg-red-900/60"
+                    title="Remove Image"
                   >
-                    ← Move Up
-                  </button>
-                  <button
-                    type="button"
-                    disabled={idx === files.length - 1}
-                    onClick={() => moveFile(idx, 'down')}
-                    className="disabled:opacity-30 hover:text-blue-600 font-bold"
-                  >
-                    Move Down →
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {!pdfBlob && (
+          {/* Action Trigger */}
+          {!outputUrl && (
             <button
-              type="button"
-              onClick={generatePdf}
-              disabled={generating}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-3 rounded-xl text-sm transition"
+              onClick={convertToPdf}
+              disabled={processing}
+              className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {generating ? progressText : 'Generate PDF'}
+              {processing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" /> {progressStage}
+                </>
+              ) : (
+                `Convert ${images.length} Images to PDF`
+              )}
             </button>
+          )}
+
+          {/* Error Banner */}
+          {error && (
+            <div className="p-4 bg-red-950/40 border border-red-900/60 rounded-xl space-y-2">
+              <div className="flex items-center gap-2 text-red-400">
+                <AlertCircle className="w-4 h-4" />
+                <p className="font-semibold text-xs">Processing Error</p>
+              </div>
+              <p className="text-xs text-red-300">{error}</p>
+            </div>
+          )}
+
+          {/* Output / Download Card */}
+          {outputBlob && outputUrl && (
+            <div className="p-6 bg-zinc-900/90 border border-emerald-500/40 rounded-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>PDF Document Ready!</span>
+                </div>
+                <span className="text-xs text-zinc-400 font-semibold">
+                  Size: {(outputBlob.size / 1024).toFixed(1)} KB ({images.length} Pages)
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleDownload}
+                  className="flex-1 py-3 px-5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-xl text-sm transition flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" /> Download PDF Document
+                </button>
+                <button
+                  onClick={resetAll}
+                  className="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold rounded-xl text-sm transition flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className="w-4 h-4" /> Start New
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      {error && (
-        <div className="p-4 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400 rounded-xl text-xs">
-          {error}
-        </div>
-      )}
-
-      {pdfBlob && (
-        <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">PDF Ready</h3>
-
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-              <span className="block text-[10px] text-slate-500 font-bold uppercase">Pages</span>
-              <span className="text-sm font-black text-slate-900 dark:text-white">{files.length}</span>
-            </div>
-
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900">
-              <span className="block text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase">Type</span>
-              <span className="text-sm font-black text-blue-600 dark:text-blue-400">PDF</span>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={downloadPdf}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition"
-            >
-              Download PDF
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold py-3 rounded-xl text-sm transition"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Security Banner */}
+      <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-center space-x-2 text-xs text-zinc-500">
+        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <span>100% Client-Side Processing • Your photos never leave your device</span>
+      </div>
     </div>
   );
 }
