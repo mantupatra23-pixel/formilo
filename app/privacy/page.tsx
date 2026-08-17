@@ -1,38 +1,52 @@
 // app/privacy/page.tsx
 import { Metadata } from 'next';
+import { ShieldCheck, Lock, EyeOff } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Formilo',
-  description: 'Formilo privacy policy detailing zero-storage client-side operations and third-party advertising disclosures.',
+  description: 'Formilo client-side privacy policy and data security disclosures.',
 };
 
 export default function PrivacyPage() {
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 prose prose-invert">
-      <h1 className="text-3xl font-extrabold text-white">Privacy Policy</h1>
-      <p className="text-xs text-zinc-500">Last updated: August 2026</p>
+    <main className="min-h-[80vh] bg-[#09090b] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        
+        <div className="border-b border-zinc-800 pb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-3">
+            <ShieldCheck className="w-3.5 h-3.5" /> Privacy First Architecture
+          </div>
+          <h1 className="text-3xl font-extrabold text-white">Privacy Policy</h1>
+          <p className="text-xs text-zinc-400 mt-1">Last Updated: August 2026</p>
+        </div>
 
-      <div className="mt-8 space-y-6 text-sm text-zinc-300 leading-relaxed">
-        <section className="space-y-2">
-          <h2 className="text-lg font-bold text-white">1. Zero Server-Side File Storage</h2>
-          <p>
-            Formilo processes all uploaded images, PDFs, signatures, and government documents strictly on the client side inside your web browser engine. Your files are never transmitted, saved, or analyzed on remote backend servers.
-          </p>
-        </section>
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Lock className="w-5 h-5 text-emerald-400" /> 1. Zero Server-Side File Storage
+            </h2>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              Formilo operates entirely client-side. When you resize a photo, crop a signature, or convert a PDF, all operations are executed strictly within your web browser using HTML5 Canvas and JavaScript. No document or image is ever uploaded to or stored on our servers.
+            </p>
+          </div>
 
-        <section className="space-y-2">
-          <h2 className="text-lg font-bold text-white">2. Analytics & Cookies</h2>
-          <p>
-            We may use anonymous telemetry tools to measure general site traffic, page load performance, and error frequencies. These metrics do not collect or correlate personally identifiable information (PII).
-          </p>
-        </section>
+          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <EyeOff className="w-5 h-5 text-emerald-400" /> 2. Anonymous Telemetry & Analytics
+            </h2>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              We may collect standard, non-personally identifiable diagnostic information (such as browser version, page load performance, and error crash logs) to maintain tool reliability.
+            </p>
+          </div>
 
-        <section className="space-y-2">
-          <h2 className="text-lg font-bold text-white">3. Third-Party Advertising & AdSense</h2>
-          <p>
-            Third-party vendors, including Google, use cookies to serve ads based on prior visits to this and other websites. Users may opt out of personalized advertising by visiting Google's Ad Settings.
-          </p>
-        </section>
+          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+            <h2 className="text-lg font-bold text-white">3. Third-Party Advertising & Cookies</h2>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              We partner with third-party advertising networks like Google AdSense. These networks may use cookies to serve relevant advertisements based on prior visits. Users can manage personalized ad preferences via Google Ad Settings.
+            </p>
+          </div>
+        </div>
+
       </div>
     </main>
   );
