@@ -1,289 +1,221 @@
 'use client';
 
-import React, { useState } from 'react';
-import JSZip from 'jszip';
-import { getAcceptString, validateSelectedFile } from '@/config/fileValidation';
+import React, { useState, useRef } from 'react';
+import { UploadCloud, Download, RefreshCw, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 
-interface PageItem {
+interface ConvertedPage {
   pageNumber: number;
-  thumbnailUrl: string;
-  selected: boolean;
+  dataUrl: string;
+  blob: Blob;
 }
 
-const getPdfJs = async () => {
-  if (typeof window === 'undefined') {
-    throw new Error('PDF.js can only be loaded in the browser environment.');
-  }
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  return pdfjsLib;
-};
-
 export default function PdfToJpgTool() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [pages, setPages] = useState<PageItem[]>([]);
-  const [quality, setQuality] = useState<number>(0.85);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [progressMsg, setProgressMsg] = useState<string>('');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [pages, setPages] = useState<ConvertedPage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadPdfJs = async () => {
+    // Dynamic import for client-side rendering
+    const pdfjsLib = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    return pdfjsLib;
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    const file = e.target.files[0];
-
-    const validation = validateSelectedFile(file, 'pdfToJpg');
-    if (!validation.valid) {
-      setErrorMsg(validation.message || 'Invalid PDF file.');
-      return;
-    }
-
-    setSelectedFile(file);
-    setErrorMsg(null);
-    setIsProcessing(true);
-    setProgressMsg('Loading PDF pages...');
-
-    try {
-      const pdfjsLib = await getPdfJs();
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const pageCount = pdf.numPages;
-      const loadedPages: PageItem[] = [];
-
-      for (let i = 1; i <= pageCount; i++) {
-        setProgressMsg(`Generating thumbnail for page ${i} of ${pageCount}...`);
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 0.3 });
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        if (ctx) {
-          await page.render({
-            canvasContext: ctx,
-            canvas: canvas,
-            viewport: viewport,
-          }).promise;
-          const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
-          loadedPages.push({ pageNumber: i, thumbnailUrl, selected: true });
-        }
+    setError(null);
+    setPages([]);
+    
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile.type !== 'application/pdf' && !selectedFile.name.toLowerCase().endsWith('.pdf')) {
+        setError('Please select a valid PDF document.');
+        return;
       }
 
-      setPages(loadedPages);
-    } catch {
-      setErrorMsg('This PDF could not be opened or is password protected.');
-      setSelectedFile(null);
-    } finally {
-      setIsProcessing(false);
-      setProgressMsg('');
-    }
-  };
+      setFile(selectedFile);
+      setLoading(true);
+      setProgress('Reading PDF document...');
 
-  const togglePageSelection = (pageNumber: number) => {
-    setPages((prev) =>
-      prev.map((p) => (p.pageNumber === pageNumber ? { ...p, selected: !p.selected } : p))
-    );
-  };
+      try {
+        const pdfjs = await loadPdfJs();
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const typedarray = new Uint8Array(arrayBuffer);
 
-  const selectAll = (status: boolean) => {
-    setPages((prev) => prev.map((p) => ({ ...p, selected: status })));
-  };
+        const pdf = await pdfjs.getDocument({ data: typedarray }).promise;
+        const totalPages = pdf.numPages;
+        const convertedPages: ConvertedPage[] = [];
 
-  const convertAndDownload = async () => {
-    if (!selectedFile) return;
-    const selectedPages = pages.filter((p) => p.selected);
-    if (selectedPages.length === 0) {
-      alert('Please select at least one page to convert.');
-      return;
-    }
-
-    setIsProcessing(true);
-    setProgressMsg('Extracting high-resolution pages...');
-
-    try {
-      const pdfjsLib = await getPdfJs();
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-      if (selectedPages.length === 1) {
-        const pNum = selectedPages[0].pageNumber;
-        const page = await pdf.getPage(pNum);
-        const viewport = page.getViewport({ scale: 2.0 });
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        if (ctx) {
-          await page.render({
-            canvasContext: ctx,
-            canvas: canvas,
-            viewport: viewport,
-          }).promise;
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `formilo_page_${pNum}.jpg`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }
-            },
-            'image/jpeg',
-            quality
-          );
-        }
-      } else {
-        const zip = new JSZip();
-
-        for (let i = 0; i < selectedPages.length; i++) {
-          const pNum = selectedPages[i].pageNumber;
-          setProgressMsg(`Rendering page ${i + 1} of ${selectedPages.length}...`);
-          const page = await pdf.getPage(pNum);
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          setProgress(`Rendering page ${pageNum} of ${totalPages}...`);
+          const page = await pdf.getPage(pageNum);
+          
+          // Render at 2x scale for crisp quality
           const viewport = page.getViewport({ scale: 2.0 });
           const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
+          const context = canvas.getContext('2d');
 
-          if (ctx) {
-            await page.render({
-              canvasContext: ctx,
-              canvas: canvas,
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          if (context) {
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            const renderContext = {
+              canvasContext: context,
               viewport: viewport,
-            }).promise;
-            const blob = await new Promise<Blob | null>((resolve) =>
-              canvas.toBlob(resolve, 'image/jpeg', quality)
+            };
+
+            await page.render(renderContext).promise;
+
+            const blob: Blob = await new Promise((resolve) =>
+              canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.92)
             );
-            if (blob) {
-              zip.file(`formilo_page_${pNum}.jpg`, blob);
-            }
+
+            convertedPages.push({
+              pageNumber: pageNum,
+              dataUrl: URL.createObjectURL(blob),
+              blob: blob,
+            });
           }
         }
 
-        setProgressMsg('Creating ZIP archive...');
-        const zipContent = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(zipContent);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'formilo_pdf_pages.zip';
-        a.click();
-        URL.revokeObjectURL(url);
+        setPages(convertedPages);
+      } catch (err: any) {
+        console.error('PDF parsing error:', err);
+        setError('Could not render this PDF. Ensure it is not corrupted or password-protected.');
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setErrorMsg('Failed to export selected pages.');
-    } finally {
-      setIsProcessing(false);
-      setProgressMsg('');
     }
   };
 
+  const handleDownloadSingle = (page: ConvertedPage) => {
+    const a = document.createElement('a');
+    a.href = page.dataUrl;
+    a.download = `formilo-page-${page.pageNumber}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleDownloadAll = () => {
+    pages.forEach((page, idx) => {
+      setTimeout(() => {
+        handleDownloadSingle(page);
+      }, idx * 250);
+    });
+  };
+
+  const handleReset = () => {
+    pages.forEach((p) => URL.revokeObjectURL(p.dataUrl));
+    setFile(null);
+    setPages([]);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
-      {!selectedFile ? (
-        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
-          <input
-            type="file"
-            accept={getAcceptString('pdfToJpg')}
-            onChange={handleFileChange}
-            className="hidden"
-            id="pdf-to-jpg-input"
-          />
-          <label
-            htmlFor="pdf-to-jpg-input"
-            className="cursor-pointer inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
-          >
-            Click to upload or drag & drop PDF
-          </label>
-          <p className="text-xs text-slate-500">Supports PDF files</p>
+    <div className="space-y-6">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {!file ? (
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/60 rounded-xl p-10 text-center cursor-pointer transition-all bg-zinc-950/40 group"
+        >
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <UploadCloud className="w-7 h-7" />
+          </div>
+          <p className="text-base font-semibold text-white">Choose PDF File or Drop here</p>
+          <p className="text-xs text-zinc-500 mt-1">Extract high-resolution JPG pages instantly</p>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{selectedFile.name}</h3>
-              <p className="text-xs text-slate-500">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+          {/* Loading Indicator */}
+          {loading && (
+            <div className="py-12 text-center space-y-3">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+              <p className="text-sm font-medium text-emerald-400 animate-pulse">{progress}</p>
             </div>
-            <button
-              onClick={() => {
-                setSelectedFile(null);
-                setPages([]);
-              }}
-              className="text-xs font-semibold text-red-600 hover:underline"
-            >
-              Remove PDF
-            </button>
-          </div>
+          )}
 
-          {pages.length > 0 && (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="space-x-2">
-                  <button onClick={() => selectAll(true)} className="text-blue-600 hover:underline font-semibold">
-                    Select All
-                  </button>
-                  <span>•</span>
-                  <button onClick={() => selectAll(false)} className="text-slate-500 hover:underline">
-                    Deselect All
-                  </button>
+          {/* Error Banner */}
+          {error && (
+            <div className="p-4 bg-red-950/40 border border-red-900/60 rounded-xl space-y-3">
+              <div className="flex items-center gap-2 text-red-400">
+                <AlertCircle className="w-4 h-4" />
+                <p className="font-semibold text-xs uppercase tracking-wider">Extraction Failed</p>
+              </div>
+              <p className="text-xs text-red-300 leading-relaxed">{error}</p>
+              <button
+                onClick={handleReset}
+                className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition"
+              >
+                Try Another PDF
+              </button>
+            </div>
+          )}
+
+          {/* Pages Grid */}
+          {pages.length > 0 && !loading && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>{pages.length} {pages.length === 1 ? 'Page' : 'Pages'} Extracted</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <label htmlFor="pdf-quality-select" className="text-slate-600 dark:text-slate-400">Quality:</label>
-                  <select
-                    id="pdf-quality-select"
-                    value={quality}
-                    onChange={(e) => setQuality(parseFloat(e.target.value))}
-                    className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-lg px-2 py-1"
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDownloadAll}
+                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs rounded-lg transition"
                   >
-                    <option value={0.55}>Low (Small file)</option>
-                    <option value={0.70}>Medium</option>
-                    <option value={0.85}>High (Recommended)</option>
-                    <option value={0.95}>Maximum</option>
-                  </select>
+                    Download All Pages
+                  </button>
+                  <button
+                    onClick={handleReset}
+                    className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition"
+                  >
+                    Reset
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-2 border border-slate-100 dark:border-slate-800 rounded-xl">
-                {pages.map((item) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {pages.map((p) => (
                   <div
-                    key={item.pageNumber}
-                    onClick={() => togglePageSelection(item.pageNumber)}
-                    className={`relative cursor-pointer border-2 rounded-xl p-2 transition ${
-                      item.selected
-                        ? 'border-blue-600 bg-blue-50/20'
-                        : 'border-slate-200 dark:border-slate-800 opacity-60'
-                    }`}
+                    key={p.pageNumber}
+                    className="p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl flex flex-col items-center gap-3"
                   >
-                    {/* eslint-disable-next-html-element-suppression */}
-                    <img src={item.thumbnailUrl} alt={`Page ${item.pageNumber}`} className="w-full h-32 object-contain rounded-lg" />
-                    <div className="mt-2 text-center text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Page {item.pageNumber}
+                    <img
+                      src={p.dataUrl}
+                      alt={`Page ${p.pageNumber}`}
+                      className="max-h-56 object-contain rounded border border-zinc-800 shadow-md"
+                    />
+                    <div className="w-full flex items-center justify-between text-xs text-zinc-400 pt-1">
+                      <span>Page {p.pageNumber}</span>
+                      <button
+                        onClick={() => handleDownloadSingle(p)}
+                        className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
-
-              <button
-                onClick={convertAndDownload}
-                disabled={isProcessing}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-3 rounded-xl text-sm transition"
-              >
-                {isProcessing
-                  ? progressMsg
-                  : pages.filter((p) => p.selected).length === 1
-                  ? 'Download Selected Page as JPG'
-                  : `Download Selected Pages as ZIP (${pages.filter((p) => p.selected).length})`}
-              </button>
-            </>
+            </div>
           )}
-        </div>
-      )}
-
-      {errorMsg && (
-        <div className="p-4 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400 rounded-xl text-xs">
-          {errorMsg}
         </div>
       )}
     </div>
