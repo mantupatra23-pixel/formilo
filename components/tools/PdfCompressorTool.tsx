@@ -1,226 +1,273 @@
 'use client';
 
-import React, { useState } from 'react';
-import { jsPDF } from 'jspdf';
-import { getAcceptString, validateSelectedFile } from '@/config/fileValidation';
+import React, { useState, useRef } from 'react';
+import { UploadCloud, Download, RefreshCw, CheckCircle2, AlertCircle, Zap, ShieldCheck } from 'lucide-react';
+import { PDFDocument } from 'pdf-lib';
 
-const getPdfJs = async () => {
-  if (typeof window === 'undefined') {
-    throw new Error('PDF.js can only be loaded in the browser environment.');
-  }
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  return pdfjsLib;
-};
+type CompressionLevel = 'strong' | 'balanced' | 'high';
 
 export default function PdfCompressorTool() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [originalSize, setOriginalSize] = useState<number>(0);
-  const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
-  const [compressedSize, setCompressedSize] = useState<number>(0);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [progressMsg, setProgressMsg] = useState<string>('');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [preset, setPreset] = useState<number>(0.65);
+  const [file, setFile] = useState<File | null>(null);
+  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('balanced');
+  const [processing, setProcessing] = useState(false);
+  const [progressStage, setProgressStage] = useState('');
+  const [outputBlob, setOutputBlob] = useState<Blob | null>(null);
+  const [outputUrl, setOutputUrl] = useState<string | null>(null);
+  const [outputSize, setOutputSize] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    const file = e.target.files[0];
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const validation = validateSelectedFile(file, 'pdfCompressor');
-    if (!validation.valid) {
-      setErrorMsg(validation.message || 'Invalid PDF file.');
-      return;
-    }
-
-    setSelectedFile(file);
-    setOriginalSize(file.size);
-    setCompressedBlob(null);
-    setErrorMsg(null);
+  const loadPdfJs = async () => {
+    const pdfjsLib: any = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    return pdfjsLib;
   };
 
-  const compressPdf = async () => {
-    if (!selectedFile) return;
-    setIsProcessing(true);
-    setProgressMsg('Reading PDF structure...');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    setOutputBlob(null);
+    setOutputUrl(null);
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile.type !== 'application/pdf' && !selectedFile.name.toLowerCase().endsWith('.pdf')) {
+        setError('Please select a valid PDF file.');
+        return;
+      }
+      setFile(selectedFile);
+    }
+  };
+
+  const compressPDF = async () => {
+    if (!file) return;
+
+    setProcessing(true);
+    setError(null);
+    setProgressStage('Initializing PDF engine...');
 
     try {
-      const pdfjsLib = await getPdfJs();
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const pageCount = pdf.numPages;
+      const pdfjs = await loadPdfJs();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      const totalPages = pdf.numPages;
 
-      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
+      const newPdfDoc = await PDFDocument.create();
 
-      for (let i = 1; i <= pageCount; i++) {
-        if (i > 1) doc.addPage();
-        setProgressMsg(`Optimizing page ${i} of ${pageCount}...`);
+      // Compression settings based on level
+      let scale = 1.3;
+      let quality = 0.65;
+      if (compressionLevel === 'strong') {
+        scale = 1.0;
+        quality = 0.45;
+      } else if (compressionLevel === 'high') {
+        scale = 1.6;
+        quality = 0.82;
+      }
 
+      for (let i = 1; i <= totalPages; i++) {
+        setProgressStage(`Compressing page ${i} of ${totalPages}...`);
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 });
+        const viewport = page.getViewport({ scale });
+
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
 
         if (ctx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
           await page.render({
             canvasContext: ctx,
-            canvas: canvas,
             viewport: viewport,
+            canvas: canvas as any,
           }).promise;
-          const imgData = canvas.toDataURL('image/jpeg', preset);
-          doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+
+          const imgDataUrl = canvas.toDataURL('image/jpeg', quality);
+          const imgBytes = await fetch(imgDataUrl).then((res) => res.arrayBuffer());
+          const embeddedImage = await newPdfDoc.embedJpg(imgBytes);
+
+          // Standardize page to PDF points
+          const originalViewport = page.getViewport({ scale: 1.0 });
+          const newPage = newPdfDoc.addPage([originalViewport.width, originalViewport.height]);
+          newPage.drawImage(embeddedImage, {
+            x: 0,
+            y: 0,
+            width: originalViewport.width,
+            height: originalViewport.height,
+          });
         }
       }
 
-      const outputArrayBuffer = doc.output('arraybuffer');
-      let blob = new Blob([outputArrayBuffer], { type: 'application/pdf' });
+      setProgressStage('Building compressed document...');
+      const compressedPdfBytes = await newPdfDoc.save();
+      const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
 
-      if (blob.size >= selectedFile.size) {
-        blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-        setErrorMsg('Your PDF is already optimized. Original file retained.');
-      }
-
-      setCompressedBlob(blob);
-      setCompressedSize(blob.size);
-    } catch {
-      setErrorMsg('Error optimizing PDF file.');
+      setOutputBlob(blob);
+      setOutputUrl(URL.createObjectURL(blob));
+      setOutputSize(blob.size);
+    } catch (err: any) {
+      console.error('Compression error:', err);
+      setError('Unable to compress this PDF. Please check if the file is encrypted or corrupted.');
     } finally {
-      setIsProcessing(false);
-      setProgressMsg('');
+      setProcessing(false);
     }
   };
 
-  const downloadPdf = () => {
-    if (!compressedBlob) return;
-    const url = URL.createObjectURL(compressedBlob);
+  const handleDownload = () => {
+    if (!outputUrl) return;
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `formilo_compressed_${selectedFile?.name || 'document.pdf'}`;
+    a.href = outputUrl;
+    a.download = `formilo_compressed_${file?.name || 'document.pdf'}`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const handleReset = () => {
+    if (outputUrl) URL.revokeObjectURL(outputUrl);
+    setFile(null);
+    setOutputBlob(null);
+    setOutputUrl(null);
+    setOutputSize(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
-      {!selectedFile ? (
-        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
-          <input
-            type="file"
-            accept={getAcceptString('pdfCompressor')}
-            onChange={handleFileChange}
-            className="hidden"
-            id="pdf-compress-input"
-          />
-          <label
-            htmlFor="pdf-compress-input"
-            className="cursor-pointer inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
-          >
-            Select PDF File
-          </label>
-          <p className="text-xs text-slate-500">Supports PDF files</p>
+    <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-6 text-zinc-100">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {!file ? (
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/60 rounded-xl p-10 text-center cursor-pointer transition-all bg-zinc-950/40 group"
+        >
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <UploadCloud className="w-7 h-7" />
+          </div>
+          <p className="text-base font-semibold text-white">Choose PDF File or Drop here</p>
+          <p className="text-xs text-zinc-500 mt-1">Reduce PDF document size directly in your browser</p>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+          {/* File Selected Card */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
             <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{selectedFile.name}</h3>
-              <p className="text-xs text-slate-500">{(originalSize / (1024 * 1024)).toFixed(2)} MB</p>
+              <p className="text-sm font-semibold text-white truncate max-w-xs sm:max-w-md">{file.name}</p>
+              <p className="text-xs text-zinc-400">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
             </div>
             <button
-              onClick={() => {
-                setSelectedFile(null);
-                setCompressedBlob(null);
-              }}
-              className="text-xs font-semibold text-red-600 hover:underline"
+              onClick={handleReset}
+              className="text-xs text-red-400 hover:text-red-300 font-medium"
             >
               Change File
             </button>
           </div>
 
-          {!compressedBlob && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Compression Level:</label>
-                <div className="grid grid-cols-3 gap-2">
+          {/* Compression Level Selector */}
+          {!outputUrl && (
+            <div className="space-y-3">
+              <label className="text-xs font-semibold text-zinc-300 block">Compression Level:</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: 'strong', label: 'Strong', desc: 'Smallest size' },
+                  { key: 'balanced', label: 'Balanced', desc: 'Recommended' },
+                  { key: 'high', label: 'High Quality', desc: 'Best clarity' },
+                ].map((level) => (
                   <button
-                    onClick={() => setPreset(0.45)}
-                    className={`py-2 text-xs font-bold rounded-lg border ${
-                      preset === 0.45 ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    key={level.key}
+                    onClick={() => setCompressionLevel(level.key as CompressionLevel)}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      compressionLevel === level.key
+                        ? 'border-emerald-500 bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/5'
+                        : 'border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700'
                     }`}
                   >
-                    Strong
+                    <span className="block text-xs font-bold">{level.label}</span>
+                    <span className="text-[10px] text-zinc-400">{level.desc}</span>
                   </button>
-                  <button
-                    onClick={() => setPreset(0.65)}
-                    className={`py-2 text-xs font-bold rounded-lg border ${
-                      preset === 0.65 ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    Balanced
-                  </button>
-                  <button
-                    onClick={() => setPreset(0.85)}
-                    className={`py-2 text-xs font-bold rounded-lg border ${
-                      preset === 0.85 ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    High Quality
-                  </button>
-                </div>
+                ))}
               </div>
 
               <button
-                onClick={compressPdf}
-                disabled={isProcessing}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-3 rounded-xl text-sm transition"
+                onClick={compressPDF}
+                disabled={processing}
+                className="w-full py-3.5 mt-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isProcessing ? progressMsg : 'Compress PDF'}
+                {processing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" /> {progressStage}
+                  </>
+                ) : (
+                  'Compress PDF'
+                )}
               </button>
             </div>
           )}
 
-          {compressedBlob && (
-            <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <span className="block text-[10px] text-slate-500 font-bold uppercase">Original</span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">
-                    {(originalSize / (1024 * 1024)).toFixed(2)} MB
+          {/* Error Banner */}
+          {error && (
+            <div className="p-4 bg-red-950/40 border border-red-900/60 rounded-xl space-y-2">
+              <div className="flex items-center gap-2 text-red-400">
+                <AlertCircle className="w-4 h-4" />
+                <p className="font-semibold text-xs">Compression Failed</p>
+              </div>
+              <p className="text-xs text-red-300">{error}</p>
+            </div>
+          )}
+
+          {/* Output / Results */}
+          {outputSize && outputUrl && (
+            <div className="p-6 bg-zinc-900/90 border border-zinc-800 rounded-xl space-y-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" /> PDF Compressed Successfully
+              </h3>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
+                  <span className="block text-[10px] text-zinc-400 font-bold uppercase">Original</span>
+                  <span className="text-sm font-bold text-zinc-200">
+                    {(file.size / 1024).toFixed(0)} KB
                   </span>
                 </div>
-                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-xl border border-blue-200 dark:border-blue-900">
-                  <span className="block text-[10px] text-blue-600 font-bold uppercase">Compressed</span>
-                  <span className="text-sm font-black text-blue-600">
-                    {(compressedSize / (1024 * 1024)).toFixed(2)} MB
+
+                <div className="p-3 bg-emerald-950/30 rounded-xl border border-emerald-500/40 text-center">
+                  <span className="block text-[10px] text-emerald-400 font-bold uppercase">Compressed</span>
+                  <span className="text-sm font-bold text-emerald-300">
+                    {(outputSize / 1024).toFixed(0)} KB
                   </span>
                 </div>
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950 rounded-xl border border-emerald-200 dark:border-emerald-900">
-                  <span className="block text-[10px] text-emerald-600 font-bold uppercase">Reduced</span>
-                  <span className="text-sm font-black text-emerald-600">
-                    {Math.max(0, (((originalSize - compressedSize) / originalSize) * 100)).toFixed(1)}%
+
+                <div className="p-3 bg-emerald-950/20 rounded-xl border border-emerald-800/40 text-center">
+                  <span className="block text-[10px] text-emerald-400 font-bold uppercase">Saved</span>
+                  <span className="text-sm font-bold text-emerald-400">
+                    {file.size > outputSize
+                      ? `${(((file.size - outputSize) / file.size) * 100).toFixed(1)}%`
+                      : '0%'}
                   </span>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="pt-2 flex flex-wrap gap-3">
                 <button
-                  onClick={downloadPdf}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition"
+                  onClick={handleDownload}
+                  className="flex-1 py-3 px-5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-xl text-sm transition flex items-center justify-center gap-2"
                 >
-                  Download Compressed PDF
+                  <Download className="w-4 h-4" /> Download Reduced PDF
                 </button>
                 <button
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setCompressedBlob(null);
-                  }}
-                  className="px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold py-3 rounded-xl text-sm transition"
+                  onClick={handleReset}
+                  className="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold rounded-xl text-sm transition flex items-center justify-center gap-1.5"
                 >
-                  Reset
+                  <RefreshCw className="w-4 h-4" /> Compress Another
                 </button>
               </div>
             </div>
@@ -228,11 +275,11 @@ export default function PdfCompressorTool() {
         </div>
       )}
 
-      {errorMsg && (
-        <div className="p-4 bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-400 rounded-xl text-xs">
-          {errorMsg}
-        </div>
-      )}
+      {/* Security Banner */}
+      <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-center space-x-2 text-xs text-zinc-500">
+        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <span>100% Client-Side Processing • Your PDF is never uploaded to any server</span>
+      </div>
     </div>
   );
 }
