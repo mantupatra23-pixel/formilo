@@ -53,7 +53,6 @@ export default function PdfCompressorTool() {
 
       const newPdfDoc = await PDFDocument.create();
 
-      // Compression settings based on level
       let scale = 1.3;
       let quality = 0.65;
       if (compressionLevel === 'strong') {
@@ -88,7 +87,6 @@ export default function PdfCompressorTool() {
           const imgBytes = await fetch(imgDataUrl).then((res) => res.arrayBuffer());
           const embeddedImage = await newPdfDoc.embedJpg(imgBytes);
 
-          // Standardize page to PDF points
           const originalViewport = page.getViewport({ scale: 1.0 });
           const newPage = newPdfDoc.addPage([originalViewport.width, originalViewport.height]);
           newPage.drawImage(embeddedImage, {
@@ -102,7 +100,9 @@ export default function PdfCompressorTool() {
 
       setProgressStage('Building compressed document...');
       const compressedPdfBytes = await newPdfDoc.save();
-      const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+      
+      // Fix TS2322 Blob Part type compatibility
+      const blob = new Blob([compressedPdfBytes as unknown as BlobPart], { type: 'application/pdf' });
 
       setOutputBlob(blob);
       setOutputUrl(URL.createObjectURL(blob));
@@ -158,7 +158,6 @@ export default function PdfCompressorTool() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* File Selected Card */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
             <div>
               <p className="text-sm font-semibold text-white truncate max-w-xs sm:max-w-md">{file.name}</p>
@@ -172,7 +171,6 @@ export default function PdfCompressorTool() {
             </button>
           </div>
 
-          {/* Compression Level Selector */}
           {!outputUrl && (
             <div className="space-y-3">
               <label className="text-xs font-semibold text-zinc-300 block">Compression Level:</label>
@@ -213,7 +211,6 @@ export default function PdfCompressorTool() {
             </div>
           )}
 
-          {/* Error Banner */}
           {error && (
             <div className="p-4 bg-red-950/40 border border-red-900/60 rounded-xl space-y-2">
               <div className="flex items-center gap-2 text-red-400">
@@ -224,7 +221,6 @@ export default function PdfCompressorTool() {
             </div>
           )}
 
-          {/* Output / Results */}
           {outputSize && outputUrl && (
             <div className="p-6 bg-zinc-900/90 border border-zinc-800 rounded-xl space-y-4">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -275,7 +271,6 @@ export default function PdfCompressorTool() {
         </div>
       )}
 
-      {/* Security Banner */}
       <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-center space-x-2 text-xs text-zinc-500">
         <ShieldCheck className="w-4 h-4 text-emerald-400" />
         <span>100% Client-Side Processing • Your PDF is never uploaded to any server</span>
