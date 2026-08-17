@@ -3,232 +3,394 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { 
-  Zap, ShieldCheck, ArrowRight, Search, 
-  FileText, Image as ImageIcon, Smartphone, 
-  Flame, Briefcase, RefreshCw, Layers
+  Sparkles, Zap, ShieldCheck, ArrowRight, Search, 
+  FileText, Image as ImageIcon, PenTool, Smartphone, 
+  GraduationCap, RefreshCw, Sliders, CheckCircle2, Flame, Layers
 } from 'lucide-react';
-import { TOOLS } from '@/lib/tools';
+import { TOOLS, Tool } from '@/lib/tools';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Search Filter
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+  const filteredTools = useMemo(() => {
     return TOOLS.filter((tool) => {
-      const q = searchQuery.toLowerCase();
-      return (
-        tool.enabled && (
-          tool.name.toLowerCase().includes(q) ||
-          tool.description.toLowerCase().includes(q) ||
-          (tool.keywords && tool.keywords.some((k) => k.toLowerCase().includes(q)))
-        )
-      );
+      const matchesSearch = 
+        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tool.keywords && tool.keywords.some((k) => k.toLowerCase().includes(searchQuery.toLowerCase())));
+
+      const matchesCategory = 
+        selectedCategory === 'all' || 
+        (selectedCategory === 'exam' ? tool.badge === 'Exam Preset' : tool.category === selectedCategory);
+
+      return tool.enabled && matchesSearch && matchesCategory;
     });
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategory]);
 
-  // Curated Categories for Clean UI
-  const popularTools = TOOLS.filter(t => ['photo-resize-20kb', 'photo-resize-50kb', 'signature-resize-20kb', 'jpg-to-pdf', 'image-compressor', 'passport-photo-resizer'].includes(t.slug));
-  
-  const pdfTools = TOOLS.filter(t => t.category === 'pdf').slice(0, 6);
-  
-  const converterTools = TOOLS.filter(t => t.badge === 'Converter').slice(0, 6);
-  
-  const examTools = TOOLS.filter(t => t.badge === 'Exam Preset');
-  const topExamTools = examTools.slice(0, 6);
-  const restExamTools = examTools.slice(6);
+  const popularTools = useMemo(() => {
+    return TOOLS.filter((t) => [
+      'photo-resize-20kb', 
+      'photo-resize-50kb', 
+      'signature-resize-20kb', 
+      'jpg-to-pdf', 
+      'pdf-to-jpg',
+      'pdf-compressor',
+      'ssc-cgl-photo-resizer',
+      'passport-photo-resizer',
+      'image-compressor'
+    ].includes(t.slug));
+  }, []);
 
-  const kbTools = TOOLS.filter(t => t.name.startsWith('Photo Resize to') && !['photo-resize-20kb', 'photo-resize-50kb'].includes(t.slug));
+  const examTools = useMemo(() => TOOLS.filter((t) => t.badge === 'Exam Preset' && t.enabled), []);
+  const photoTools = useMemo(() => TOOLS.filter((t) => t.category === 'photo' && t.badge !== 'Exam Preset' && t.enabled), []);
+  const pdfTools = useMemo(() => TOOLS.filter((t) => t.category === 'pdf' && t.enabled), []);
+  const signatureTools = useMemo(() => TOOLS.filter((t) => t.category === 'signature' && t.badge !== 'Exam Preset' && t.enabled), []);
+  const imageTools = useMemo(() => TOOLS.filter((t) => t.category === 'image' && t.enabled), []);
+
+  const quickPresets = [
+    { label: '⚡ Photo < 20 KB', slug: 'photo-resize-20kb', color: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' },
+    { label: '✍️ Signature < 20 KB', slug: 'signature-resize-20kb', color: 'border-cyan-500/50 text-cyan-400 bg-cyan-500/10' },
+    { label: '📄 JPG to PDF', slug: 'jpg-to-pdf', color: 'border-rose-500/50 text-rose-400 bg-rose-500/10' },
+    { label: '🪪 SSC CGL (3.5x4.5cm)', slug: 'ssc-cgl-photo-resizer', color: 'border-amber-500/50 text-amber-400 bg-amber-500/10' },
+    { label: '📦 Compress PDF', slug: 'pdf-compressor', color: 'border-rose-500/50 text-rose-400 bg-rose-500/10' },
+    { label: '🎯 Passport Photo', slug: 'passport-photo-resizer', color: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' },
+  ];
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-emerald-500 selection:text-black">
       {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/10 blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[380px] bg-emerald-500/10 blur-[150px] pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="max-w-5xl mx-auto px-4 pt-14 pb-8 text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold tracking-wide">
-          <Zap className="w-3.5 h-3.5" /> 100% Client-Side Engine • Zero Server Uploads
+      <section className="max-w-6xl mx-auto px-4 pt-14 pb-8 text-center space-y-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/5">
+          <Zap className="w-3.5 h-3.5 fill-emerald-400" /> 100% Client-Side Engine • 150+ Tools • Zero Server Upload
         </div>
 
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-          Free Online Tools for <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-green-500">
-            Photos, Signatures & PDFs
+        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
+          Every Online Form File, <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+            Resized & Formatted in Seconds
           </span>
         </h1>
 
         <p className="max-w-2xl mx-auto text-sm sm:text-base text-zinc-400">
-          Resize exam photos, format signatures, compress files, and convert documents instantly inside your browser memory.
+          Instant government exam presets, exact KB size reducers, signature background cleaners, and multi-page PDF conversion tools.
         </p>
 
-        {/* Live Search */}
-        <div className="max-w-2xl mx-auto pt-4 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for a tool (e.g., 20kb photo, SSC signature, JPG to PDF)..."
-            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20 text-white placeholder-zinc-500 text-sm outline-none transition shadow-xl"
-          />
+        {/* Live Search & Quick Preset Chips */}
+        <div className="max-w-3xl mx-auto space-y-4 pt-2">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by exam name, tool, or KB size (e.g. SSC, 20 KB photo, PDF, UPSC)..."
+              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-zinc-900/90 border-2 border-zinc-700/80 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20 text-white placeholder-zinc-500 text-sm font-medium outline-none transition shadow-2xl"
+            />
+          </div>
+
+          {/* Quick Highlight Presets */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            {quickPresets.map((preset, idx) => (
+              <Link
+                key={idx}
+                href={`/tools/${preset.slug}`}
+                className={`text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all hover:scale-105 ${preset.color}`}
+              >
+                {preset.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-16">
+      {/* Main Tool Grid Container */}
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-12">
         
-        {/* Search Results Display */}
+        {/* Active Search Results */}
         {searchQuery.trim() !== '' ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Search className="w-5 h-5 text-emerald-400" /> Search Results ({searchResults.length})
-            </h2>
-            {searchResults.length === 0 ? (
-              <div className="p-8 text-center bg-zinc-900/40 border border-zinc-800 rounded-2xl text-zinc-400 text-sm">
-                No tools found for "{searchQuery}".
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-white flex items-center gap-2">
+                <Search className="w-5 h-5 text-emerald-400" />
+                Search Results ({filteredTools.length})
+              </h2>
+            </div>
+
+            {filteredTools.length === 0 ? (
+              <div className="p-12 text-center bg-zinc-900/60 border border-zinc-800 rounded-2xl text-zinc-400 text-sm">
+                No tools found matching "{searchQuery}". Try "20 kb", "signature", or "ssc".
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {searchResults.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
+                {filteredTools.map((tool) => (
+                  <HighlightedToolCard key={tool.slug} tool={tool} />
+                ))}
               </div>
             )}
           </section>
         ) : (
-          /* Curated Layout View */
           <>
-            {/* 1. Most Popular Tools */}
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Flame className="w-5 h-5 text-emerald-400" /> Essential Tools
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {popularTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
-              </div>
-            </section>
+            {/* Category Filter Pills */}
+            <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {[
+                { id: 'all', label: '🔥 All Tools', count: TOOLS.length },
+                { id: 'exam', label: '🪪 Exam & Govt Presets', count: examTools.length },
+                { id: 'photo', label: '📸 Photo KB Resizers', count: photoTools.length },
+                { id: 'pdf', label: '📄 PDF Suite', count: pdfTools.length },
+                { id: 'signature', label: '✍️ Signature Tools', count: signatureTools.length },
+                { id: 'image', label: '🔄 Format Converters', count: imageTools.length }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`text-xs px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-1.5 shrink-0 ${
+                    selectedCategory === cat.id
+                      ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 scale-105'
+                      : 'bg-zinc-900/90 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700'
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    selectedCategory === cat.id ? 'bg-black/20 text-black font-extrabold' : 'bg-zinc-800 text-zinc-400'
+                  }`}>
+                    {cat.count}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-            {/* 2. PDF Suite */}
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-400" /> PDF Toolkit
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pdfTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
-              </div>
-            </section>
+            {/* Popular Featured Tools Grid */}
+            {selectedCategory === 'all' && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-black text-white flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-emerald-400 fill-emerald-400" /> 
+                    Featured & Most Used Tools
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {popularTools.map((tool) => (
+                    <HighlightedToolCard key={tool.slug} tool={tool} isFeatured />
+                  ))}
+                </div>
+              </section>
+            )}
 
-            {/* 3. Image Converters */}
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <RefreshCw className="w-5 h-5 text-emerald-400" /> Image Converters
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {converterTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
-              </div>
-            </section>
+            {/* Exam & Govt Presets Section */}
+            {(selectedCategory === 'all' || selectedCategory === 'exam') && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-amber-400" />
+                    Government & Exam Portal Presets
+                  </h2>
+                  <span className="text-xs text-amber-400 font-semibold">{examTools.length} Presets Available</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {examTools.map((tool) => (
+                    <HighlightedToolCard key={tool.slug} tool={tool} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-            {/* 4. Exam Presets (Mixed Cards + Chips) */}
-            <section className="space-y-4 p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800">
-              <div className="flex flex-col space-y-1 mb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-emerald-400" /> Government Exam Presets
-                </h2>
-                <p className="text-xs text-zinc-400">One-click standard dimension & size locks for official portals.</p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {topExamTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
-              </div>
+            {/* Photo Tools Section */}
+            {(selectedCategory === 'all' || selectedCategory === 'photo') && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-emerald-400" />
+                    Exact KB Photo Resizers & Dimensions
+                  </h2>
+                  <span className="text-xs text-emerald-400 font-semibold">{photoTools.length} Tools</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {photoTools.map((tool) => (
+                    <HighlightedToolCard key={tool.slug} tool={tool} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-              <div className="pt-4 mt-4 border-t border-zinc-800 flex flex-wrap gap-2">
-                {restExamTools.map((tool) => (
-                  <Link
-                    key={tool.slug}
-                    href={`/tools/${tool.slug}`}
-                    className="px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px] font-medium text-zinc-300 hover:border-emerald-500/50 hover:text-emerald-400 transition"
-                  >
-                    {tool.name}
-                  </Link>
-                ))}
-              </div>
-            </section>
+            {/* PDF Suite Section */}
+            {(selectedCategory === 'all' || selectedCategory === 'pdf') && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-rose-400" />
+                    PDF Converter & Compression Suite
+                  </h2>
+                  <span className="text-xs text-rose-400 font-semibold">{pdfTools.length} Tools</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pdfTools.map((tool) => (
+                    <HighlightedToolCard key={tool.slug} tool={tool} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-            {/* 5. Quick Exact Size Links (Chips) */}
-            <section className="space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-400" /> Exact File Size Resizers
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {kbTools.map((tool) => (
-                  <Link
-                    key={tool.slug}
-                    href={`/tools/${tool.slug}`}
-                    className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:text-emerald-400 transition"
-                  >
-                    {tool.targetKB && tool.targetKB < 1000 ? `${tool.targetKB} KB` : 'Custom Size'}
-                  </Link>
-                ))}
-              </div>
-            </section>
+            {/* Signature Tools Section */}
+            {(selectedCategory === 'all' || selectedCategory === 'signature') && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <PenTool className="w-5 h-5 text-cyan-400" />
+                    Signature Cleaners & Resizers
+                  </h2>
+                  <span className="text-xs text-cyan-400 font-semibold">{signatureTools.length} Tools</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {signatureTools.map((tool) => (
+                    <HighlightedToolCard key={tool.slug} tool={tool} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Image Converters Section */}
+            {(selectedCategory === 'all' || selectedCategory === 'image') && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <RefreshCw className="w-5 h-5 text-violet-400" />
+                    Format Converters & Image Enhancers
+                  </h2>
+                  <span className="text-xs text-violet-400 font-semibold">{imageTools.length} Tools</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {imageTools.map((tool) => (
+                    <HighlightedToolCard key={tool.slug} tool={tool} />
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
 
-        {/* Features Section */}
-        <section className="pt-8 border-t border-zinc-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 text-center space-y-3">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">Instant Processing</h3>
-            <p className="text-xs text-zinc-400">Everything runs directly in your browser memory. No queue.</p>
-          </div>
-          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 text-center space-y-3">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">100% Private</h3>
-            <p className="text-xs text-zinc-400">Documents and photos are never uploaded to our servers.</p>
-          </div>
-          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 text-center space-y-3">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">Mobile Ready</h3>
-            <p className="text-xs text-zinc-400">Perfectly optimized for seamless use on smartphones.</p>
-          </div>
-        </section>
       </main>
     </div>
   );
 }
 
-// Compact Tool Card Component
-function ToolCard({ tool }: { tool: any }) {
+// ── HIGH-CONTRAST HIGHLIGHTED TOOL CARD ──────────────────────────────────────
+function HighlightedToolCard({ tool, isFeatured }: { tool: Tool; isFeatured?: boolean }) {
+  const isExam = tool.badge === 'Exam Preset';
+
+  // Category specific styles
+  const getTheme = () => {
+    if (isExam) {
+      return {
+        cardBorder: 'hover:border-amber-500/70 hover:shadow-amber-500/10',
+        iconBg: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+        icon: <GraduationCap className="w-5 h-5" />,
+        badge: 'bg-amber-500/15 text-amber-300 border border-amber-500/40',
+        titleHover: 'group-hover:text-amber-300',
+        btnText: 'text-amber-400',
+        accentBar: 'bg-amber-500'
+      };
+    }
+    switch (tool.category) {
+      case 'pdf':
+        return {
+          cardBorder: 'hover:border-rose-500/70 hover:shadow-rose-500/10',
+          iconBg: 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+          icon: <FileText className="w-5 h-5" />,
+          badge: 'bg-rose-500/15 text-rose-300 border border-rose-500/40',
+          titleHover: 'group-hover:text-rose-300',
+          btnText: 'text-rose-400',
+          accentBar: 'bg-rose-500'
+        };
+      case 'signature':
+        return {
+          cardBorder: 'hover:border-cyan-500/70 hover:shadow-cyan-500/10',
+          iconBg: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
+          icon: <PenTool className="w-5 h-5" />,
+          badge: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
+          titleHover: 'group-hover:text-cyan-300',
+          btnText: 'text-cyan-400',
+          accentBar: 'bg-cyan-500'
+        };
+      case 'image':
+        return {
+          cardBorder: 'hover:border-violet-500/70 hover:shadow-violet-500/10',
+          iconBg: 'bg-violet-500/15 text-violet-400 border border-violet-500/30',
+          icon: <RefreshCw className="w-5 h-5" />,
+          badge: 'bg-violet-500/15 text-violet-300 border border-violet-500/40',
+          titleHover: 'group-hover:text-violet-300',
+          btnText: 'text-violet-400',
+          accentBar: 'bg-violet-500'
+        };
+      case 'photo':
+      default:
+        return {
+          cardBorder: 'hover:border-emerald-500/70 hover:shadow-emerald-500/10',
+          iconBg: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+          icon: <ImageIcon className="w-5 h-5" />,
+          badge: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40',
+          titleHover: 'group-hover:text-emerald-300',
+          btnText: 'text-emerald-400',
+          accentBar: 'bg-emerald-500'
+        };
+    }
+  };
+
+  const theme = getTheme();
+
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 hover:border-emerald-500/50 hover:bg-zinc-900/90 transition-all shadow-lg flex flex-col justify-between h-full"
+      className={`group relative p-5 rounded-2xl bg-[#121215] border-2 border-zinc-800/90 transition-all duration-200 shadow-xl flex flex-col justify-between overflow-hidden ${theme.cardBorder}`}
     >
+      {/* Top Category Accent Line */}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${theme.accentBar} opacity-60 group-hover:opacity-100 transition-opacity`} />
+
       <div>
-        <div className="flex items-start justify-between mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60">
-            {tool.category}
-          </span>
-          {tool.targetKB && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-              &lt; {tool.targetKB} KB
+        {/* Top Header: Icon + Badges */}
+        <div className="flex items-start justify-between gap-2">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${theme.iconBg}`}>
+            {theme.icon}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 justify-end">
+            <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-lg ${theme.badge}`}>
+              {isExam ? 'Exam Preset' : tool.category}
             </span>
-          )}
+
+            {tool.targetKB && (
+              <span className="text-[11px] font-black px-2 py-0.5 rounded-lg bg-zinc-800 text-white border border-zinc-700">
+                &lt; {tool.targetKB >= 1000 ? `${tool.targetKB / 1000} MB` : `${tool.targetKB} KB`}
+              </span>
+            )}
+          </div>
         </div>
-        <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug">
+
+        {/* Tool Title */}
+        <h3 className={`text-base sm:text-lg font-bold text-white mt-4 leading-snug transition-colors ${theme.titleHover}`}>
           {tool.name}
         </h3>
-        <p className="text-[11px] sm:text-xs text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
+
+        {/* Description */}
+        <p className="text-xs text-zinc-300 mt-1.5 line-clamp-2 leading-relaxed font-normal">
           {tool.shortDescription || tool.description}
         </p>
+
+        {/* Target Dimensions Pill (If Exam/Preset) */}
+        {(tool.targetWidth && tool.targetHeight) && (
+          <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-300 px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-700/80">
+            <span>Dimensions: {tool.targetWidth} × {tool.targetHeight} px</span>
+          </div>
+        )}
       </div>
-      <div className="mt-4 pt-3 border-t border-zinc-800/70 flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 group-hover:text-emerald-300 transition-colors font-medium">
-        <span>Use Tool</span>
-        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+
+      {/* Footer CTA */}
+      <div className={`mt-5 pt-3 border-t border-zinc-800 flex items-center justify-between text-xs font-bold ${theme.btnText}`}>
+        <span>Open Tool</span>
+        <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
       </div>
     </Link>
   );
