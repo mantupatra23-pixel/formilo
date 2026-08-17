@@ -121,6 +121,34 @@ const CORE_TOOLS: Tool[] = [
     seoDescription: 'Resize scanned signature images under 20 KB online with crisp white background.'
   },
   {
+    id: 'watermark-remover',
+    slug: 'watermark-remover',
+    name: 'Online Watermark & Stamp Remover',
+    category: 'image',
+    description: 'Erase unwanted watermarks, dates, stamps, and text from photos using browser inpainting technology.',
+    shortDescription: 'Remove watermarks and stamps from images in-browser.',
+    acceptedMime: ['image/jpeg', 'image/png', 'image/webp'],
+    toolType: 'watermark-remover',
+    icon: 'Eraser',
+    badge: 'Smart Tool',
+    keywords: ['watermark remover', 'remove watermark from photo online', 'stamp remover', 'clean photo background'],
+    instructions: [
+      'Upload your photograph.',
+      'Paint over the watermark or text with the brush.',
+      'Click Erase Highlighted Watermark and download clean photo.'
+    ],
+    faq: [
+      {
+        question: 'Does it leave a blur?',
+        answer: 'It uses neighboring pixel interpolation to seamlessly blend the removed area with the background.'
+      }
+    ],
+    relatedTools: ['photo-resize-20kb', 'image-compressor', 'image-pixel-resizer'],
+    enabled: true,
+    seoTitle: 'Watermark Remover Online Free (100% Private) — Formilo',
+    seoDescription: 'Remove unwanted watermarks, text, and stamps from photos free online directly in your browser.'
+  },
+  {
     id: 'jpg-to-pdf',
     slug: 'jpg-to-pdf',
     name: 'JPG to PDF Converter',

@@ -10,6 +10,8 @@ import ImageResizeTool from '@/components/tools/ImageResizeTool';
 import JpgToPdfTool from '@/components/tools/JpgToPdfTool';
 import PdfToJpgTool from '@/components/tools/PdfToJpgTool';
 import PdfCompressorTool from '@/components/tools/PdfCompressorTool';
+import WatermarkRemoverTool from '@/components/tools/WatermarkRemoverTool';
+import ComboResizerTool from '@/components/tools/ComboResizerTool';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -61,6 +63,8 @@ export default async function DynamicToolPage({ params }: PageProps) {
   const rawSlug = (slug || '').toLowerCase().trim();
   const toolSlug = (tool.slug || '').toLowerCase().trim();
 
+  const isWatermark = rawSlug.includes('watermark') || rawSlug.includes('stamp-remover');
+  const isCombo = rawSlug.includes('combo') || rawSlug.includes('form-pack');
   const isJpgToPdf = rawSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf' || toolSlug === 'jpg-to-pdf-converter' || toolSlug.includes('to-pdf');
   const isPdfToJpg = rawSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg' || toolSlug === 'pdf-to-jpg-converter' || toolSlug === 'pdf-to-png';
   const isPdfCompressor = rawSlug === 'pdf-compressor' || toolSlug.includes('pdf-compress');
@@ -72,13 +76,15 @@ export default async function DynamicToolPage({ params }: PageProps) {
   const toolProps: any = {
     ...tool,
     title: tool.name,
-    toolType: isJpgToPdf ? 'jpg-to-pdf' : 'image-target-kb',
+    toolType: isWatermark ? 'watermark-remover' : isCombo ? 'combo-resizer' : isJpgToPdf ? 'jpg-to-pdf' : 'image-target-kb',
     icon: tool.icon || 'ImageIcon',
     keywords: tool.keywords || [],
     acceptedMime: tool.acceptedMime || ['image/jpeg', 'image/png', 'image/webp'],
   };
 
   const renderToolWorkspace = () => {
+    if (isWatermark) return <WatermarkRemoverTool />;
+    if (isCombo) return <ComboResizerTool />;
     if (isJpgToPdf) return <JpgToPdfTool />;
     if (isPdfToJpg) return <PdfToJpgTool />;
     if (isPdfCompressor) return <PdfCompressorTool />;
@@ -116,7 +122,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
         '@type': 'ListItem',
         'position': 2,
         'name': tool.category ? `${tool.category.toUpperCase()} Tools` : 'Tools',
-        'item': `${BASE_URL}/${tool.category ? `${tool.category}-tools` : 'tools'}`
+        'item': `${BASE_URL}/${tool.category ? `${tool.category}-tools` : 'photo-tools'}`
       },
       {
         '@type': 'ListItem',
@@ -158,7 +164,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
         />
       )}
 
-      {/* Ambient Glow */}
+      {/* Ambient Mesh Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[550px] h-[280px] bg-emerald-500/10 blur-[130px] pointer-events-none -z-10" />
 
       <div className="max-w-5xl mx-auto space-y-10">
@@ -176,7 +182,7 @@ export default async function DynamicToolPage({ params }: PageProps) {
           <span className="text-emerald-400 font-medium">{tool.name}</span>
         </nav>
 
-        {/* Header */}
+        {/* Tool Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
             <Zap className="w-3.5 h-3.5" /> {tool.badge || tool.category || 'Tool'}
