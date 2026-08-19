@@ -4,7 +4,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import examToolsData from '@/data/exam-presets.json';
 import UniversalExamToolClient from './UniversalExamToolClient';
-import AdBanner from '@/components/AdBanner';
 import { Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface Props {
@@ -101,14 +100,8 @@ export default async function ExamToolPage({ params }: Props) {
           </p>
         </div>
 
-        {/* High-CTR Ad Slot 1: Above Tool Engine */}
-        <AdBanner format="horizontal" className="my-4" />
-
         {/* Core Processing Component */}
         <UniversalExamToolClient tool={tool} />
-
-        {/* High-CTR Ad Slot 2: Between Engine and Guidelines Table */}
-        <AdBanner format="auto" className="my-6" />
 
         {/* Official Guideline Spec Grid */}
         <div className="p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
