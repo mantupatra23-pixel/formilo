@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, Download, RefreshCw, Lock, Sparkles, Share2, Check } from 'lucide-react';
+import { Upload, Download, RefreshCw, Sparkles, Share2, Check, Send, X, Copy } from 'lucide-react';
 
 interface ToolConfig {
   slug: string;
@@ -20,8 +20,12 @@ export default function UniversalExamToolClient({ tool }: { tool: ToolConfig }) 
   const [processedUrl, setProcessedUrl] = useState<string | null>(null);
   const [outputSizeKB, setOutputSizeKB] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toolUrl = `https://formilo-jzcl.vercel.app/exam/${tool.slug}`;
+  const shareMessage = `⚡ Maine *${tool.examName}* online form ke liye photo/signature bina quality kharab kiye strictly < *${tool.targetKB} KB* me convert kar liya!\n\nAap bhi apne form ke documents 100% private free me yahan se format karein:\n${toolUrl}`;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -30,6 +34,7 @@ export default function UniversalExamToolClient({ tool }: { tool: ToolConfig }) 
       setPreview(URL.createObjectURL(selected));
       setProcessedUrl(null);
       setOutputSizeKB(null);
+      setShowShareModal(false);
     }
   };
 
@@ -82,13 +87,32 @@ export default function UniversalExamToolClient({ tool }: { tool: ToolConfig }) 
     };
   };
 
-  const shareOnWhatsApp = () => {
-    const shareText = `Fill your ${tool.examName} form easily! Auto-resize photo & signature under ${tool.targetKB} KB directly in your browser: https://formilo-jzcl.vercel.app/exam/${tool.slug}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+  const handleDownloadTrigger = () => {
+    setTimeout(() => {
+      setShowShareModal(true);
+    }, 600);
+  };
+
+  const shareToWhatsApp = () => {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`, '_blank');
+  };
+
+  const shareToTelegram = () => {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(toolUrl)}&text=${encodeURIComponent(`⚡ Format your ${tool.examName} photo & signature under ${tool.targetKB} KB for free:`)}`, '_blank');
+  };
+
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(toolUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Fallback
+    }
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-3xl bg-zinc-900/90 border border-zinc-800 shadow-2xl space-y-6">
+    <div className="p-6 sm:p-8 rounded-3xl bg-zinc-900/90 border border-zinc-800 shadow-2xl space-y-6 relative">
       {!preview ? (
         <div
           onClick={() => fileInputRef.current?.click()}
@@ -144,20 +168,24 @@ export default function UniversalExamToolClient({ tool }: { tool: ToolConfig }) 
                 <a
                   href={processedUrl}
                   download={`${tool.slug}-formilo.jpg`}
+                  onClick={handleDownloadTrigger}
                   className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
                 >
                   <Download className="w-4 h-4" /> Download Form Ready File
                 </a>
+
                 <button
-                  onClick={shareOnWhatsApp}
+                  onClick={shareToWhatsApp}
                   className="px-4 py-3 rounded-xl bg-[#25D366]/20 border border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/30 font-semibold text-xs flex items-center gap-2 cursor-pointer"
                 >
-                  <Share2 className="w-4 h-4" /> Share with Friends
+                  <Share2 className="w-4 h-4" /> WhatsApp Share
                 </button>
+
                 <button
                   onClick={() => {
                     setPreview(null);
                     setProcessedUrl(null);
+                    setShowShareModal(false);
                   }}
                   className="px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold"
                 >
@@ -165,6 +193,59 @@ export default function UniversalExamToolClient({ tool }: { tool: ToolConfig }) 
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Post-Download Viral Growth Popup */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-[#121215] border border-zinc-700 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center relative">
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-full bg-zinc-800/80"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+              <Check className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-extrabold text-white tracking-tight">
+                File Downloaded Successfully!
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Help other {tool.examName} candidates by sharing this free tool in study groups.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={shareToWhatsApp}
+                className="py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#22c35e] text-black font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 transition-transform active:scale-95"
+              >
+                <Share2 className="w-4 h-4" /> WhatsApp
+              </button>
+
+              <button
+                onClick={shareToTelegram}
+                className="py-3 px-4 rounded-xl bg-[#229ED9] hover:bg-[#1e8cc0] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#229ED9]/20 transition-transform active:scale-95"
+              >
+                <Send className="w-4 h-4" /> Telegram
+              </button>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={copyShareLink}
+                className="w-full py-2.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-2"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Link Copied to Clipboard!' : 'Copy Direct Link'}
+              </button>
+            </div>
           </div>
         </div>
       )}
