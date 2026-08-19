@@ -1,158 +1,260 @@
 // app/exam/[slug]/page.tsx
-import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import examToolsData from '@/data/exam-presets.json';
-import UniversalExamToolClient from './UniversalExamToolClient';
-import { Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import TelegramBanner from '@/components/TelegramBanner';
+import ExamResizerTool from '@/components/ExamResizerTool';
+import { 
+  ShieldCheck, 
+  CheckCircle2, 
+  HelpCircle, 
+  ArrowLeft, 
+  FileCheck, 
+  Cpu, 
+  AlertCircle 
+} from 'lucide-react';
 
-interface Props {
+interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-  return examToolsData.map((item) => ({
-    slug: item.slug,
-  }));
-}
+// Preset parser helper to support 330+ dynamic exam slugs
+function getExamPreset(slug: string) {
+  const isSignature = slug.includes('signature') || slug.includes('sign');
+  const isThumb = slug.includes('thumb');
+  
+  const docType = isSignature ? 'Signature' : isThumb ? 'Thumb Impression' : 'Passport Size Photo';
+  
+  // Format exam name from slug
+  const rawName = slug
+    .replace(/-(passport-photo|photo|signature|sign|thumb-impression|thumb)$/i, '')
+    .replace(/-/g, ' ');
+    
+  const examName = rawName.toUpperCase();
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const tool = examToolsData.find((t) => t.slug === slug);
-  if (!tool) return {};
-
-  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
-  const url = `${BASE_URL}/exam/${tool.slug}`;
+  // Specs based on standard government guidelines
+  const maxKB = isSignature ? 20 : isThumb ? 30 : 50;
+  const minKB = isSignature ? 5 : isThumb ? 10 : 20;
+  const dimensions = isSignature 
+    ? { width: 350, height: 150, aspect: '7:3', cm: '3.5 x 1.5 cm' }
+    : { width: 350, height: 450, aspect: '3.5:4.5', cm: '3.5 x 4.5 cm' };
 
   return {
-    title: `${tool.title} — Online Resizer (${tool.targetKB} KB)`,
-    description: tool.description,
-    keywords: [
-      `${tool.examName} photo resize`,
-      `${tool.examName} signature resize`,
-      `${tool.examName} photo size under ${tool.targetKB}kb`,
-      `${tool.examName} dimension format`,
-      'online form photo resizer 2026'
-    ],
-    alternates: { canonical: url },
+    slug,
+    examName: examName || 'GOVT EXAM',
+    docType,
+    maxKB,
+    minKB,
+    dimensions,
+    format: 'JPG / JPEG',
+    bgColor: isSignature ? 'White Background with Black/Blue Ink' : 'Light / White Background',
+  };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const preset = getExamPreset(slug);
+
+  const title = `${preset.examName} ${preset.docType} Resizer (Strictly < ${preset.maxKB} KB)`;
+  const description = `Compress and resize ${preset.examName} ${preset.docType} strictly between ${preset.minKB} KB to ${preset.maxKB} KB. 100% private in-browser tool with zero server uploads.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `https://formilo-jzcl.vercel.app/exam/${slug}`,
+    },
     openGraph: {
-      title: `${tool.title} | Formilo`,
-      description: tool.description,
-      url,
+      title,
+      description,
+      url: `https://formilo-jzcl.vercel.app/exam/${slug}`,
       type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
   };
 }
 
-export default async function ExamToolPage({ params }: Props) {
+export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
-  const tool = examToolsData.find((t) => t.slug === slug);
+  if (!slug) notFound();
 
-  if (!tool) {
-    notFound();
-  }
+  const preset = getExamPreset(slug);
 
-  const relatedTools = examToolsData
-    .filter((t) => t.examName === tool.examName && t.slug !== tool.slug)
-    .slice(0, 3);
-
+  // Schema.org JSON-LD Structured Data
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: tool.title,
-    applicationCategory: 'MultimediaApplication',
-    operatingSystem: 'Any',
+    name: `${preset.examName} ${preset.docType} Resizer`,
+    operatingSystem: 'Any (Web Browser)',
+    applicationCategory: 'UtilityApplication',
     offers: {
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'INR',
     },
-    description: tool.description,
+    description: `Online tool to format and compress ${preset.examName} ${preset.docType} strictly under ${preset.maxKB} KB.`,
+  };
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `What is the required size for ${preset.examName} ${preset.docType}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `The ${preset.docType} must be between ${preset.minKB} KB and ${preset.maxKB} KB in JPG/JPEG format with clear visibility on a clean background.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Is my uploaded document stored on Formilo servers?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `No. All compression and cropping are performed 100% locally in your device's browser memory (RAM). Your files never leave your device.`,
+        },
+      },
+    ],
   };
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="w-full min-h-screen bg-[#050505] text-zinc-100 py-8 px-4 sm:px-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
 
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-zinc-400">
-          <Link href="/" className="hover:text-emerald-400">Home</Link>
-          <span>/</span>
-          <Link href="/form-tools" className="hover:text-emerald-400">Exam Presets</Link>
-          <span>/</span>
-          <span className="text-emerald-400 font-semibold truncate">{tool.examName}</span>
-        </nav>
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-emerald-400 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to All Exam Tools</span>
+          </Link>
 
-        {/* Heading Header */}
-        <div className="space-y-2 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" /> Official Dimension & Size Lock: &lt; {tool.targetKB} KB
+          <div className="flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
+            <Cpu className="w-3.5 h-3.5" />
+            <span>Local Browser Engine (100% Private)</span>
+          </div>
+        </div>
+
+        {/* Header Section */}
+        <div className="text-center space-y-3 pt-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-xs font-mono font-medium text-emerald-400 uppercase tracking-wide">
+            Official 2026 Format Preset
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            {tool.title}
+            {preset.examName} <span className="text-emerald-400">{preset.docType}</span> Resizer
           </h1>
-          <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-            {tool.description}
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl mx-auto">
+            Compress and format your {preset.docType.toLowerCase()} strictly between{' '}
+            <span className="text-white font-bold">{preset.minKB} KB – {preset.maxKB} KB</span> according to official notification guidelines.
           </p>
         </div>
 
-        {/* Core Processing Component */}
-        <UniversalExamToolClient tool={tool} />
+        {/* Core Tool Component */}
+        <div className="relative">
+          <ExamResizerTool preset={preset} />
+        </div>
 
-        {/* Official Guideline Spec Grid */}
-        <div className="p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> {tool.examName} Official Upload Guidelines
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-500 block">Exam Board</span>
-              <span className="text-zinc-200 font-bold mt-1 block truncate">{tool.org}</span>
+        {/* Telegram Conversion Banner */}
+        <TelegramBanner />
+
+        {/* Specification Table */}
+        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800/80 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-white">
+            <FileCheck className="w-4 h-4 text-emerald-400" />
+            <span>Required File Specifications for {preset.examName}</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-1">
+              <span className="text-zinc-500 font-medium">Target File Size</span>
+              <p className="font-bold text-emerald-400 text-sm">{preset.minKB} KB – {preset.maxKB} KB</p>
             </div>
-            <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-500 block">Max File Size</span>
-              <span className="text-emerald-400 font-bold mt-1 block">&lt; {tool.targetKB} KB</span>
+            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-1">
+              <span className="text-zinc-500 font-medium">Recommended Dimensions</span>
+              <p className="font-bold text-zinc-200 text-sm">{preset.dimensions.cm}</p>
             </div>
-            <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-500 block">Dimensions</span>
-              <span className="text-zinc-200 font-bold mt-1 block">{tool.dimensions}</span>
+            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-1">
+              <span className="text-zinc-500 font-medium">Accepted File Format</span>
+              <p className="font-bold text-zinc-200 text-sm">{preset.format}</p>
             </div>
-            <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-500 block">DPI Resolution</span>
-              <span className="text-zinc-200 font-bold mt-1 block">{tool.dpi} DPI</span>
+            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-1">
+              <span className="text-zinc-500 font-medium">Background / Quality</span>
+              <p className="font-bold text-zinc-200 text-sm">{preset.bgColor}</p>
             </div>
           </div>
         </div>
 
-        {/* Related Exam Presets Mesh */}
-        {relatedTools.length > 0 && (
-          <div className="space-y-3 pt-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Other {tool.examName} Format Presets
-            </h3>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {relatedTools.map((rel) => (
-                <Link
-                  key={rel.slug}
-                  href={`/exam/${rel.slug}`}
-                  className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 hover:border-emerald-500/40 hover:bg-zinc-900 transition-all flex flex-col justify-between group"
-                >
-                  <p className="text-xs font-bold text-zinc-200 group-hover:text-emerald-400">
-                    {rel.title}
-                  </p>
-                  <span className="text-[11px] text-zinc-500 mt-2 flex items-center gap-1">
-                    Open Tool <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </Link>
-              ))}
+        {/* Instructions & Guidelines */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-zinc-400">
+          <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800/80 space-y-3">
+            <div className="flex items-center gap-2 font-bold text-white text-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>How to Use 1-Click Resizer</span>
+            </div>
+            <ul className="space-y-2 list-disc list-inside">
+              <li>Upload your original photo, signature, or document file.</li>
+              <li>Adjust the cropping bounding box to keep the subject centered.</li>
+              <li>Set quality slider if you need exact custom KB output.</li>
+              <li>Click <b>Download Resized Document</b> to save the verified file.</li>
+            </ul>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800/80 space-y-3">
+            <div className="flex items-center gap-2 font-bold text-white text-sm">
+              <AlertCircle className="w-4 h-4 text-amber-400" />
+              <span>Rejection Prevention Checklist</span>
+            </div>
+            <ul className="space-y-2 list-disc list-inside">
+              <li>Ensure the face occupies at least 70% of the passport photo frame.</li>
+              <li>Signatures must be done on clean white paper using dark blue or black ink.</li>
+              <li>Avoid wearing dark glasses, caps, or having heavy shadows across the face.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* FAQs */}
+        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800/80 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-white">
+            <HelpCircle className="w-4 h-4 text-emerald-400" />
+            <span>Frequently Asked Questions</span>
+          </div>
+
+          <div className="space-y-4 text-xs">
+            <div className="space-y-1">
+              <h4 className="font-bold text-zinc-200">
+                Will this document pass the official portal validation?
+              </h4>
+              <p className="text-zinc-400">
+                Yes. Formilo strictly encodes images to standard JPEG MIME formats while enforcing header-level compression under {preset.maxKB} KB to prevent portal rejection.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <h4 className="font-bold text-zinc-200">
+                Is it safe to upload personal ID documents here?
+              </h4>
+              <p className="text-zinc-400">
+                Formilo runs entirely via HTML5 Canvas API inside your browser memory. No images or signatures are sent over the internet or saved to remote databases.
+              </p>
             </div>
           </div>
-        )}
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
