@@ -28,6 +28,7 @@ export interface ExactDimensionOptions {
   isSignature?: boolean;
 }
 
+// 1. File Type Detection Helper
 export function getImageFormat(file: File): 'JPEG' | 'PNG' | 'WEBP' | 'HEIC' | 'UNKNOWN' {
   const mime = (file.type || '').toLowerCase();
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
@@ -47,6 +48,7 @@ export function getImageFormat(file: File): 'JPEG' | 'PNG' | 'WEBP' | 'HEIC' | '
   return 'UNKNOWN';
 }
 
+// 2. Base64 DataURL to Blob Converter (Fallback for older mobile browsers)
 export function dataURLToBlob(dataurl: string): Blob {
   const arr = dataurl.split(',');
   const mimeMatch = arr[0].match(/:(.*?);/);
@@ -60,6 +62,7 @@ export function dataURLToBlob(dataurl: string): Blob {
   return new Blob([u8arr], { type: mime });
 }
 
+// 3. Robust Canvas to Blob with Memory Fallback
 export async function canvasToBlobSafe(
   canvas: HTMLCanvasElement,
   mimeType: string,
@@ -73,19 +76,60 @@ export async function canvasToBlobSafe(
   } catch {}
 
   const dataUrl = canvas.toDataURL(mimeType, quality);
-  const blob = dataURLToBlob(dataUrl);
-  if (!blob || blob.size === 0) {
-    throw new Error('Your browser could not encode this photo.');
+  const fallbackBlob = dataURLToBlob(dataUrl);
+  if (!fallbackBlob || fallbackBlob.size === 0) {
+    throw new Error('Your browser could not encode this image.');
   }
-  return blob;
+  return fallbackBlob;
 }
 
+// 4. Subtle Convolution Sharpen Filter (Prevents blur on downscaled photos/text)
+export function applyCrispFilter(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  try {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    const copy = new Uint8ClampedArray(data);
+
+    const weights = [
+      0, -0.15, 0,
+      -0.15, 1.6, -0.15,
+      0, -0.15, 0
+    ];
+
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const dstOff = (y * w + x) * 4;
+        let r = 0, g = 0, b = 0;
+
+        for (let cy = 0; cy < 3; cy++) {
+          for (let cx = 0; cx < 3; cx++) {
+            const scx = x + cx - 1;
+            const scy = y + cy - 1;
+            const srcOff = (scy * w + scx) * 4;
+            const wt = weights[cy * 3 + cx];
+            r += copy[srcOff] * wt;
+            g += copy[srcOff + 1] * wt;
+            b += copy[srcOff + 2] * wt;
+          }
+        }
+
+        data[dstOff] = Math.min(255, Math.max(0, r));
+        data[dstOff + 1] = Math.min(255, Math.max(0, g));
+        data[dstOff + 2] = Math.min(255, Math.max(0, b));
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  } catch {}
+}
+
+// 5. 3-Stage Safe Image Loader
 export async function decodeImageSafely(file: File, maxDimension?: number): Promise<any> {
   const format = getImageFormat(file);
   if (format === 'HEIC') {
-    throw new Error('HEIC/HEIF format is not supported directly. Please select JPG/PNG.');
+    throw new Error('HEIC/HEIF format is not supported directly. Please upload a JPG or PNG file.');
   }
 
+  // Method A: Native createImageBitmap
   if (typeof window !== 'undefined' && 'createImageBitmap' in window) {
     try {
       if (maxDimension) {
@@ -98,18 +142,20 @@ export async function decodeImageSafely(file: File, maxDimension?: number): Prom
     } catch {}
   }
 
+  // Method B: Image Object URL
   try {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
     img.src = objectUrl;
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
-      img.onerror = () => reject(new Error('ObjectURL load error'));
+      img.onerror = () => reject(new Error('Image ObjectURL load error'));
     });
     URL.revokeObjectURL(objectUrl);
     return img;
   } catch {}
 
+  // Method C: FileReader Base64 Buffer
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -123,6 +169,7 @@ export async function decodeImageSafely(file: File, maxDimension?: number): Prom
   });
 }
 
+// 6. HD Binary Search Target Compressor
 export async function compressImageToTarget(
   file: File,
   options: CompressionOptions = {},
@@ -130,113 +177,60 @@ export async function compressImageToTarget(
 ): Promise<CompressionResult> {
   onProgress?.('Reading photo...');
 
-  let targetMaxDim = options.maxDimension;
-  if (!targetMaxDim && options.targetKB) {
-    if (options.targetKB <= 20) targetMaxDim = 1200;
-    else if (options.targetKB <= 50) targetMaxDim = 1800;
-    else if (options.targetKB <= 100) targetMaxDim = 2400;
-  }
-
-  onProgress?.('Decoding image safely...');
-  const decodedSource: any = await decodeImageSafely(file, targetMaxDim);
+  const decodedSource: any = await decodeImageSafely(file, options.maxDimension);
 
   const sourceWidth = Number(decodedSource.naturalWidth || decodedSource.width || 350);
   const sourceHeight = Number(decodedSource.naturalHeight || decodedSource.height || 450);
 
-  let currentWidth = options.width || sourceWidth;
-  let currentHeight = options.height || sourceHeight;
-
-  if (targetMaxDim && !options.width && (currentWidth > targetMaxDim || currentHeight > targetMaxDim)) {
-    const ratio = Math.min(targetMaxDim / currentWidth, targetMaxDim / currentHeight);
-    currentWidth = Math.round(currentWidth * ratio);
-    currentHeight = Math.round(currentHeight * ratio);
-  }
+  let targetWidth = options.width || sourceWidth;
+  let targetHeight = options.height || sourceHeight;
 
   const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
   const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx) {
     if (decodedSource && typeof decodedSource.close === 'function') decodedSource.close();
     throw new Error('Canvas memory allocation failed.');
   }
 
-  const format = getImageFormat(file);
-  const exportMime = (options.forceJpeg || format !== 'PNG' || options.isSignature) ? 'image/jpeg' : 'image/png';
-  const targetBytes = options.targetKB ? options.targetKB * 1024 : undefined;
+  // High-Quality Step-down Bicubic Sampling
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, targetWidth, targetHeight);
+  ctx.drawImage(decodedSource, 0, 0, targetWidth, targetHeight);
 
-  const renderToBlob = async (w: number, h: number, q: number): Promise<Blob> => {
-    canvas.width = w;
-    canvas.height = h;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(decodedSource, 0, 0, w, h);
+  // Apply crisp sharpness to prevent fuzzy text/signatures
+  applyCrispFilter(ctx, targetWidth, targetHeight);
 
-    return await canvasToBlobSafe(canvas, exportMime, q);
-  };
+  const targetBytes = options.targetKB ? options.targetKB * 1024 : 50 * 1024;
+  const exportMime = 'image/jpeg';
 
-  if (!targetBytes) {
-    onProgress?.('Compressing photo...');
-    const q = options.quality ?? 0.85;
-    const blob = await renderToBlob(currentWidth, currentHeight, q);
-    if (decodedSource && typeof decodedSource.close === 'function') decodedSource.close();
-    return {
-      blob,
-      width: currentWidth,
-      height: currentHeight,
-      quality: q,
-      sizeBytes: blob.size,
-      mimeType: exportMime,
-    };
-  }
+  onProgress?.('Locking maximum HD clarity...');
 
-  onProgress?.('Locking target KB...');
-
+  let lowQ = 0.25;
+  let highQ = 0.98;
   let bestBlob: Blob | null = null;
-  let finalWidth = currentWidth;
-  let finalHeight = currentHeight;
-  let finalQuality = 0.9;
-  let iterations = 0;
+  let bestQuality = 0.95;
 
-  while (iterations < 14) {
-    iterations++;
+  // 9-Step Precision Binary Search (Preserves maximum allowed KB)
+  for (let i = 0; i < 9; i++) {
+    const midQ = (lowQ + highQ) / 2;
+    const blob = await canvasToBlobSafe(canvas, exportMime, midQ);
 
-    let lowQ = 0.05;
-    let highQ = 0.96;
-    let localBestBlob: Blob | null = null;
-    let localBestQ = lowQ;
-
-    for (let i = 0; i < 7; i++) {
-      const midQ = (lowQ + highQ) / 2;
-      const testBlob = await renderToBlob(finalWidth, finalHeight, midQ);
-
-      if (testBlob.size <= targetBytes) {
-        localBestBlob = testBlob;
-        localBestQ = midQ;
-        lowQ = midQ;
-      } else {
-        highQ = midQ;
-      }
-    }
-
-    if (localBestBlob && localBestBlob.size <= targetBytes) {
-      bestBlob = localBestBlob;
-      finalQuality = localBestQ;
-      break;
-    }
-
-    finalWidth = Math.round(finalWidth * 0.88);
-    finalHeight = Math.round(finalHeight * 0.88);
-
-    if (finalWidth < 80 || finalHeight < 80) {
-      bestBlob = await renderToBlob(Math.max(finalWidth, 50), Math.max(finalHeight, 50), 0.05);
-      finalQuality = 0.05;
-      break;
+    if (blob.size <= targetBytes) {
+      bestBlob = blob;
+      bestQuality = midQ;
+      lowQ = midQ; // Push for higher sharpness
+    } else {
+      highQ = midQ; // Scale down quality slightly
     }
   }
 
   if (!bestBlob) {
-    bestBlob = await renderToBlob(finalWidth, finalHeight, 0.05);
+    bestBlob = await canvasToBlobSafe(canvas, exportMime, 0.2);
+    bestQuality = 0.2;
   }
 
   if (decodedSource && typeof decodedSource.close === 'function') {
@@ -245,14 +239,15 @@ export async function compressImageToTarget(
 
   return {
     blob: bestBlob,
-    width: finalWidth,
-    height: finalHeight,
-    quality: finalQuality,
+    width: targetWidth,
+    height: targetHeight,
+    quality: bestQuality,
     sizeBytes: bestBlob.size,
     mimeType: exportMime,
   };
 }
 
+// 7. Exact-Dimension Preset Formatter
 export async function processAndCompressImage(
   file: File,
   options: ExactDimensionOptions
