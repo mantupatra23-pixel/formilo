@@ -1,7 +1,7 @@
 // components/ExamResizerTool.tsx
 'use client';
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { 
   Upload, 
   Download, 
@@ -29,27 +29,19 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
   const [outputSize, setOutputSize] = useState<number | null>(null);
   const [quality, setQuality] = useState<number>(0.90);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mobile & Gallery Compatible File Handler
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  // Direct Mobile-Native Handler (Works with Google Photos & Gallery)
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const file = files[0];
     setOriginalSize(file.size / 1024);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const src = event.target?.result as string;
-      if (!src) return;
-      setSelectedImage(src);
-      processImage(src, quality);
-    };
-    reader.onerror = () => {
-      alert('Error reading selected image. Please try again.');
-    };
-    reader.readAsDataURL(file);
+    // Instant Object URL for Mobile Reliability
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedImage(objectUrl);
+    processImage(objectUrl, quality);
   };
 
   const processImage = (imageSrc: string, targetQuality: number) => {
@@ -75,11 +67,11 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      // Clean White Background Fill
+      // Clean White Background
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, targetW, targetH);
 
-      // Smart Natural Center Fit (No Stretch & No Cut-off)
+      // Smart Natural Center Fit (No stretch, no weird crop)
       const imgW = img.naturalWidth;
       const imgH = img.naturalHeight;
       const imgRatio = imgW / imgH;
@@ -101,19 +93,28 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
 
       ctx.drawImage(img, drawX, drawY, drawW, drawH);
 
-      // Recursive Target KB Compressor
-      let q = targetQuality;
-      let dataUrl = canvas.toDataURL('image/jpeg', q);
-      let calculatedKB = (dataUrl.length * 3) / 4 / 1024;
+      // Binary Search Quality Compression
+      let minQ = 0.20;
+      let maxQ = 0.98;
+      let bestDataUrl = canvas.toDataURL('image/jpeg', maxQ);
+      let bestKB = (bestDataUrl.length * 3) / 4 / 1024;
 
-      while (calculatedKB > preset.maxKB && q > 0.1) {
-        q -= 0.05;
-        dataUrl = canvas.toDataURL('image/jpeg', q);
-        calculatedKB = (dataUrl.length * 3) / 4 / 1024;
+      for (let i = 0; i < 7; i++) {
+        const midQ = (minQ + maxQ) / 2;
+        const dataUrl = canvas.toDataURL('image/jpeg', midQ);
+        const kb = (dataUrl.length * 3) / 4 / 1024;
+
+        if (kb <= preset.maxKB) {
+          bestDataUrl = dataUrl;
+          bestKB = kb;
+          minQ = midQ;
+        } else {
+          maxQ = midQ;
+        }
       }
 
-      setProcessedImage(dataUrl);
-      setOutputSize(Math.round(calculatedKB * 10) / 10);
+      setProcessedImage(bestDataUrl);
+      setOutputSize(Math.round(bestKB * 10) / 10);
       setIsProcessing(false);
     };
 
@@ -127,7 +128,6 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     setProcessedImage(null);
     setOriginalSize(null);
     setOutputSize(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleDownload = () => {
@@ -141,41 +141,37 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
   };
 
   const handleWhatsAppShare = () => {
-    const text = `⚡ Formilo — Resize & format ${preset.examName} ${preset.docType} strictly under ${preset.maxKB} KB:\n${window.location.href}`;
+    const text = `⚡ Formilo Tool — Resize & format ${preset.examName} ${preset.docType} strictly under ${preset.maxKB} KB:\n${window.location.href}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
     <div className="w-full bg-[#0c0d0e] border border-zinc-800 rounded-3xl p-5 sm:p-8 shadow-2xl space-y-6">
-      {/* Mobile-Reliable Input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleImageUpload}
-        onClick={(e) => {
-          (e.target as HTMLInputElement).value = '';
-        }}
-        accept="image/jpeg,image/png,image/webp,image/jpg,image/*"
-        className="hidden"
-      />
-
+      
       {!selectedImage ? (
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-zinc-800 hover:border-emerald-500 rounded-2xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-200 bg-zinc-950/60 hover:bg-emerald-950/10 flex flex-col items-center justify-center gap-4 group"
-        >
-          <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+        /* Full Direct Native Touch Area */
+        <div className="relative border-2 border-dashed border-zinc-800 hover:border-emerald-500 rounded-2xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-200 bg-zinc-950/60 hover:bg-emerald-950/10 flex flex-col items-center justify-center gap-4 group overflow-hidden">
+          
+          {/* Direct Transparent Touch Input Covering Entire Box */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+          />
+
+          <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform pointer-events-none">
             <Upload className="w-8 h-8" />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 pointer-events-none">
             <p className="text-base sm:text-lg font-bold text-white">
-              Click or Drag to Upload {preset.docType}
+              Tap Anywhere to Upload {preset.docType}
             </p>
             <p className="text-xs text-zinc-400">
-              Auto-formats to {preset.dimensions.width}x{preset.dimensions.height} px &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
+              Supports Google Photos, Gallery &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
             </p>
           </div>
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/20">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/20 pointer-events-none">
             <ShieldCheck className="w-3.5 h-3.5" /> 100% Client-Side In-Browser Processing
           </div>
         </div>
@@ -253,7 +249,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               onClick={handleReset}
               className="py-4 px-5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 font-bold text-xs transition-all cursor-pointer"
             >
-              Reset
+              Change Photo
             </button>
           </div>
         </div>
