@@ -14,7 +14,6 @@ import {
   Move, 
   RotateCw,
   Sparkles,
-  Crop,
   Maximize2
 } from 'lucide-react';
 
@@ -36,13 +35,12 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
   const [originalSize, setOriginalSize] = useState<number | null>(null);
   const [outputSize, setOutputSize] = useState<number | null>(null);
   
-  // Default Settings: Natural Contain (No auto zoom, No cutoff)
-  const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
+  // Smart HD Controls (Default: Cover/Fill to avoid empty borders and maintain full passport framing)
+  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
   const [zoom, setZoom] = useState<number>(1.0);
   const [rotation, setRotation] = useState<number>(0);
   const [panX, setPanX] = useState<number>(0);
   const [panY, setPanY] = useState<number>(0);
-  const [quality, setQuality] = useState<number>(0.88);
   const [enhanceSign, setEnhanceSign] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -63,8 +61,8 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
       img.src = src;
       img.onload = () => {
         setImageElement(img);
-        // Reset to full natural view on new upload
-        setFitMode('contain');
+        // Smart Default: Signatures fit whole, Photos cover/crop properly
+        setFitMode(isSignature ? 'contain' : 'cover');
         setZoom(1.0);
         setRotation(0);
         setPanX(0);
@@ -74,7 +72,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     reader.readAsDataURL(file);
   };
 
-  const renderCanvas = useCallback(() => {
+  const renderHDCanvas = useCallback(() => {
     if (!imageElement) return;
     setIsProcessing(true);
 
@@ -90,11 +88,15 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     canvas.width = targetW;
     canvas.height = targetH;
 
-    // 1. Pure White Clean Background
+    // Enable Maximum Quality Interpolation
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // 1. Pure White Background
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, targetW, targetH);
 
-    // 2. Center Origin for Rotation and Scaling
+    // 2. Center Pivot Translation & Rotation
     ctx.save();
     ctx.translate(targetW / 2 + panX, targetH / 2 + panY);
     ctx.rotate((rotation * Math.PI) / 180);
@@ -110,7 +112,6 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     let drawH = targetH;
 
     if (fitMode === 'contain') {
-      // Natural Fit: Shows 100% of the photo without any crop
       if (imgRatio > targetRatio) {
         drawW = targetW * zoom;
         drawH = (targetW / imgRatio) * zoom;
@@ -119,7 +120,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
         drawW = (targetH * imgRatio) * zoom;
       }
     } else {
-      // Cover: Fills the entire passport box
+      // Clean Passport Cover (Fills Box Without Distortion)
       if (imgRatio > targetRatio) {
         drawH = targetH * zoom;
         drawW = targetH * imgRatio * zoom;
@@ -129,40 +130,48 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
       }
     }
 
-    // 3. Contrast Filter if enabled
+    // 3. Contrast Filter
     if (enhanceSign) {
       ctx.filter = 'contrast(1.8) brightness(1.05) grayscale(1)';
     } else {
       ctx.filter = 'none';
     }
 
-    // Draw from center
     const actualW = isRotated90 ? drawH : drawW;
     const actualH = isRotated90 ? drawW : drawH;
     ctx.drawImage(imageElement, -actualW / 2, -actualH / 2, actualW, actualH);
     ctx.restore();
 
-    // 4. Strict Under KB Enforcement
-    let q = quality;
-    let dataUrl = canvas.toDataURL('image/jpeg', q);
-    let calculatedKB = (dataUrl.length * 3) / 4 / 1024;
+    // 4. Binary Search Maximum Quality under Target KB
+    let minQ = 0.20;
+    let maxQ = 0.98;
+    let bestDataUrl = canvas.toDataURL('image/jpeg', maxQ);
+    let bestKB = (bestDataUrl.length * 3) / 4 / 1024;
 
-    while (calculatedKB > preset.maxKB && q > 0.1) {
-      q -= 0.05;
-      dataUrl = canvas.toDataURL('image/jpeg', q);
-      calculatedKB = (dataUrl.length * 3) / 4 / 1024;
+    for (let i = 0; i < 7; i++) {
+      const midQ = (minQ + maxQ) / 2;
+      const dataUrl = canvas.toDataURL('image/jpeg', midQ);
+      const kb = (dataUrl.length * 3) / 4 / 1024;
+
+      if (kb <= preset.maxKB) {
+        bestDataUrl = dataUrl;
+        bestKB = kb;
+        minQ = midQ;
+      } else {
+        maxQ = midQ;
+      }
     }
 
-    setProcessedImage(dataUrl);
-    setOutputSize(Math.round(calculatedKB * 10) / 10);
+    setProcessedImage(bestDataUrl);
+    setOutputSize(Math.round(bestKB * 10) / 10);
     setIsProcessing(false);
-  }, [imageElement, preset, fitMode, zoom, rotation, panX, panY, enhanceSign, quality]);
+  }, [imageElement, preset, fitMode, zoom, rotation, panX, panY, enhanceSign]);
 
   useEffect(() => {
     if (imageElement) {
-      renderCanvas();
+      renderHDCanvas();
     }
-  }, [imageElement, renderCanvas]);
+  }, [imageElement, renderHDCanvas]);
 
   const handleRotate = () => {
     setRotation((prev) => (prev + 90) % 360);
@@ -188,7 +197,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
   };
 
   const handleWhatsAppShare = () => {
-    const text = `⚡ Formilo Tool — Resize & format ${preset.examName} ${preset.docType} strictly under ${preset.maxKB} KB without distortion:\n${window.location.href}`;
+    const text = `⚡ Formilo Tool — Resize & format ${preset.examName} ${preset.docType} strictly under ${preset.maxKB} KB without blur:\n${window.location.href}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -215,18 +224,18 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               Click or Drag to Upload {preset.docType}
             </p>
             <p className="text-xs text-zinc-400 max-w-sm">
-              Loads 100% full photo cleanly &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
+              HD bi-cubic compression &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
             </p>
           </div>
           <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/20">
-            <ShieldCheck className="w-3.5 h-3.5" /> 100% Client-Side In-Browser RAM Processing
+            <ShieldCheck className="w-3.5 h-3.5" /> 100% Client-Side In-Browser HD Processing
           </div>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Dual Preview Box */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center justify-center">
-            {/* Original Preview */}
+            {/* Original */}
             <div className="space-y-2 text-center">
               <span className="text-[11px] font-bold tracking-wider uppercase text-zinc-400">
                 Original {originalSize ? `(${Math.round(originalSize)} KB)` : ''}
@@ -237,17 +246,17 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               </div>
             </div>
 
-            {/* Formatted Output Preview */}
+            {/* Formatted */}
             <div className="space-y-2 text-center">
               <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400 flex items-center justify-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> Formatted ({outputSize} KB / {preset.dimensions.width}x{preset.dimensions.height}PX)
+                <CheckCircle className="w-3.5 h-3.5" /> HD Formatted ({outputSize} KB / {preset.dimensions.width}x{preset.dimensions.height}PX)
               </span>
               <div className="relative aspect-[3.5/4.5] max-h-64 sm:max-h-72 mx-auto rounded-2xl bg-black border-2 border-emerald-500/80 shadow-lg shadow-emerald-500/10 flex items-center justify-center overflow-hidden p-2">
                 {isProcessing ? (
                   <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
                 ) : processedImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={processedImage} alt="Formatted Result" className="max-h-full max-w-full object-contain rounded-xl" />
+                  <img src={processedImage} alt="HD Result" className="max-h-full max-w-full object-contain rounded-xl" />
                 ) : null}
               </div>
             </div>
@@ -265,21 +274,21 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
                 <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
                   <button
                     type="button"
-                    onClick={() => { setFitMode('contain'); setZoom(1.0); setPanX(0); setPanY(0); }}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      fitMode === 'contain' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Full Natural View
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setFitMode('cover'); }}
+                    onClick={() => { setFitMode('cover'); setZoom(1.0); setPanX(0); setPanY(0); }}
                     className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       fitMode === 'cover' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     Auto Fill &amp; Crop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setFitMode('contain'); }}
+                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      fitMode === 'contain' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Fit Whole Image
                   </button>
                 </div>
 
@@ -294,7 +303,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               </div>
             </div>
 
-            {/* Custom Sliders for Fine-Tuning */}
+            {/* Custom Sliders */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 text-xs">
               <div className="space-y-1.5">
                 <div className="flex justify-between text-zinc-400">
@@ -304,7 +313,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
                 <input
                   type="range"
                   min="0.5"
-                  max="3.0"
+                  max="2.5"
                   step="0.05"
                   value={zoom}
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
