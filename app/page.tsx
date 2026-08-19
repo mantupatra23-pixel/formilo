@@ -19,8 +19,7 @@ import {
   Calendar,
   SlidersHorizontal,
   RefreshCw,
-  FileCheck2,
-  ShieldCheck
+  X
 } from 'lucide-react';
 
 export interface UnifiedTool {
@@ -35,7 +34,7 @@ export interface UnifiedTool {
   isPopular?: boolean;
 }
 
-// 1. Core High-Demand & Featured Utilities (Fixed Working Routes)
+// 1. Core High-Demand & Featured Tools
 const CORE_TOOLS: UnifiedTool[] = [
   {
     id: 'name-date-photo-generator',
@@ -163,23 +162,29 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Complete Deduplicated Matrix
+  // Strict 1-Pass Unique Exam Generator (0% Duplicate Guarantee)
   const allTools = useMemo<UnifiedTool[]>(() => {
     const toolMap = new Map<string, UnifiedTool>();
 
-    // 1. Add Core tools first
+    // 1. Add Core tools
     CORE_TOOLS.forEach((tool) => {
-      const cleanSlug = tool.slug.toLowerCase().trim();
-      toolMap.set(cleanSlug, tool);
+      toolMap.set(tool.slug.toLowerCase().trim(), tool);
     });
 
-    // 2. Expand exam presets dynamically from JSON
+    // 2. Track unique exam bases so each exam is processed only ONCE
+    const processedExams = new Set<string>();
     const rawList = Array.isArray(examToolsData) ? examToolsData : [];
 
     rawList.forEach((item: any) => {
       const rawSlug = String(item.slug || '').toLowerCase().trim();
       const baseSlug = rawSlug
-        .replace(/-(passport-size-photo-resizer|passport-photo|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|under-20kb|under-50kb|20kb|50kb|resizer)$/i, '');
+        .replace(/-(passport-size-photo-resizer|passport-photo|photo-resizer|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|under-20kb|under-50kb|20kb|50kb|resizer)$/gi, '')
+        .trim();
+
+      if (!baseSlug || processedExams.has(baseSlug)) {
+        return; // SKIP: Already processed this exam!
+      }
+      processedExams.add(baseSlug);
 
       const rawTitle = String(item.title || item.name || '')
         .replace(/(Passport Size Photo|Photo|Signature|Left Thumb|Postcard Size Photo).*/i, '')
@@ -255,7 +260,7 @@ export default function HomePage() {
   const pdfCount = allTools.filter((t) => t.category === 'pdf').length;
   const converterCount = allTools.filter((t) => t.category === 'converter').length;
 
-  // Filtered tools based on search and category tab
+  // Filtered tools
   const filteredTools = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
@@ -301,7 +306,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 pt-10 pb-6 text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/10">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>100% Client-Side Engine &bull; {totalCount}+ Live Online Tools &bull; Zero Server Upload</span>
+          <span>100% Client-Side Engine &bull; {totalCount}+ Live Unique Tools &bull; Zero Server Upload</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
@@ -324,14 +329,14 @@ export default function HomePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search across ${totalCount}+ tools (e.g. Name Date, PAN, SSC, 20 KB photo, UPSC)...`}
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-zinc-900/90 border-2 border-zinc-800 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20 text-white placeholder-zinc-500 text-sm font-medium outline-none transition shadow-2xl"
+              className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-zinc-900/90 border-2 border-zinc-800 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20 text-white placeholder-zinc-500 text-sm font-medium outline-none transition shadow-2xl"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-500 hover:text-white cursor-pointer"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
               >
-                CLEAR
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -351,7 +356,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Cyber Cafe & CSC Center Quick Hub */}
+      {/* Cyber Cafe Quick Desk Banner */}
       <section className="max-w-6xl mx-auto px-4 my-6">
         <div className="p-6 sm:p-7 rounded-3xl bg-[#0c0d0e] border border-zinc-800/90 relative overflow-hidden shadow-2xl">
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -403,7 +408,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Dynamic Multi-Category Filter Tabs */}
+      {/* Category Tabs */}
       <section className="max-w-6xl mx-auto px-4 mb-6">
         <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {[
@@ -437,7 +442,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tools Display Grid */}
+      {/* Tools Grid */}
       <main className="max-w-6xl mx-auto px-4 py-4 space-y-10">
         {searchQuery.trim() !== '' ? (
           <section className="space-y-4">
@@ -460,7 +465,7 @@ export default function HomePage() {
           </section>
         ) : (
           <>
-            {/* Featured Section (Shown on 'All' Tab) */}
+            {/* Featured Section */}
             {selectedCategory === 'all' && (
               <section className="space-y-4">
                 <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
@@ -501,7 +506,6 @@ export default function HomePage() {
           </>
         )}
 
-        {/* Telegram Community Conversion */}
         <TelegramBanner />
       </main>
     </div>
