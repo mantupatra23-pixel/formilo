@@ -2,10 +2,10 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import examToolsData from '@/data/exam-presets.json';
 import UniversalExamToolClient from './UniversalExamToolClient';
-import { ShieldCheck, Zap, Sparkles, CheckCircle2, ArrowRight, Share2 } from 'lucide-react';
+import AdBanner from '@/components/AdBanner';
+import { Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -53,7 +53,6 @@ export default async function ExamToolPage({ params }: Props) {
     notFound();
   }
 
-  // Related exam tools for internal linking
   const relatedTools = examToolsData
     .filter((t) => t.examName === tool.examName && t.slug !== tool.slug)
     .slice(0, 3);
@@ -72,43 +71,15 @@ export default async function ExamToolPage({ params }: Props) {
     description: tool.description,
   };
 
-  const faqJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: `What is the required photo/signature size for ${tool.examName}?`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: `According to ${tool.org} official notification, the required file size must be strictly between ${tool.minKB} KB to ${tool.targetKB} KB with dimensions of ${tool.dimensions}.`,
-        },
-      },
-      {
-        '@type': 'Question',
-        name: `Is this ${tool.title} tool safe to use?`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes, Formilo operates 100% client-side inside your browser. No files or documents are ever uploaded to any server.',
-        },
-      },
-    ],
-  };
-
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 py-10 px-4 sm:px-6 lg:px-8">
-      {/* Structured Schema Data */}
+    <main className="min-h-screen bg-[#09090b] text-zinc-100 py-8 px-4 sm:px-6 lg:px-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
 
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Breadcrumbs */}
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs text-zinc-400">
           <Link href="/" className="hover:text-emerald-400">Home</Link>
           <span>/</span>
@@ -117,52 +88,58 @@ export default async function ExamToolPage({ params }: Props) {
           <span className="text-emerald-400 font-semibold truncate">{tool.examName}</span>
         </nav>
 
-        {/* Heading */}
-        <div className="space-y-3">
+        {/* Heading Header */}
+        <div className="space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" /> Official Preset Locked: &lt; {tool.targetKB} KB
+            <Sparkles className="w-3.5 h-3.5" /> Official Dimension & Size Lock: &lt; {tool.targetKB} KB
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
             {tool.title}
           </h1>
-          <p className="text-zinc-400 text-sm leading-relaxed">
+          <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
             {tool.description}
           </p>
         </div>
 
-        {/* Interactive Client-side Processor Engine */}
+        {/* High-CTR Ad Slot 1: Above Tool Engine */}
+        <AdBanner format="horizontal" className="my-4" />
+
+        {/* Core Processing Component */}
         <UniversalExamToolClient tool={tool} />
 
-        {/* Specification Table */}
+        {/* High-CTR Ad Slot 2: Between Engine and Guidelines Table */}
+        <AdBanner format="auto" className="my-6" />
+
+        {/* Official Guideline Spec Grid */}
         <div className="p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" /> {tool.examName} Official Upload Guidelines
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
               <span className="text-zinc-500 block">Exam Board</span>
               <span className="text-zinc-200 font-bold mt-1 block truncate">{tool.org}</span>
             </div>
             <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
               <span className="text-zinc-500 block">Max File Size</span>
-              <span className="text-emerald-400 font-bold mt-1 block">{tool.targetKB} KB</span>
+              <span className="text-emerald-400 font-bold mt-1 block">&lt; {tool.targetKB} KB</span>
             </div>
             <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-500 block">Required Dimensions</span>
+              <span className="text-zinc-500 block">Dimensions</span>
               <span className="text-zinc-200 font-bold mt-1 block">{tool.dimensions}</span>
             </div>
             <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-500 block">Resolution</span>
+              <span className="text-zinc-500 block">DPI Resolution</span>
               <span className="text-zinc-200 font-bold mt-1 block">{tool.dpi} DPI</span>
             </div>
           </div>
         </div>
 
-        {/* Related Exam Tools (Internal SEO Mesh) */}
+        {/* Related Exam Presets Mesh */}
         {relatedTools.length > 0 && (
-          <div className="space-y-3 pt-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">
-              Other {tool.examName} Tools
+          <div className="space-y-3 pt-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              Other {tool.examName} Format Presets
             </h3>
             <div className="grid sm:grid-cols-3 gap-3">
               {relatedTools.map((rel) => (
@@ -182,7 +159,6 @@ export default async function ExamToolPage({ params }: Props) {
             </div>
           </div>
         )}
-
       </div>
     </main>
   );

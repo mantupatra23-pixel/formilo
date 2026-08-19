@@ -4,40 +4,42 @@
 import { useEffect } from 'react';
 
 interface AdBannerProps {
-  dataAdSlot?: string;
-  dataAdFormat?: 'auto' | 'fluid' | 'rectangle' | 'horizontal';
+  slotId?: string;
+  format?: 'auto' | 'fluid' | 'rectangle' | 'horizontal';
   className?: string;
 }
 
 export default function AdBanner({
-  dataAdSlot = '1234567890',
-  dataAdFormat = 'auto',
+  slotId = '1234567890', // AdSense approve hone par custom Slot ID yahan daal sakte hain
+  format = 'auto',
   className = '',
 }: AdBannerProps) {
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        ((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle =
-          (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({});
+        const adsbygoogle = (window as any).adsbygoogle || [];
+        adsbygoogle.push({});
       }
     } catch (err) {
-      console.error('AdSense banner error:', err);
+      console.error('AdSense banner execution notice:', err);
     }
   }, []);
 
   return (
-    <div className={`w-full overflow-hidden my-6 flex flex-col items-center justify-center min-h-[90px] bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-2 text-center ${className}`}>
-      <span className="text-[10px] text-zinc-600 uppercase tracking-widest mb-1 select-none font-mono">
-        Advertisement
+    <div className={`w-full my-6 text-center overflow-hidden ${className}`}>
+      <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-600 block mb-1">
+        Sponsored / Advertisement
       </span>
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block', width: '100%', textAlign: 'center' }}
-        data-ad-client="ca-pub-0000000000000000"
-        data-ad-slot={dataAdSlot}
-        data-ad-format={dataAdFormat}
-        data-full-width-responsive="true"
-      />
+      <div className="min-h-[100px] w-full bg-zinc-900/50 border border-zinc-800/80 rounded-2xl flex items-center justify-center p-1">
+        <ins
+          className="adsbygoogle"
+          style={{ display: 'block', minWidth: '280px', width: '100%' }}
+          data-ad-client="ca-pub-5180587791480026"
+          data-ad-slot={slotId}
+          data-ad-format={format}
+          data-full-width-responsive="true"
+        />
+      </div>
     </div>
   );
 }
