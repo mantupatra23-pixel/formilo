@@ -4,6 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import TelegramBanner from '@/components/TelegramBanner';
+import examToolsData from '@/data/exam-presets.json';
 import { 
   Search, 
   Sparkles, 
@@ -18,7 +19,8 @@ import {
   Layers,
   Flame,
   Calendar,
-  SlidersHorizontal
+  SlidersHorizontal,
+  RefreshCw
 } from 'lucide-react';
 
 interface FormiloTool {
@@ -32,8 +34,7 @@ interface FormiloTool {
   isPopular?: boolean;
 }
 
-const STATIC_CORE_TOOLS: FormiloTool[] = [
-  // Core Generators & High Demand
+const CORE_PRIORITY_TOOLS: FormiloTool[] = [
   {
     id: 'name-date-photo',
     title: 'Name & Date on Photo (DOP / DOB) Generator',
@@ -104,74 +105,6 @@ const STATIC_CORE_TOOLS: FormiloTool[] = [
     href: '/exam/nielit-ccc-photo-resizer',
     isPopular: true,
   },
-
-  // Exam Presets
-  {
-    id: 'ssc-cgl-photo',
-    title: 'SSC CGL Passport Photo Resizer',
-    description: 'Standard 3.5 x 4.5 cm photo compressed strictly under 50 KB for SSC CGL portal.',
-    category: 'exam',
-    badge: 'SSC',
-    sizeBadge: '< 50 KB',
-    href: '/exam/ssc-cgl-passport-photo',
-    isPopular: true,
-  },
-  {
-    id: 'ssc-signature',
-    title: 'SSC Signature Crop & Compress',
-    description: 'Format official signature between 10 KB to 20 KB with 3.5 x 1.5 cm aspect ratio.',
-    category: 'signature',
-    badge: 'SSC',
-    sizeBadge: '< 20 KB',
-    href: '/exam/ssc-gd-signature',
-  },
-  {
-    id: 'rrb-ntpc-photo',
-    title: 'Railway RRB NTPC Photo Resizer',
-    description: 'Format railway recruit photo strictly under 50 KB on plain light background.',
-    category: 'exam',
-    badge: 'RAILWAY',
-    sizeBadge: '< 50 KB',
-    href: '/exam/rrb-ntpc-passport-photo',
-  },
-  {
-    id: 'up-police-photo',
-    title: 'UP Police Constable Photo Resizer',
-    description: 'Format recruitment photograph to 350x450 px under 50 KB without blur.',
-    category: 'exam',
-    badge: 'POLICE',
-    sizeBadge: '< 50 KB',
-    href: '/exam/up-police-constable-passport-photo',
-  },
-  {
-    id: 'upsc-cse-photo',
-    title: 'UPSC Civil Services Photo Resizer',
-    description: 'High-clarity passport photograph formatting for UPSC online portal under 100 KB.',
-    category: 'exam',
-    badge: 'UPSC',
-    sizeBadge: '< 100 KB',
-    href: '/exam/upsc-cse-passport-photo',
-  },
-  {
-    id: 'odisha-police-photo',
-    title: 'Odisha Police Constable & SI Photo Resizer',
-    description: 'OPRB recruitment official passport size photo resizer under 50 KB (350x450 px).',
-    category: 'exam',
-    badge: 'OPRB',
-    sizeBadge: '< 50 KB',
-    href: '/exam/odisha-police-constable-si-passport-photo',
-  },
-  {
-    id: 'maharashtra-police-photo',
-    title: 'Maharashtra Police Bharti Photo Resizer',
-    description: 'Format candidate passport photo to 350x450 px and under 50 KB strictly.',
-    category: 'exam',
-    badge: 'POLICE',
-    sizeBadge: '< 50 KB',
-    href: '/exam/maharashtra-police-bharti-passport-photo',
-  },
-
-  // Utilities, PDF & Converters
   {
     id: 'watermark-remover',
     title: 'Online Watermark & Stamp Remover',
@@ -180,6 +113,7 @@ const STATIC_CORE_TOOLS: FormiloTool[] = [
     badge: 'SMART TOOL',
     sizeBadge: 'AUTO',
     href: '/exam/photo-watermark-remover',
+    isPopular: true,
   },
   {
     id: 'jpg-to-pdf',
@@ -199,6 +133,7 @@ const STATIC_CORE_TOOLS: FormiloTool[] = [
     badge: 'FAST',
     sizeBadge: 'HD',
     href: '/cyber-cafe',
+    isPopular: true,
   },
   {
     id: 'pdf-compressor',
@@ -215,19 +150,47 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'exam' | 'photo' | 'pdf' | 'signature' | 'converter'>('all');
 
-  const counts = useMemo(() => {
-    return {
-      all: STATIC_CORE_TOOLS.length + 310,
-      exam: STATIC_CORE_TOOLS.filter((t) => t.category === 'exam').length + 240,
-      photo: STATIC_CORE_TOOLS.filter((t) => t.category === 'photo').length + 40,
-      pdf: STATIC_CORE_TOOLS.filter((t) => t.category === 'pdf').length + 6,
-      signature: STATIC_CORE_TOOLS.filter((t) => t.category === 'signature').length + 30,
-      converter: STATIC_CORE_TOOLS.filter((t) => t.category === 'converter').length + 18,
-    };
+  // Dynamically merge core tools with all 280+ presets from JSON
+  const allTools = useMemo<FormiloTool[]>(() => {
+    const rawExamPresets: FormiloTool[] = (examToolsData || []).map((item: any) => {
+      const isSign = item.slug.includes('signature') || item.slug.includes('sign');
+      const isThumb = item.slug.includes('thumb');
+      const cat: 'exam' | 'photo' | 'signature' = isSign ? 'signature' : isThumb ? 'signature' : 'exam';
+
+      return {
+        id: item.slug,
+        title: item.title || item.name,
+        description: item.description || `Compress and format ${item.title} strictly under ${item.targetKB || 50} KB for official application portals.`,
+        category: cat,
+        badge: item.board || 'EXAM',
+        sizeBadge: `< ${item.targetKB || 50} KB`,
+        href: `/exam/${item.slug}`,
+        isPopular: false,
+      };
+    });
+
+    // Remove duplicates if any
+    const existingSlugs = new Set(CORE_PRIORITY_TOOLS.map((t) => t.id));
+    const filteredPresets = rawExamPresets.filter((p) => !existingSlugs.has(p.id));
+
+    return [...CORE_PRIORITY_TOOLS, ...filteredPresets];
   }, []);
 
+  // Category counts calculated directly from complete dataset
+  const counts = useMemo(() => {
+    return {
+      all: allTools.length,
+      exam: allTools.filter((t) => t.category === 'exam').length,
+      photo: allTools.filter((t) => t.category === 'photo').length,
+      signature: allTools.filter((t) => t.category === 'signature').length,
+      pdf: allTools.filter((t) => t.category === 'pdf').length,
+      converter: allTools.filter((t) => t.category === 'converter').length,
+    };
+  }, [allTools]);
+
+  // Search & Category Filter
   const filteredTools = useMemo(() => {
-    return STATIC_CORE_TOOLS.filter((tool) => {
+    return allTools.filter((tool) => {
       const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -238,11 +201,11 @@ export default function HomePage() {
 
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [allTools, searchQuery, selectedCategory]);
 
   const popularTools = useMemo(() => {
-    return STATIC_CORE_TOOLS.filter((t) => t.isPopular);
-  }, []);
+    return allTools.filter((t) => t.isPopular);
+  }, [allTools]);
 
   return (
     <div className="w-full min-h-screen bg-[#050505] text-zinc-100 pb-16">
@@ -251,7 +214,7 @@ export default function HomePage() {
       <section className="relative px-4 pt-12 pb-8 max-w-5xl mx-auto text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium shadow-lg shadow-emerald-950/40">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>100% Client-Side Engine &bull; 325+ Live Online Tools &bull; Zero Server Upload</span>
+          <span>100% Client-Side Engine &bull; {allTools.length}+ Live Online Tools &bull; Zero Server Upload</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
@@ -265,7 +228,7 @@ export default function HomePage() {
           Instant government exam presets, exact KB size reducers, Name &amp; Date generators, watermark removers, and multi-page PDF conversion tools.
         </p>
 
-        {/* Search Bar */}
+        {/* Live Search Bar */}
         <div className="max-w-2xl mx-auto space-y-3 pt-2">
           <div className="relative flex items-center">
             <Search className="w-5 h-5 text-zinc-500 absolute left-4 pointer-events-none" />
@@ -273,7 +236,7 @@ export default function HomePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search across 325+ tools (e.g. Name Date, PAN, SSC, 20 KB photo, UPSC)..."
+              placeholder={`Search across ${allTools.length}+ tools (e.g. Name Date, PAN, SSC, 20 KB photo, UPSC)...`}
               className="w-full pl-12 pr-4 py-3.5 bg-zinc-950/90 border border-zinc-800 focus:border-emerald-500 rounded-2xl text-xs sm:text-sm text-white placeholder-zinc-500 shadow-xl focus:outline-none transition-all"
             />
             {searchQuery && (
@@ -374,11 +337,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Category Tabs */}
+      {/* Dynamic Category Navigation Tabs */}
       <section className="max-w-5xl mx-auto px-4 mt-8 space-y-6">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           <button
-            onClick={() => setSelectedCategory('all')}
+            onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
               selectedCategory === 'all'
                 ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -391,7 +354,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setSelectedCategory('exam')}
+            onClick={() => { setSelectedCategory('exam'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
               selectedCategory === 'exam'
                 ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -404,7 +367,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setSelectedCategory('photo')}
+            onClick={() => { setSelectedCategory('photo'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
               selectedCategory === 'photo'
                 ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -417,7 +380,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setSelectedCategory('signature')}
+            onClick={() => { setSelectedCategory('signature'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
               selectedCategory === 'signature'
                 ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -430,7 +393,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setSelectedCategory('pdf')}
+            onClick={() => { setSelectedCategory('pdf'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
               selectedCategory === 'pdf'
                 ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -443,7 +406,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setSelectedCategory('converter')}
+            onClick={() => { setSelectedCategory('converter'); setSearchQuery(''); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
               selectedCategory === 'converter'
                 ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
@@ -477,13 +440,13 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Main Tool Grid */}
+        {/* Main Tools Grid */}
         <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
             <div className="flex items-center gap-2 text-sm font-bold text-white">
               <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
               <span>
-                {searchQuery ? `Search Results (${filteredTools.length})` : selectedCategory === 'all' ? 'All Verified Formilo Tools' : `${selectedCategory.toUpperCase()} Tools`}
+                {searchQuery ? `Search Results (${filteredTools.length})` : selectedCategory === 'all' ? `All Available Tools (${filteredTools.length})` : `${selectedCategory.toUpperCase()} Tools (${filteredTools.length})`}
               </span>
             </div>
             <span className="text-[11px] font-mono text-zinc-400">
