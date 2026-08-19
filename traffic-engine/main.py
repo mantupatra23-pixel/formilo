@@ -1,4 +1,3 @@
-# main.py
 import os
 import random
 import requests
@@ -14,9 +13,8 @@ app = FastAPI(title="Formilo 24/7 Traffic Engine")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 BASE_SITE_URL = os.getenv("BASE_SITE_URL", "https://formilo-jzcl.vercel.app")
-RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")  # e.g., https://formilo-traffic-engine.onrender.com
+RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
 
-# 1. High-Traffic Exam Presets Pool
 CAMPAIGNS = [
     {
         "exam": "SSC CGL 2026",
@@ -50,25 +48,9 @@ CAMPAIGNS = [
     }
 ]
 
-# 2. Self-Ping Keep-Alive Worker (Prevents Render Free Tier Sleep)
-def keep_alive_ping():
-    target_url = RENDER_EXTERNAL_URL or os.getenv("RENDER_APP_URL")
-    if not target_url:
-        print("[Keep-Alive] RENDER_EXTERNAL_URL not configured. Local ping running.")
-        return
-
-    try:
-        ping_url = f"{target_url.rstrip('/')}/ping"
-        res = requests.get(ping_url, timeout=15)
-        print(f"[Keep-Alive Ping] {datetime.now().strftime('%H:%M:%S')} -> Status: {res.status_code}")
-    except Exception as e:
-        print(f"[Keep-Alive Error] {e}")
-
-# 3. Automated Telegram Traffic Broadcast Worker
 def send_telegram_broadcast():
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        print("[!] Telegram credentials missing. Skipping broadcast.")
-        return
+        return {"error": "Credentials missing", "token_set": bool(TELEGRAM_BOT_TOKEN), "chat_id_set": bool(TELEGRAM_CHAT_ID)}
 
     campaign = random.choice(CAMPAIGNS)
     tool_url = f"{BASE_SITE_URL}/exam/{campaign['slug']}"
@@ -92,43 +74,42 @@ def send_telegram_broadcast():
 
     try:
         res = requests.post(url, json=payload, timeout=10)
-        print(f"[+] Broadcast sent for {campaign['exam']}: Status {res.status_code}")
+        return {"status_code": res.status_code, "response": res.json()}
     except Exception as e:
-        print(f"[!] Broadcast failed: {e}")
+        return {"error": str(e)}
 
-# 4. Multi-Task Background Scheduler
+def keep_alive_ping():
+    target_url = RENDER_EXTERNAL_URL
+    if not target_url:
+        return
+    try:
+        requests.get(f"{target_url.rstrip('/')}/ping", timeout=15)
+    except Exception:
+        pass
+
 scheduler = BackgroundScheduler()
-
-# Render 15 min inactivity par sota hai, isliye har 10 min par self-ping
 scheduler.add_job(keep_alive_ping, 'interval', minutes=10)
-
-# Har 3 ghante me Telegram broadcast push
 scheduler.add_job(send_telegram_broadcast, 'interval', hours=3)
-
 scheduler.start()
 
-# 5. API Endpoints
 @app.get("/")
 def home():
     return {
         "status": "online",
-        "service": "Formilo Autonomous Traffic Engine",
-        "uptime": "24/7 Keep-Alive Active",
-        "self_ping_interval": "Every 10 minutes",
-        "broadcast_interval": "Every 3 hours"
+        "env_check": {
+            "token_configured": bool(TELEGRAM_BOT_TOKEN),
+            "chat_id": TELEGRAM_CHAT_ID or "NOT_SET"
+        }
     }
 
 @app.get("/ping")
 def ping():
-    return {
-        "status": "alive",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/trigger-broadcast")
 def manual_broadcast():
-    send_telegram_broadcast()
-    return {"message": "Broadcast triggered successfully."}
+    result = send_telegram_broadcast()
+    return result
 
 if __name__ == "__main__":
     import uvicorn
