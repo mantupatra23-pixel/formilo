@@ -1,6 +1,11 @@
+// lib/imageCompression.ts
+
 export interface CompressionOptions {
   targetKB?: number;
   maxDimension?: number;
+  width?: number;
+  height?: number;
+  dpi?: number;
   quality?: number;
   forceJpeg?: boolean;
   isSignature?: boolean;
@@ -15,8 +20,17 @@ export interface CompressionResult {
   mimeType: string;
 }
 
+export interface ExactDimensionOptions {
+  targetKB: number;
+  width: number;
+  height: number;
+  dpi?: number;
+  isSignature?: boolean;
+}
+
+// 1. Image Format Detector
 export function getImageFormat(file: File): 'JPEG' | 'PNG' | 'WEBP' | 'HEIC' | 'UNKNOWN' {
-  const mime = file.type.toLowerCase();
+  const mime = (file.type || '').toLowerCase();
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
 
   if (mime === 'image/heic' || mime === 'image/heif' || ext === '.heic' || ext === '.heif') {
@@ -34,10 +48,11 @@ export function getImageFormat(file: File): 'JPEG' | 'PNG' | 'WEBP' | 'HEIC' | '
   return 'UNKNOWN';
 }
 
-// Convert DataURL to Blob fallback for Android browsers
-function dataURLToBlob(dataurl: string): Blob {
+// 2. DataURL to Blob Fallback for Mobile Android Engines
+export function dataURLToBlob(dataurl: string): Blob {
   const arr = dataurl.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const mimeMatch = arr[0].match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
   const bstr = atob(arr[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
@@ -47,15 +62,19 @@ function dataURLToBlob(dataurl: string): Blob {
   return new Blob([u8arr], { type: mime });
 }
 
-// Safe canvas to Blob encoder with fallback
-async function canvasToBlobSafe(canvas: HTMLCanvasElement, mimeType: string, quality: number): Promise<Blob> {
+// 3. Safe Canvas to Blob Encoder
+export async function canvasToBlobSafe(
+  canvas: HTMLCanvasElement,
+  mimeType: string,
+  quality: number
+): Promise<Blob> {
   try {
     const blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob((b) => resolve(b), mimeType, quality);
     });
     if (blob && blob.size > 0) return blob;
   } catch {
-    // Fallback to toDataURL
+    // Fallback to toDataURL when canvas.toBlob fails in older mobile webviews
   }
 
   const dataUrl = canvas.toDataURL(mimeType, quality);
@@ -66,28 +85,29 @@ async function canvasToBlobSafe(canvas: HTMLCanvasElement, mimeType: string, qua
   return blob;
 }
 
-// 3-Stage Safe Camera Image Decoder
-async function decodeImageSafely(file: File, maxDimension?: number): Promise<ImageBitmap> {
+// 4. 3-Stage Safe Camera Image Decoder (Prevents Mobile RAM Crashes)
+export async function decodeImageSafely(
+  file: File,
+  maxDimension?: number
+): Promise<ImageBitmap | HTMLImageElement> {
   const format = getImageFormat(file);
 
   if (format === 'HEIC') {
-    throw new Error('HEIC/HEIF photos are not supported by this browser. Please select a JPG photo.');
+    throw new Error('HEIC/HEIF format is not supported directly. Please select a standard JPG/PNG photo.');
   }
 
-  let resizeWidth: number | undefined = maxDimension;
-
-  // METHOD A: createImageBitmap
-  if ('createImageBitmap' in window) {
+  // METHOD A: Native createImageBitmap with Hardware Acceleration
+  if (typeof window !== 'undefined' && 'createImageBitmap' in window) {
     try {
-      if (resizeWidth) {
+      if (maxDimension) {
         return await createImageBitmap(file, {
-          resizeWidth,
+          resizeWidth: maxDimension,
           resizeQuality: 'high',
         });
       }
       return await createImageBitmap(file);
     } catch {
-      console.log('[FORMILO CAMERA DEBUG] Method A (ImageBitmap) failed. Trying Method B...');
+      console.warn('[FORMILO] Method A failed. Switching to Method B (ObjectURL)...');
     }
   }
 
@@ -97,87 +117,37 @@ async function decodeImageSafely(file: File, maxDimension?: number): Promise<Ima
     const img = new Image();
     img.src = objectUrl;
 
-    await new Promise((resolve, reject) => {
-      img.onload = () => resolve(true);
-      img.onerror = () => reject(new Error('Method B failed'));
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('ObjectURL load error'));
     });
 
     URL.revokeObjectURL(objectUrl);
-
-    let w = img.naturalWidth;
-    let h = img.naturalHeight;
-
-    if (maxDimension && (w > maxDimension || h > maxDimension)) {
-      const ratio = Math.min(maxDimension / w, maxDimension / h);
-      w = Math.round(w * ratio);
-      h = Math.round(h * ratio);
-    }
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = w;
-    tempCanvas.height = h;
-    const ctx = tempCanvas.getContext('2d');
-    if (!ctx) throw new Error('Memory allocation failed');
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(img, 0, 0, w, h);
-
-    return await createImageBitmap(tempCanvas);
+    return img;
   } catch {
-    console.log('[FORMILO CAMERA DEBUG] Method B failed. Trying Method C (FileReader)...');
+    console.warn('[FORMILO] Method B failed. Switching to Method C (FileReader)...');
   }
 
-  // METHOD C: FileReader + DataURL
+  // METHOD C: FileReader Base64 Buffer Fallback
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const img = new Image();
-        img.src = reader.result as string;
-        await new Promise((res) => (img.onload = res));
-
-        let w = img.naturalWidth;
-        let h = img.naturalHeight;
-
-        if (maxDimension && (w > maxDimension || h > maxDimension)) {
-          const ratio = Math.min(maxDimension / w, maxDimension / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = w;
-        tempCanvas.height = h;
-        const ctx = tempCanvas.getContext('2d');
-        if (!ctx) throw new Error('Browser memory limit reached');
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-
-        const bitmap = await createImageBitmap(tempCanvas);
-        resolve(bitmap);
-      } catch (err) {
-        reject(new Error('Unable to read or decode this camera photo in this browser.'));
-      }
+    reader.onload = () => {
+      const img = new Image();
+      img.src = reader.result as string;
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('FileReader decoding failed.'));
     };
-    reader.onerror = () => reject(new Error('Unable to read file from storage.'));
+    reader.onerror = () => reject(new Error('Storage read failure.'));
     reader.readAsDataURL(file);
   });
 }
 
+// 5. Binary Search Target Compressor for Custom KB and Auto Scale
 export async function compressImageToTarget(
   file: File,
   options: CompressionOptions = {},
   onProgress?: (msg: string) => void
 ): Promise<CompressionResult> {
-  console.log('[FORMILO CAMERA DEBUG] File details:', {
-    name: file.name,
-    type: file.type,
-    size: file.size,
-  });
-
   onProgress?.('Reading photo...');
 
   let targetMaxDim = options.maxDimension;
@@ -187,42 +157,40 @@ export async function compressImageToTarget(
     else if (options.targetKB <= 100) targetMaxDim = 2400;
   }
 
-  onProgress?.('Decoding camera image...');
-  const imageBitmap = await decodeImageSafely(file, targetMaxDim);
+  onProgress?.('Decoding camera image safely...');
+  const decodedSource = await decodeImageSafely(file, targetMaxDim);
 
-  console.log('[FORMILO CAMERA DEBUG] Decoded dimensions:', {
-    width: imageBitmap.width,
-    height: imageBitmap.height,
-  });
+  const sourceWidth = 'width' in decodedSource ? decodedSource.width : decodedSource.naturalWidth;
+  const sourceHeight = 'height' in decodedSource ? decodedSource.height : decodedSource.naturalHeight;
 
-  onProgress?.('Preparing dimensions...');
-  let currentWidth = imageBitmap.width;
-  let currentHeight = imageBitmap.height;
+  let currentWidth = options.width || sourceWidth;
+  let currentHeight = options.height || sourceHeight;
 
-  if (targetMaxDim && (currentWidth > targetMaxDim || currentHeight > targetMaxDim)) {
+  if (targetMaxDim && !options.width && (currentWidth > targetMaxDim || currentHeight > targetMaxDim)) {
     const ratio = Math.min(targetMaxDim / currentWidth, targetMaxDim / currentHeight);
     currentWidth = Math.round(currentWidth * ratio);
     currentHeight = Math.round(currentHeight * ratio);
   }
 
   const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx) {
-    imageBitmap.close();
-    throw new Error('Canvas memory allocation failed for photo.');
+    if ('close' in decodedSource && typeof decodedSource.close === 'function') decodedSource.close();
+    throw new Error('Canvas memory allocation failed.');
   }
 
   const format = getImageFormat(file);
-  const exportMime = (options.forceJpeg || format !== 'PNG') ? 'image/jpeg' : 'image/png';
+  const exportMime = (options.forceJpeg || format !== 'PNG' || options.isSignature) ? 'image/jpeg' : 'image/png';
   const targetBytes = options.targetKB ? options.targetKB * 1024 : undefined;
 
   const renderToBlob = async (w: number, h: number, q: number): Promise<Blob> => {
     canvas.width = w;
     canvas.height = h;
-    ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(imageBitmap, 0, 0, w, h);
+    ctx.drawImage(decodedSource, 0, 0, w, h);
 
     return await canvasToBlobSafe(canvas, exportMime, q);
   };
@@ -231,7 +199,7 @@ export async function compressImageToTarget(
     onProgress?.('Compressing photo...');
     const q = options.quality ?? 0.85;
     const blob = await renderToBlob(currentWidth, currentHeight, q);
-    imageBitmap.close();
+    if ('close' in decodedSource && typeof decodedSource.close === 'function') decodedSource.close();
     return {
       blob,
       width: currentWidth,
@@ -242,33 +210,34 @@ export async function compressImageToTarget(
     };
   }
 
-  onProgress?.('Finding optimal quality under target...');
+  onProgress?.('Locking target KB...');
 
   let bestBlob: Blob | null = null;
   let finalWidth = currentWidth;
   let finalHeight = currentHeight;
   let finalQuality = 0.9;
   let iterations = 0;
-  const maxIterations = 16;
+  const maxIterations = 14;
 
   while (iterations < maxIterations) {
     iterations++;
 
     let lowQ = 0.05;
-    let highQ = 0.95;
+    let highQ = 0.96;
     let localBestBlob: Blob | null = null;
     let localBestQ = lowQ;
 
-    for (let i = 0; i < 6; i++) {
+    // 7-Stage Fast Binary Search for Exact KB
+    for (let i = 0; i < 7; i++) {
       const midQ = (lowQ + highQ) / 2;
       const testBlob = await renderToBlob(finalWidth, finalHeight, midQ);
 
       if (testBlob.size <= targetBytes) {
         localBestBlob = testBlob;
         localBestQ = midQ;
-        lowQ = midQ;
+        lowQ = midQ; // Try sharper quality
       } else {
-        highQ = midQ;
+        highQ = midQ; // Reduce quality
       }
     }
 
@@ -278,12 +247,12 @@ export async function compressImageToTarget(
       break;
     }
 
-    // Downscale dimensions gradually if quality tuning alone wasn't enough
-    finalWidth = Math.round(finalWidth * 0.85);
-    finalHeight = Math.round(finalHeight * 0.85);
+    // Step down dimensions if strict KB threshold requires scaling
+    finalWidth = Math.round(finalWidth * 0.88);
+    finalHeight = Math.round(finalHeight * 0.88);
 
-    if (finalWidth < 60 || finalHeight < 60) {
-      bestBlob = await renderToBlob(Math.max(finalWidth, 40), Math.max(finalHeight, 40), 0.05);
+    if (finalWidth < 80 || finalHeight < 80) {
+      bestBlob = await renderToBlob(Math.max(finalWidth, 50), Math.max(finalHeight, 50), 0.05);
       finalQuality = 0.05;
       break;
     }
@@ -293,10 +262,9 @@ export async function compressImageToTarget(
     bestBlob = await renderToBlob(finalWidth, finalHeight, 0.05);
   }
 
-  imageBitmap.close();
-  onProgress?.('Verifying final size...');
-
-  console.log('[FORMILO CAMERA DEBUG] Final output size:', bestBlob.size);
+  if ('close' in decodedSource && typeof decodedSource.close === 'function') {
+    decodedSource.close();
+  }
 
   return {
     blob: bestBlob,
@@ -306,4 +274,22 @@ export async function compressImageToTarget(
     sizeBytes: bestBlob.size,
     mimeType: exportMime,
   };
+}
+
+// 6. Direct Exact-Dimension Formatter for SSC, UPSC, PAN & Exam Presets
+export async function processAndCompressImage(
+  file: File,
+  options: ExactDimensionOptions
+): Promise<Blob> {
+  const { targetKB, width, height } = options;
+
+  const result = await compressImageToTarget(file, {
+    targetKB,
+    width,
+    height,
+    forceJpeg: true,
+    isSignature: options.isSignature
+  });
+
+  return result.blob;
 }

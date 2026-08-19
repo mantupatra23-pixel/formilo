@@ -3,14 +3,15 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import TelegramBanner from '@/components/TelegramBanner';
 import ExamResizerTool from '@/components/ExamResizerTool';
+import { getToolBySlug } from '@/lib/toolsData';
 import { 
-  FileCheck, 
+  Zap, 
   CheckCircle2, 
-  AlertCircle, 
-  HelpCircle, 
-  ArrowRight,
-  Zap,
-  ShieldCheck 
+  ArrowRight, 
+  ShieldCheck, 
+  FileCheck, 
+  HelpCircle,
+  Lock
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -19,153 +20,227 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-interface ExamPresetConfig {
+export interface ExamPresetConfig {
+  id: string;
   slug: string;
   baseSlug: string;
+  title: string;
   examName: string;
   boardName: string;
   docType: string;
+  targetKB: number;
   maxKB: number;
   minKB: number;
-  dimensions: { width: number; height: number; aspect: string; cm: string; dpi: number };
+  width: number;
+  height: number;
+  dpi: number;
+  dimensionText: string;
+  aspectRatio: string;
   format: string;
   bgColor: string;
 }
 
-function getExamPreset(slug: string): ExamPresetConfig {
-  const lower = (slug || 'govt-exam-photo').toLowerCase();
+function resolveExamPreset(rawSlug: string): ExamPresetConfig {
+  const cleanSlug = decodeURIComponent(rawSlug || 'govt-exam-photo').toLowerCase().trim();
+  
+  // 1. Check if exact tool exists in verified registry
+  const matchedTool = getToolBySlug(cleanSlug);
 
-  // 1. Target KB Detection from Slug
-  let maxKB = 50;
-  let minKB = 20;
+  // 2. Target KB Detection
+  let targetKB = matchedTool?.targetKB || 50;
+  let minKB = matchedTool?.minKB || 20;
 
-  if (lower.includes('20kb') || lower.includes('20-kb') || lower.includes('under-20kb')) {
-    maxKB = 20;
+  if (cleanSlug.includes('20kb') || cleanSlug.includes('20-kb') || cleanSlug.includes('under-20kb')) {
+    targetKB = 20;
     minKB = 5;
-  } else if (lower.includes('30kb') || lower.includes('30-kb')) {
-    maxKB = 30;
+  } else if (cleanSlug.includes('30kb') || cleanSlug.includes('30-kb')) {
+    targetKB = 30;
     minKB = 10;
-  } else if (lower.includes('100kb') || lower.includes('100-kb')) {
-    maxKB = 100;
+  } else if (cleanSlug.includes('100kb') || cleanSlug.includes('100-kb')) {
+    targetKB = 100;
     minKB = 30;
-  } else if (lower.includes('200kb') || lower.includes('200-kb') || lower.includes('postcard') || lower.includes('4x6')) {
-    maxKB = 200;
+  } else if (cleanSlug.includes('200kb') || cleanSlug.includes('200-kb') || cleanSlug.includes('postcard') || cleanSlug.includes('4x6')) {
+    targetKB = 200;
     minKB = 50;
-  } else if (lower.includes('500kb') || lower.includes('500-kb')) {
-    maxKB = 500;
+  } else if (cleanSlug.includes('500kb') || cleanSlug.includes('500-kb')) {
+    targetKB = 500;
     minKB = 100;
   }
 
-  // 2. Specific Format & Dimension Presets
-  const isSignature = lower.includes('signature') || lower.includes('sign');
-  const isThumb = lower.includes('thumb');
-  const isPostcard = lower.includes('postcard') || lower.includes('4x6');
-  const isPan = lower.includes('pan');
-  const isCCC = lower.includes('ccc') || lower.includes('nielit');
+  // 3. Document Type & Dimension Configuration
+  const isSignature = cleanSlug.includes('signature') || cleanSlug.includes('sign');
+  const isThumb = cleanSlug.includes('thumb');
+  const isPostcard = cleanSlug.includes('postcard') || cleanSlug.includes('4x6');
+  const isPan = cleanSlug.includes('pan');
+  const isCCC = cleanSlug.includes('ccc') || cleanSlug.includes('nielit');
+  const isDeclaration = cleanSlug.includes('declaration');
 
-  if (isSignature && !lower.includes('200kb') && !lower.includes('100kb')) {
-    maxKB = isPan ? 30 : 20;
-    minKB = 5;
-  }
-  if (isThumb) {
-    maxKB = 20;
-    minKB = 5;
-  }
-
+  let width = matchedTool?.width || 350;
+  let height = matchedTool?.height || 450;
+  let dpi = matchedTool?.dpi || 300;
   let docType = 'Passport Size Photo';
-  let dimensions = { width: 350, height: 450, aspect: '3.5:4.5', cm: '3.5 x 4.5 cm (350x450 px)', dpi: 300 };
+  let aspectRatio = '3.5:4.5';
+  let dimensionText = `${width} × ${height} px`;
 
-  if (isPan && isSignature) {
+  if (isDeclaration) {
+    docType = 'Handwritten Declaration';
+    width = 800;
+    height = 400;
+    targetKB = 100;
+    minKB = 50;
+    aspectRatio = '2:1';
+    dimensionText = '800 × 400 px';
+  } else if (isPan && isSignature) {
     docType = 'Signature (400 x 200 px)';
-    dimensions = { width: 400, height: 200, aspect: '2:1', cm: '2 x 4 cm (400x200 px)', dpi: 300 };
+    width = 400;
+    height = 200;
+    targetKB = 30;
+    minKB = 5;
+    aspectRatio = '2:1';
+    dimensionText = '400 × 200 px (300 DPI)';
   } else if (isPan) {
     docType = 'Passport Photo (213 x 213 px)';
-    dimensions = { width: 213, height: 213, aspect: '1:1', cm: '2.5 x 2.5 cm (213x213 px)', dpi: 300 };
+    width = 213;
+    height = 213;
+    targetKB = 50;
+    minKB = 10;
+    aspectRatio = '1:1';
+    dimensionText = '213 × 213 px (300 DPI)';
   } else if (isCCC && isSignature) {
     docType = 'Signature (170 x 132 px)';
-    dimensions = { width: 170, height: 132, aspect: '170:132', cm: '170 x 132 px', dpi: 300 };
+    width = 170;
+    height = 132;
+    targetKB = 20;
+    minKB = 10;
+    aspectRatio = '170:132';
+    dimensionText = '170 × 132 px';
   } else if (isCCC) {
     docType = 'Passport Photo (132 x 170 px)';
-    dimensions = { width: 132, height: 170, aspect: '132:170', cm: '132 x 170 px', dpi: 300 };
+    width = 132;
+    height = 170;
+    targetKB = 20;
+    minKB = 10;
+    aspectRatio = '132:170';
+    dimensionText = '132 × 170 px';
   } else if (isPostcard) {
     docType = 'Postcard Size Photo (4x6 Inch)';
-    dimensions = { width: 480, height: 720, aspect: '4:6', cm: '4 x 6 Inch (480x720 px)', dpi: 300 };
+    width = 480;
+    height = 720;
+    targetKB = 200;
+    minKB = 50;
+    aspectRatio = '4:6';
+    dimensionText = '480 × 720 px (4 × 6 Inch)';
   } else if (isSignature) {
     docType = 'Signature Crop & Compress';
-    dimensions = { width: 280, height: 120, aspect: '7:3', cm: '3.5 x 1.5 cm (280x120 px)', dpi: 300 };
+    width = 280;
+    height = 120;
+    targetKB = 20;
+    minKB = 5;
+    aspectRatio = '7:3';
+    dimensionText = '280 × 120 px';
   } else if (isThumb) {
     docType = 'Left Thumb Impression';
-    dimensions = { width: 240, height: 240, aspect: '1:1', cm: '3 x 3 cm (240x240 px)', dpi: 300 };
+    width = 240;
+    height = 240;
+    targetKB = 20;
+    minKB = 5;
+    aspectRatio = '1:1';
+    dimensionText = '240 × 240 px';
   }
 
-  const baseSlug = lower
-    .replace(/-(passport-photo|photo|signature|sign|thumb-impression|thumb|postcard-size-photo|postcard|under-20kb|under-50kb|20kb|50kb|resizer)$/gi, '');
+  // 4. Base Slug and Exam Name Parsing
+  const baseSlug = cleanSlug
+    .replace(/-(passport-size-photo-resizer|passport-photo|photo-resizer|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|handwritten-declaration-resizer|declaration|under-20kb|under-50kb|20kb|50kb|resizer)$/gi, '');
 
   const words = (baseSlug || 'Govt Exam').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1));
   const examName = words.join(' ');
 
-  const boardName = lower.includes('odisha') 
+  // 5. Board Name Detection
+  const boardName = cleanSlug.includes('odisha') 
     ? 'OPRB' 
-    : lower.includes('maharashtra') 
-    ? 'Maharashtra Police' 
-    : lower.includes('telangana') || lower.includes('ts') 
-    ? 'TSLPRB' 
-    : lower.includes('ap-police') || lower.includes('andhra') 
-    ? 'SLPRB AP' 
-    : lower.includes('ssc') 
-    ? 'Staff Selection Commission' 
-    : lower.includes('upsc') 
-    ? 'UPSC' 
+    : cleanSlug.includes('maharashtra') 
+    ? 'Maharashtra Police Recruitment Board' 
+    : cleanSlug.includes('telangana') || cleanSlug.includes('tspsc') 
+    ? 'TSPSC / TSLPRB' 
+    : cleanSlug.includes('ap-police') || cleanSlug.includes('andhra') 
+    ? 'SLPRB Andhra Pradesh' 
+    : cleanSlug.includes('ssc') 
+    ? 'Staff Selection Commission (SSC)' 
+    : cleanSlug.includes('upsc') 
+    ? 'Union Public Service Commission (UPSC)' 
+    : cleanSlug.includes('rrb') || cleanSlug.includes('railway')
+    ? 'Railway Recruitment Board (RRB)'
+    : cleanSlug.includes('ibps') || cleanSlug.includes('sbi') || cleanSlug.includes('rbi')
+    ? 'Institute of Banking Personnel Selection'
     : isPan 
-    ? 'NSDL / UTIITSL' 
+    ? 'Income Tax Department (NSDL / UTIITSL)' 
     : isCCC 
     ? 'NIELIT' 
-    : 'Official Examination Board';
+    : 'Official Examination Authority';
 
   return {
-    slug,
+    id: matchedTool?.id || cleanSlug,
+    slug: cleanSlug,
     baseSlug,
+    title: matchedTool?.title || `${examName} ${docType} Resizer`,
     examName,
     boardName,
     docType,
-    maxKB,
+    targetKB,
+    maxKB: targetKB,
     minKB,
-    dimensions,
+    width,
+    height,
+    dpi,
+    dimensionText: matchedTool?.dimensionText || dimensionText,
+    aspectRatio,
     format: 'JPG / JPEG',
-    bgColor: isSignature ? 'Clean White Background with Blue/Black Ink' : 'Light / White Background',
+    bgColor: isSignature 
+      ? 'Clean White Background with Black/Blue Ink' 
+      : isThumb 
+      ? 'Clean White Paper with Blue/Black Impression' 
+      : 'Light / Crisp White Background',
   };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const preset = getExamPreset(slug);
+  const preset = resolveExamPreset(slug);
 
   return {
-    title: `${preset.examName} ${preset.docType} Resizer (Strictly < ${preset.maxKB} KB)`,
-    description: `Free online ${preset.docType.toLowerCase()} resizer for ${preset.examName} conducted by ${preset.boardName}. Compress strictly between ${preset.minKB} KB to ${preset.maxKB} KB with ${preset.dimensions.cm}. 100% private in-browser tool.`,
+    title: `${preset.examName} ${preset.docType} Resizer (Strictly < ${preset.targetKB} KB) - Formilo`,
+    description: `Free online ${preset.docType.toLowerCase()} resizer for ${preset.examName} conducted by ${preset.boardName}. Compress strictly between ${preset.minKB} KB to ${preset.targetKB} KB with ${preset.dimensionText}. 100% private in-browser tool.`,
+    alternates: {
+      canonical: `https://formilo.vercel.app/exam/${preset.slug}`,
+    },
+    openGraph: {
+      title: `${preset.examName} ${preset.docType} Resizer`,
+      description: `Format official document strictly under ${preset.targetKB} KB (${preset.dimensionText}) with zero server upload.`,
+      type: 'website',
+    }
   };
 }
 
 export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
-  const preset = getExamPreset(slug);
+  const preset = resolveExamPreset(slug);
 
-  const otherFormats = [
-    { title: `${preset.examName} Passport Photo`, slug: `${preset.baseSlug}-passport-photo`, maxKB: 50 },
-    { title: `${preset.examName} Signature Crop & Compress`, slug: `${preset.baseSlug}-signature`, maxKB: 20 },
-    { title: `${preset.examName} Left Thumb Impression`, slug: `${preset.baseSlug}-thumb-impression`, maxKB: 20 },
-    { title: `${preset.examName} Postcard Size Photo (4x6 Inch)`, slug: `${preset.baseSlug}-postcard-size-photo`, maxKB: 200 },
+  const relatedFormats = [
+    { title: `${preset.examName} Passport Photo`, slug: `${preset.baseSlug}-passport-size-photo-resizer`, sizeText: '< 50 KB' },
+    { title: `${preset.examName} Signature Crop & Compress`, slug: `${preset.baseSlug}-signature-crop-compress`, sizeText: '< 20 KB' },
+    { title: `${preset.examName} Left Thumb Impression`, slug: `${preset.baseSlug}-left-thumb-impression-resizer`, sizeText: '< 20 KB' },
+    { title: `${preset.examName} Postcard Photo (4x6 Inch)`, slug: `${preset.baseSlug}-postcard-size-photo-4x6-resizer`, sizeText: '< 200 KB' },
   ].filter(item => item.slug !== preset.slug);
 
   return (
-    <div className="w-full min-h-screen bg-[#050505] text-zinc-100 py-8 px-4 sm:px-6">
+    <div className="w-full min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
-          <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium overflow-x-auto pb-1">
+          <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">Home</Link>
           <span>/</span>
-          <Link href="/#exam-presets" className="hover:text-emerald-400 transition-colors">Exam Presets</Link>
+          <Link href="/#exam-presets" className="hover:text-emerald-400 transition-colors shrink-0">Exam Presets</Link>
           <span>/</span>
           <span className="text-emerald-400 font-semibold truncate">{preset.examName}</span>
         </nav>
@@ -174,71 +249,104 @@ export default async function ExamPage({ params }: PageProps) {
         <div className="space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
-            <span>Official Dimension &amp; Size Lock: &lt; {preset.maxKB} KB</span>
+            <span>Official Dimension &amp; Size Lock: &lt; {preset.targetKB} KB</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
             {preset.examName} <span className="text-emerald-400">{preset.docType}</span> Resizer
           </h1>
 
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-            Free online {preset.docType.toLowerCase()} resizer for {preset.examName} conducted by {preset.boardName}. Compress and resize official document strictly between {preset.minKB} KB to {preset.maxKB} KB with {preset.dimensions.cm}. 100% private in-browser tool.
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-3xl">
+            Free online {preset.docType.toLowerCase()} resizer and format compressor for <strong>{preset.examName}</strong> conducted by {preset.boardName}. Automatically locks file size strictly between {preset.minKB} KB to {preset.targetKB} KB ({preset.dimensionText}) in JPG/JPEG format with 100% private in-browser processing.
           </p>
         </div>
 
-        {/* Sponsored Placeholder 1 */}
-        <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-center p-4">
+        {/* Top Ad Container */}
+        <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
           <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
             Sponsored / Advertisement
           </span>
         </div>
 
-        {/* Resizer Tool Component */}
-        <ExamResizerTool preset={preset} />
+        {/* Interactive Resizer Engine */}
+        <ExamResizerTool preset={preset} config={preset} />
 
-        {/* Sponsored Placeholder 2 */}
-        <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-center p-4">
+        {/* Bottom Ad Container */}
+        <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
           <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
             Sponsored / Advertisement
           </span>
         </div>
 
-        {/* Official Upload Guidelines Card */}
+        {/* Official Upload Guidelines Specifications */}
         <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4">
           <div className="flex items-center gap-2 font-bold text-white text-sm">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{preset.examName} Official Upload Guidelines</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800 space-y-1">
-              <span className="text-zinc-500">Exam Board</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+              <span className="text-zinc-500">Board / Authority</span>
               <p className="font-bold text-white text-xs truncate">{preset.boardName}</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800 space-y-1">
-              <span className="text-zinc-500">Max File Size</span>
-              <p className="font-bold text-emerald-400 text-xs">&lt; {preset.maxKB} KB</p>
+            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+              <span className="text-zinc-500">Allowed File Size</span>
+              <p className="font-bold text-emerald-400 text-xs">{preset.minKB} KB - {preset.targetKB} KB</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800 space-y-1">
-              <span className="text-zinc-500">Dimensions</span>
-              <p className="font-bold text-white text-xs truncate">{preset.dimensions.width} &times; {preset.dimensions.height} px</p>
+            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+              <span className="text-zinc-500">Exact Dimensions</span>
+              <p className="font-bold text-white text-xs truncate">{preset.width} &times; {preset.height} px</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800 space-y-1">
-              <span className="text-zinc-500">DPI Resolution</span>
-              <p className="font-bold text-emerald-400 text-xs">{preset.dimensions.dpi} DPI</p>
+            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+              <span className="text-zinc-500">Resolution &amp; DPI</span>
+              <p className="font-bold text-emerald-400 text-xs">{preset.dpi} DPI</p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-850 flex items-start gap-3 text-xs text-zinc-400">
+            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-zinc-200">Background &amp; Quality Requirement:</p>
+              <p>{preset.bgColor}. Make sure candidate facial features or signature strokes are crisp, evenly lit, and free from blur before submitting.</p>
             </div>
           </div>
         </div>
 
-        {/* Other Exam Format Presets Section */}
-        {otherFormats.length > 0 && (
-          <div className="space-y-4 pt-4">
+        {/* Step-by-Step Instructions & FAQ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
+            <div className="flex items-center gap-2 font-bold text-white text-sm">
+              <FileCheck className="w-4 h-4 text-emerald-400" />
+              <span>How to Resize for {preset.examName}</span>
+            </div>
+            <ol className="list-decimal list-inside space-y-2 text-zinc-400 leading-relaxed">
+              <li>Click <strong>&quot;Choose Image&quot;</strong> or drop your document into the box above.</li>
+              <li>Use the zoom and alignment slider to frame the document correctly.</li>
+              <li>Click <strong>&quot;Generate &amp; Download&quot;</strong> to instantly get your verified file under {preset.targetKB} KB.</li>
+            </ol>
+          </div>
+
+          <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
+            <div className="flex items-center gap-2 font-bold text-white text-sm">
+              <Lock className="w-4 h-4 text-emerald-400" />
+              <span>Zero Server Upload Guarantee</span>
+            </div>
+            <p className="text-zinc-400 leading-relaxed">
+              All images and documents are processed locally inside your web browser RAM using HTML5 Canvas. No confidential identity documents or personal photographs are ever uploaded to any cloud server.
+            </p>
+          </div>
+        </div>
+
+        {/* Related Exam Format Presets */}
+        {relatedFormats.length > 0 && (
+          <div className="space-y-4 pt-2">
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
-              OTHER {preset.examName.toUpperCase()} FORMAT PRESETS
+              RELATED {preset.examName.toUpperCase()} FORMAT PRESETS
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {otherFormats.map((f) => (
+              {relatedFormats.map((f) => (
                 <Link
                   key={f.slug}
                   href={`/exam/${f.slug}`}
@@ -248,7 +356,7 @@ export default async function ExamPage({ params }: PageProps) {
                     <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
                       {f.title}
                     </h4>
-                    <span className="text-[11px] font-mono text-emerald-400">&lt; {f.maxKB} KB</span>
+                    <span className="text-[11px] font-mono text-emerald-400">{f.sizeText}</span>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-zinc-500 group-hover:text-emerald-400 font-medium">
                     <span>Open Tool</span>
@@ -260,7 +368,7 @@ export default async function ExamPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Telegram Conversion */}
+        {/* Telegram Community Banner */}
         <TelegramBanner />
 
       </div>

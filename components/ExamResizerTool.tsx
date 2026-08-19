@@ -1,313 +1,352 @@
-// components/ExamResizerTool.tsx
 'use client';
 
-import React, { useState, useRef, ChangeEvent, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
-  Upload, 
+  UploadCloud, 
   Download, 
   RefreshCw, 
-  MessageCircle, 
-  ShieldCheck, 
-  CheckCircle, 
   Sliders, 
   ZoomIn, 
-  Move, 
-  RotateCw,
-  Sparkles,
-  Maximize2
+  ZoomOut, 
+  RotateCw, 
+  Sparkles, 
+  AlertTriangle, 
+  FileImage, 
+  CheckCircle2,
+  Trash2
 } from 'lucide-react';
+import { compressImageToTarget, getImageFormat } from '@/lib/imageCompression';
 
-interface PresetProps {
-  slug: string;
-  examName: string;
-  docType: string;
-  maxKB: number;
-  minKB: number;
-  dimensions: { width: number; height: number; aspect: string; cm: string; dpi?: number };
-  format: string;
-  bgColor: string;
+interface ExamResizerToolProps {
+  preset?: {
+    id?: string;
+    slug?: string;
+    examName?: string;
+    docType?: string;
+    targetKB?: number;
+    maxKB?: number;
+    minKB?: number;
+    width?: number;
+    height?: number;
+    dpi?: number;
+    dimensionText?: string;
+    bgColor?: string;
+  };
+  config?: any;
 }
 
-export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
-  const [processedImage, setProcessedImage] = useState<string | null>(null);
-  const [originalSize, setOriginalSize] = useState<number | null>(null);
-  const [outputSize, setOutputSize] = useState<number | null>(null);
-  
-  const isSignature = preset.slug.includes('signature') || preset.slug.includes('sign');
-  const [fitMode, setFitMode] = useState<'cover' | 'contain'>(isSignature ? 'contain' : 'cover');
-  const [zoom, setZoom] = useState<number>(1.0);
-  const [rotation, setRotation] = useState<number>(0);
-  const [panX, setPanX] = useState<number>(0);
-  const [panY, setPanY] = useState<number>(0);
-  const [quality, setQuality] = useState<number>(0.92);
-  const [enhanceSign, setEnhanceSign] = useState<boolean>(isSignature);
+export default function ExamResizerTool({ preset, config }: ExamResizerToolProps) {
+  const activeConfig = preset || config || {};
+
+  // Extract presets with safe fallbacks
+  const targetKB = Number(activeConfig.targetKB || activeConfig.maxKB || 50);
+  const minKB = Number(activeConfig.minKB || 10);
+  const targetWidth = Number(activeConfig.width || 350);
+  const targetHeight = Number(activeConfig.height || 450);
+  const docType = activeConfig.docType || 'Document / Photo';
+  const examName = activeConfig.examName || 'Official Exam';
+  const dimensionText = activeConfig.dimensionText || `${targetWidth} × ${targetHeight} px`;
+
+  // State Management
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [processedUrl, setProcessedUrl] = useState<string | null>(null);
+  const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
+  const [finalSizeKB, setFinalSizeKB] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
-  // Native Mobile File Input Handler
-  const handleFile = (file: File) => {
-    setOriginalSize(file.size / 1024);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const src = e.target?.result as string;
-      if (!src) return;
-      setSelectedImage(src);
+  // Adjustment Controls
+  const [zoom, setZoom] = useState<number>(1);
+  const [rotation, setRotation] = useState<number>(0);
+  const [brightness, setBrightness] = useState<number>(100);
+  const [contrast, setContrast] = useState<number>(100);
 
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        setImageElement(img);
-        setFitMode(isSignature ? 'contain' : 'cover');
-        setZoom(1.0);
-        setRotation(0);
-        setPanX(0);
-        setPanY(0);
-      };
-    };
-    reader.readAsDataURL(file);
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
+  // Trigger Native File Dialog
+  const handleDropzoneClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
     }
   };
 
-  const renderHDCanvas = useCallback(() => {
-    if (!imageElement) return;
-    setIsProcessing(true);
+  // Load selected file
+  const handleFileChange = (file: File) => {
+    setErrorMessage(null);
+    setProcessedUrl(null);
+    setProcessedBlob(null);
+    setFinalSizeKB(null);
+    setZoom(1);
+    setRotation(0);
+    setBrightness(100);
+    setContrast(100);
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      setIsProcessing(false);
+    const format = getImageFormat(file);
+    if (format === 'HEIC') {
+      setErrorMessage('HEIC/HEIF format is not supported directly. Please upload a JPG or PNG file.');
       return;
     }
 
-    const baseW = preset.dimensions.width || 350;
-    const baseH = preset.dimensions.height || 450;
-    const scale = 2; // 2x HD supersampling
-    const targetW = baseW * scale;
-    const targetH = baseH * scale;
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
 
-    canvas.width = targetW;
-    canvas.height = targetH;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = objectUrl;
+    img.onload = () => {
+      setSourceImage(img);
+    };
+    img.onerror = () => {
+      setErrorMessage('Failed to read this image file. Please try another photo.');
+    };
+  };
 
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+  // Drag & Drop Handlers
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
 
-    // Pure White Background
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, targetW, targetH);
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
 
-    ctx.save();
-    ctx.translate(targetW / 2 + panX * scale, targetH / 2 + panY * scale);
-    ctx.rotate((rotation * Math.PI) / 180);
-
-    const isRotated90 = rotation % 180 !== 0;
-    const imgW = isRotated90 ? imageElement.naturalHeight : imageElement.naturalWidth;
-    const imgH = isRotated90 ? imageElement.naturalWidth : imageElement.naturalHeight;
-
-    const imgRatio = imgW / imgH;
-    const targetRatio = targetW / targetH;
-
-    let drawW = targetW;
-    let drawH = targetH;
-
-    if (fitMode === 'contain') {
-      if (imgRatio > targetRatio) {
-        drawW = targetW * zoom;
-        drawH = (targetW / imgRatio) * zoom;
-      } else {
-        drawH = targetH * zoom;
-        drawW = (targetH * imgRatio) * zoom;
-      }
-    } else {
-      // Cover (Standard Passport Framing)
-      if (imgRatio > targetRatio) {
-        drawH = targetH * zoom;
-        drawW = targetH * imgRatio * zoom;
-      } else {
-        drawW = targetW * zoom;
-        drawH = (targetW / imgRatio) * zoom;
-      }
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileChange(e.dataTransfer.files[0]);
     }
+  }, []);
 
-    if (enhanceSign) {
-      ctx.filter = 'contrast(1.8) brightness(1.05) grayscale(1)';
-    } else {
-      ctx.filter = 'none';
-    }
+  // Frame and Compress Image
+  const generateProcessedDocument = useCallback(async () => {
+    if (!sourceImage || !selectedFile) return;
 
-    const actualW = isRotated90 ? drawH : drawW;
-    const actualH = isRotated90 ? drawW : drawH;
-    ctx.drawImage(imageElement, -actualW / 2, -actualH / 2, actualW, actualH);
-    ctx.restore();
+    setIsProcessing(true);
+    setErrorMessage(null);
+    setStatusMessage('Framing and adjusting canvas...');
 
-    // Binary Search Quality Compressor
-    let minQ = 0.20;
-    let maxQ = 0.98;
-    let bestDataUrl = canvas.toDataURL('image/jpeg', maxQ);
-    let bestKB = (bestDataUrl.length * 3) / 4 / 1024;
+    try {
+      // 1. Create Frame Canvas with Target Dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d', { alpha: false });
 
-    for (let i = 0; i < 7; i++) {
-      const midQ = (minQ + maxQ) / 2;
-      const dataUrl = canvas.toDataURL('image/jpeg', midQ);
-      const kb = (dataUrl.length * 3) / 4 / 1024;
+      if (!ctx) throw new Error('Failed to create canvas processing context.');
 
-      if (kb <= preset.maxKB) {
-        bestDataUrl = dataUrl;
-        bestKB = kb;
-        minQ = midQ;
+      // Clear & Fill Background (White default for forms/signatures)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+      // Apply Filters
+      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      ctx.save();
+      ctx.translate(targetWidth / 2, targetHeight / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(zoom, zoom);
+
+      // Compute aspect fill
+      const imgAspect = sourceImage.naturalWidth / sourceImage.naturalHeight;
+      const canvasAspect = targetWidth / targetHeight;
+      let drawW = targetWidth;
+      let drawH = targetHeight;
+
+      if (imgAspect > canvasAspect) {
+        drawW = targetHeight * imgAspect;
       } else {
-        maxQ = midQ;
+        drawH = targetWidth / imgAspect;
       }
+
+      ctx.drawImage(sourceImage, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      // 2. Convert Framed Canvas to Temp File for Strict Binary Search Compression
+      setStatusMessage(`Locking file size strictly under ${targetKB} KB...`);
+      const tempBlob: Blob = await new Promise((resolve) => {
+        canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.95);
+      });
+
+      const tempFile = new File([tempBlob], selectedFile.name, { type: 'image/jpeg' });
+
+      // 3. Binary Search Compression Target Loop
+      const compressionResult = await compressImageToTarget(
+        tempFile,
+        {
+          targetKB,
+          width: targetWidth,
+          height: targetHeight,
+          forceJpeg: true,
+          isSignature: activeConfig.slug?.includes('signature') || activeConfig.slug?.includes('thumb'),
+        },
+        (progress) => setStatusMessage(progress)
+      );
+
+      const finalUrl = URL.createObjectURL(compressionResult.blob);
+      setProcessedBlob(compressionResult.blob);
+      setProcessedUrl(finalUrl);
+      setFinalSizeKB(Number((compressionResult.blob.size / 1024).toFixed(1)));
+      setStatusMessage('Done! Document ready for submission.');
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message || 'Error processing document. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
+  }, [sourceImage, selectedFile, targetWidth, targetHeight, targetKB, zoom, rotation, brightness, contrast, activeConfig.slug]);
 
-    setProcessedImage(bestDataUrl);
-    setOutputSize(Math.round(bestKB * 10) / 10);
-    setIsProcessing(false);
-  }, [imageElement, preset, fitMode, zoom, rotation, panX, panY, enhanceSign]);
-
+  // Trigger compression automatically when file is loaded
   useEffect(() => {
-    if (imageElement) {
-      renderHDCanvas();
+    if (sourceImage) {
+      generateProcessedDocument();
     }
-  }, [imageElement, renderHDCanvas]);
+  }, [sourceImage]);
 
-  const handleRotate = () => {
-    setRotation((prev) => (prev + 90) % 360);
-  };
-
-  const handleReset = () => {
-    setSelectedImage(null);
-    setImageElement(null);
-    setProcessedImage(null);
-    setOriginalSize(null);
-    setOutputSize(null);
-  };
-
+  // Download Output
   const handleDownload = () => {
-    if (!processedImage) return;
+    if (!processedBlob || !processedUrl) return;
+
     const link = document.createElement('a');
-    link.href = processedImage;
-    link.download = `${preset.slug}-formilo.jpg`;
+    const safeSlug = activeConfig.slug || 'formilo-processed-document';
+    link.download = `${safeSlug}-verified.jpg`;
+    link.href = processedUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const handleWhatsAppShare = () => {
-    const text = `⚡ Formilo Tool — Resize & format ${preset.examName} ${preset.docType} strictly under ${preset.maxKB} KB without blur:\n${window.location.href}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  // Reset Tool
+  const handleReset = () => {
+    setSelectedFile(null);
+    setSourceImage(null);
+    setPreviewUrl(null);
+    setProcessedUrl(null);
+    setProcessedBlob(null);
+    setFinalSizeKB(null);
+    setErrorMessage(null);
+    setZoom(1);
+    setRotation(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
-    <div className="w-full bg-[#0c0d0e] border border-zinc-800 rounded-3xl p-5 sm:p-8 shadow-2xl space-y-6">
-      {!selectedImage ? (
-        /* Full Direct Native Label Container */
-        <label className="relative border-2 border-dashed border-zinc-800 hover:border-emerald-500 rounded-2xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-200 bg-zinc-950/60 hover:bg-emerald-950/10 flex flex-col items-center justify-center gap-4 group block">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleInputChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
-          />
+    <div className="w-full bg-[#0c0d0e] border border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-6">
+      
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/jpeg,image/png,image/webp,image/jpg"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFileChange(e.target.files[0]);
+          }
+        }}
+        className="hidden"
+      />
 
-          <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-            <Upload className="w-8 h-8" />
+      {/* Target Spec Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-black/60 rounded-2xl border border-zinc-850 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-zinc-400">Target Requirements:</span>
+          <span className="font-bold text-white uppercase">{docType}</span>
+        </div>
+        <div className="flex items-center gap-3 font-mono text-[11px]">
+          <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-emerald-400 font-bold">
+            &lt; {targetKB} KB
+          </span>
+          <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+            {dimensionText}
+          </span>
+        </div>
+      </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="p-3.5 bg-red-950/50 border border-red-500/50 rounded-2xl flex items-center gap-2.5 text-xs text-red-300">
+          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {/* Main Upload / Editor Area */}
+      {!selectedFile ? (
+        <div
+          onClick={handleDropzoneClick}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          className={`w-full py-12 px-4 rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 ${
+            isDragging 
+              ? 'border-emerald-400 bg-emerald-950/20 scale-[0.99]' 
+              : 'border-zinc-800 hover:border-emerald-500/50 bg-zinc-950/50'
+          }`}
+        >
+          <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/30">
+            <UploadCloud className="w-7 h-7" />
           </div>
           <div className="space-y-1">
-            <p className="text-base sm:text-lg font-bold text-white">
-              Tap Anywhere to Upload {preset.docType}
+            <p className="text-sm sm:text-base font-bold text-white">
+              Tap to Choose Photo or Drag &amp; Drop Here
             </p>
             <p className="text-xs text-zinc-400">
-              Auto-formats to {preset.dimensions.width}x{preset.dimensions.height} px &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
+              Supports JPG, JPEG, PNG • Instant auto-resize for {examName}
             </p>
           </div>
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/20">
-            <ShieldCheck className="w-3.5 h-3.5" /> 100% Client-Side In-Browser HD Engine
-          </div>
-        </label>
+          <button
+            type="button"
+            className="mt-2 px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all pointer-events-none"
+          >
+            Select Document
+          </button>
+        </div>
       ) : (
         <div className="space-y-6">
+          
           {/* Dual Preview Box */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center justify-center">
-            {/* Original Preview */}
-            <div className="space-y-2 text-center">
-              <span className="text-[11px] font-bold tracking-wider uppercase text-zinc-400">
-                Original {originalSize ? `(${Math.round(originalSize)} KB)` : ''}
-              </span>
-              <div className="relative aspect-[3.5/4.5] max-h-64 sm:max-h-72 mx-auto rounded-2xl bg-black border border-zinc-800 flex items-center justify-center overflow-hidden p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={selectedImage} alt="Original" className="max-h-full max-w-full object-contain rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Original Preview & Adjustment Framing */}
+            <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-zinc-400">Adjust &amp; Frame</span>
+                <span className="text-zinc-500 text-[11px] font-mono truncate max-w-[150px]">
+                  {selectedFile.name}
+                </span>
               </div>
-            </div>
 
-            {/* Formatted Preview */}
-            <div className="space-y-2 text-center">
-              <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400 flex items-center justify-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> HD Formatted ({outputSize} KB / {preset.dimensions.width}x{preset.dimensions.height}PX)
-              </span>
-              <div className="relative aspect-[3.5/4.5] max-h-64 sm:max-h-72 mx-auto rounded-2xl bg-black border-2 border-emerald-500/80 shadow-lg shadow-emerald-500/10 flex items-center justify-center overflow-hidden p-2">
-                {isProcessing ? (
-                  <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
-                ) : processedImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={processedImage} alt="HD Result" className="max-h-full max-w-full object-contain rounded-xl" />
-                ) : null}
+              <div className="relative w-full h-56 bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center border border-zinc-850">
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Original Upload"
+                    className="max-h-full max-w-full object-contain transition-transform"
+                    style={{
+                      transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                      filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+                    }}
+                  />
+                )}
               </div>
-            </div>
-          </div>
 
-          {/* Quick Adjustment Options Toolbar */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-              <span className="font-bold text-white flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-emerald-400" /> Photo Framing &amp; Positioning
-              </span>
-
-              {/* View Presets */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => { setFitMode('cover'); setZoom(1.0); setPanX(0); setPanY(0); }}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      fitMode === 'cover' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Auto Fill &amp; Center
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setFitMode('contain'); }}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      fitMode === 'contain' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Fit Whole Image
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleRotate}
-                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <RotateCw className="w-3 h-3 text-emerald-400" />
-                  <span>Rotate 90&deg;</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Custom Sliders for Fine-Tuning */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 text-xs">
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-zinc-400">
-                  <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3 text-emerald-400" /> Zoom Scale</span>
-                  <span className="font-mono text-emerald-400">{Math.round(zoom * 100)}%</span>
+              {/* Controls Bar */}
+              <div className="space-y-2.5 pt-2">
+                <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                  <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3 text-emerald-400" /> Zoom</span>
+                  <span className="font-mono text-zinc-300">{(zoom * 100).toFixed(0)}%</span>
                 </div>
                 <input
                   type="range"
@@ -316,89 +355,112 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
                   step="0.05"
                   value={zoom}
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-500 cursor-pointer"
+                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
                 />
-              </div>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-zinc-400">
-                  <span className="flex items-center gap-1"><Move className="w-3 h-3 text-cyan-400" /> Shift X (Left/Right)</span>
-                  <span className="font-mono text-zinc-300">{panX}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="-150"
-                  max="150"
-                  step="2"
-                  value={panX}
-                  onChange={(e) => setPanX(parseInt(e.target.value))}
-                  className="w-full accent-cyan-500 cursor-pointer"
-                />
-              </div>
+                <div className="flex items-center justify-between gap-2 pt-2">
+                  <button
+                    onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                    className="flex-1 py-1.5 px-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl text-[11px] font-semibold text-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <RotateCw className="w-3 h-3 text-emerald-400" />
+                    <span>Rotate 90°</span>
+                  </button>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-zinc-400">
-                  <span className="flex items-center gap-1"><Move className="w-3 h-3 text-cyan-400" /> Shift Y (Up/Down)</span>
-                  <span className="font-mono text-zinc-300">{panY}px</span>
+                  <button
+                    onClick={generateProcessedDocument}
+                    disabled={isProcessing}
+                    className="flex-1 py-1.5 px-2 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 rounded-xl text-[11px] font-bold text-emerald-300 flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isProcessing ? 'animate-spin' : ''}`} />
+                    <span>Apply Frame</span>
+                  </button>
                 </div>
-                <input
-                  type="range"
-                  min="-150"
-                  max="150"
-                  step="2"
-                  value={panY}
-                  onChange={(e) => setPanY(parseInt(e.target.value))}
-                  className="w-full accent-cyan-500 cursor-pointer"
-                />
               </div>
             </div>
 
-            {/* Signature Shadow Cleaner */}
-            {isSignature && (
-              <div className="pt-2 border-t border-zinc-900 flex items-center justify-between">
-                <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={enhanceSign}
-                    onChange={(e) => setEnhanceSign(e.target.checked)}
-                    className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
-                  />
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    Clean Mobile Camera Shadow (Pure White Background &amp; Dark Ink)
+            {/* Final Formatted Result */}
+            <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-3 flex flex-col justify-between">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Output Ready
+                </span>
+                {finalSizeKB && (
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${
+                    finalSizeKB <= targetKB 
+                      ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/40' 
+                      : 'bg-red-950/80 text-red-400 border-red-500/40'
+                  }`}>
+                    {finalSizeKB} KB / {targetKB} KB
                   </span>
-                </label>
+                )}
               </div>
-            )}
+
+              <div className="relative w-full h-56 bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center border border-zinc-850 p-2">
+                {isProcessing ? (
+                  <div className="flex flex-col items-center gap-2 text-center p-4">
+                    <RefreshCw className="w-6 h-6 text-emerald-400 animate-spin" />
+                    <span className="text-xs text-zinc-400 font-medium">{statusMessage}</span>
+                  </div>
+                ) : processedUrl ? (
+                  <img
+                    src={processedUrl}
+                    alt="Formatted Document"
+                    className="max-h-full max-w-full object-contain rounded shadow-md"
+                  />
+                ) : (
+                  <span className="text-xs text-zinc-600">Processing output...</span>
+                )}
+              </div>
+
+              {/* Status details & Reset */}
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-zinc-400">
+                  <div className="p-2 rounded-xl bg-zinc-900/80 border border-zinc-850">
+                    <span className="text-zinc-500 block text-[10px]">Exact Size</span>
+                    <span className="text-emerald-400 font-bold">{finalSizeKB || '...'} KB</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-zinc-900/80 border border-zinc-850">
+                    <span className="text-zinc-500 block text-[10px]">Dimensions</span>
+                    <span className="text-white font-bold">{targetWidth}x{targetHeight} px</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleReset}
+                    className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors"
+                    title="Remove Photo"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={handleDownload}
+                    disabled={!processedBlob || isProcessing}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Ready Image</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <button
-              onClick={handleDownload}
-              className="flex-[2] py-4 px-6 rounded-2xl bg-[#00e676] hover:bg-[#00c853] text-black font-black text-sm tracking-wide transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-black stroke-[3]" />
-              <span>Download Form Ready File</span>
-            </button>
-
-            <button
-              onClick={handleWhatsAppShare}
-              className="flex-1 py-4 px-4 rounded-2xl bg-[#14281d] hover:bg-[#1a3828] border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <MessageCircle className="w-4 h-4 fill-emerald-400 text-transparent" />
-              <span>WhatsApp Share</span>
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="py-4 px-5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 font-bold text-xs transition-all cursor-pointer"
-            >
-              Change Photo
-            </button>
-          </div>
         </div>
       )}
+
+      {/* Privacy Guarantee Footer Pill */}
+      <div className="text-center pt-1">
+        <p className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          100% Client-Side Engine: Images are processed inside your browser and never uploaded to any server.
+        </p>
+      </div>
+
     </div>
   );
 }
