@@ -11,9 +11,12 @@ import {
   AlertTriangle, 
   CheckCircle2,
   Trash2,
-  Move,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { compressImageToTarget, getImageFormat } from '@/lib/imageCompression';
 
@@ -45,7 +48,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   const examName = activeConfig.examName || 'Official Exam';
   const dimensionText = activeConfig.dimensionText || `${targetWidth} × ${targetHeight} px`;
 
-  // State Management
+  // State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
   const [processedUrl, setProcessedUrl] = useState<string | null>(null);
@@ -54,15 +57,15 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Framing & Adjustment State
+  // Controls
   const [zoom, setZoom] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
   const [panX, setPanX] = useState<number>(0);
   const [panY, setPanY] = useState<number>(0);
-  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
+  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('contain');
 
   // Dragging State
-  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; initialPanX: number; initialPanY: number }>({
     x: 0,
     y: 0,
@@ -71,7 +74,8 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleDropzoneClick = () => {
     if (fileInputRef.current) {
@@ -89,10 +93,11 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
     setRotation(0);
     setPanX(0);
     setPanY(0);
+    setFitMode('contain');
 
     const format = getImageFormat(file);
     if (format === 'HEIC') {
-      setErrorMessage('HEIC format is not supported. Please choose a JPG or PNG file.');
+      setErrorMessage('HEIC format is not supported. Please upload a standard JPG or PNG.');
       return;
     }
 
@@ -105,21 +110,21 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       setSourceImage(img);
     };
     img.onerror = () => {
-      setErrorMessage('Failed to decode this photo. Please upload a standard JPG/PNG.');
+      setErrorMessage('Failed to read image. Please select a valid photo.');
     };
   };
 
-  // Live Canvas Rendering Engine (Aspect-Ratio Safe, No Stretch)
-  const renderCanvas = useCallback(
-    (outputCanvas: HTMLCanvasElement) => {
+  // Canvas Drawing Routine
+  const drawToCanvas = useCallback(
+    (canvas: HTMLCanvasElement) => {
       if (!sourceImage) return;
 
-      outputCanvas.width = targetWidth;
-      outputCanvas.height = targetHeight;
-      const ctx = outputCanvas.getContext('2d', { alpha: false });
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d', { alpha: false });
       if (!ctx) return;
 
-      // Clean White Background for official forms
+      // Clean White Background
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, targetWidth, targetHeight);
 
@@ -127,7 +132,6 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       ctx.imageSmoothingQuality = 'high';
 
       ctx.save();
-      // Move origin to center
       ctx.translate(targetWidth / 2 + panX, targetHeight / 2 + panY);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(zoom, zoom);
@@ -149,7 +153,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
           drawH = targetWidth / imgAspect;
         }
       } else {
-        // Contain (Fit full image with margins)
+        // Contain (Fit full photo with borders)
         if (imgAspect > canvasAspect) {
           drawW = targetWidth;
           drawH = targetWidth / imgAspect;
@@ -165,23 +169,14 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
     [sourceImage, targetWidth, targetHeight, panX, panY, zoom, rotation, fitMode]
   );
 
-  // Update Live Preview Canvas
-  useEffect(() => {
-    if (previewCanvasRef.current && sourceImage) {
-      renderCanvas(previewCanvasRef.current);
-    }
-  }, [renderCanvas, sourceImage]);
-
-  // Generate & Compress Output to exact target KB
-  const handleGenerate = useCallback(async () => {
+  // Trigger compression debounced on any movement/zoom
+  const triggerCompression = useCallback(async () => {
     if (!sourceImage || !selectedFile) return;
 
     setIsProcessing(true);
-    setErrorMessage(null);
-
     try {
       const exportCanvas = document.createElement('canvas');
-      renderCanvas(exportCanvas);
+      drawToCanvas(exportCanvas);
 
       const tempBlob: Blob = await new Promise((resolve) => {
         exportCanvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.95);
@@ -201,22 +196,30 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       setProcessedUrl(finalUrl);
       setFinalSizeKB(Number((compressionResult.blob.size / 1024).toFixed(1)));
     } catch (err: any) {
-      setErrorMessage(err.message || 'Compression error. Please try again.');
+      setErrorMessage(err.message || 'Compression error.');
     } finally {
       setIsProcessing(false);
     }
-  }, [sourceImage, selectedFile, renderCanvas, targetKB, targetWidth, targetHeight]);
+  }, [sourceImage, selectedFile, drawToCanvas, targetKB, targetWidth, targetHeight]);
 
-  // Auto generate on first load
+  // Live Canvas and Compression updates
   useEffect(() => {
-    if (sourceImage) {
-      handleGenerate();
-    }
-  }, [sourceImage]);
+    if (canvasRef.current && sourceImage) {
+      drawToCanvas(canvasRef.current);
 
-  // Touch / Mouse Dragging Handlers
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        triggerCompression();
+      }, 250);
+    }
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [drawToCanvas, sourceImage, triggerCompression]);
+
+  // Touch / Pointer Dragging Handlers
   const handlePointerDown = (e: React.PointerEvent) => {
-    setIsDraggingImage(true);
+    setIsDragging(true);
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
@@ -227,7 +230,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDraggingImage) return;
+    if (!isDragging) return;
     const deltaX = e.clientX - dragStartRef.current.x;
     const deltaY = e.clientY - dragStartRef.current.y;
     setPanX(dragStartRef.current.initialPanX + deltaX);
@@ -235,12 +238,18 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (isDraggingImage) {
-      setIsDraggingImage(false);
+    if (isDragging) {
+      setIsDragging(false);
       try {
         (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       } catch {}
     }
+  };
+
+  // Nudge Position Buttons (For Precise Mobile Adjustments)
+  const nudge = (dx: number, dy: number) => {
+    setPanX((prev) => prev + dx);
+    setPanY((prev) => prev + dy);
   };
 
   const handleDownload = () => {
@@ -264,8 +273,11 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
     setPanY(0);
     setZoom(1);
     setRotation(0);
+    setFitMode('contain');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  const aspectRatio = targetWidth / targetHeight;
 
   return (
     <div className="w-full bg-[#0c0d0e] border border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-6">
@@ -283,10 +295,10 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       />
 
       {/* Target Spec Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-black/60 rounded-2xl border border-zinc-800 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-black/70 rounded-2xl border border-zinc-800 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-zinc-400">Target Spec:</span>
+          <span className="text-zinc-400">Lock Target:</span>
           <span className="font-bold text-white uppercase">{docType}</span>
         </div>
         <div className="flex items-center gap-3 font-mono text-[11px]">
@@ -319,7 +331,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
               Tap to Choose Photo or Document
             </p>
             <p className="text-xs text-zinc-400">
-              Supports JPG, PNG • Instant auto-resize for {examName}
+              Instant framing for {examName} • JPG, PNG
             </p>
           </div>
           <button
@@ -331,39 +343,65 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Main Visual Framer Box */}
+          <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-4">
             
-            {/* Interactive Framing Box (Drag to adjust) */}
-            <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-zinc-300 flex items-center gap-1.5">
-                  <Move className="w-3.5 h-3.5 text-emerald-400" /> Touch &amp; Drag to Move
-                </span>
-                <span className="text-zinc-500 text-[11px] font-mono truncate max-w-[130px]">
-                  {selectedFile.name}
-                </span>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-zinc-300">
+                Live Interactive Framing ({dimensionText})
+              </span>
+              <div className="flex items-center gap-2 font-mono text-[11px]">
+                {finalSizeKB && (
+                  <span className={`px-2 py-0.5 rounded font-bold border ${
+                    finalSizeKB <= targetKB 
+                      ? 'bg-emerald-950 text-emerald-400 border-emerald-500/40' 
+                      : 'bg-red-950 text-red-400 border-red-500/40'
+                  }`}>
+                    {finalSizeKB} KB / {targetKB} KB
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Viewport with Exact Official Aspect-Ratio Bounding Box */}
+            <div 
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              className="relative w-full min-h-[280px] bg-[#101012] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-dashed border-zinc-700/80 cursor-grab active:cursor-grabbing touch-none select-none p-2"
+            >
+              <canvas
+                ref={canvasRef}
+                style={{
+                  aspectRatio: `${targetWidth} / ${targetHeight}`,
+                  maxHeight: '260px',
+                  maxWidth: '100%',
+                }}
+                className="object-contain rounded-lg shadow-2xl border-2 border-emerald-500/60 bg-white"
+              />
+
+              <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/80 backdrop-blur border border-zinc-800 text-[10px] text-zinc-300 font-mono pointer-events-none">
+                👆 Drag photo to align face/signature
               </div>
 
-              {/* Viewport Box */}
-              <div 
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                className="relative w-full h-64 bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center border border-zinc-800 cursor-grab active:cursor-grabbing touch-none select-none"
-              >
-                <canvas
-                  ref={previewCanvasRef}
-                  className="max-h-full max-w-full object-contain rounded shadow-lg border border-zinc-700 pointer-events-none"
-                />
-                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur text-[10px] text-zinc-400 font-mono pointer-events-none">
-                  Live View
+              {isProcessing && (
+                <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded bg-black/90 backdrop-blur border border-emerald-500/40 text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 pointer-events-none">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  Compressing...
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* Tools Controls Bar */}
-              <div className="space-y-3 pt-2">
+            {/* Easy Position Nudge Buttons & Controls */}
+            <div className="space-y-3 pt-1">
+              
+              {/* Zoom Slider */}
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3 text-emerald-400" /> Zoom</span>
+                  <span className="flex items-center gap-1 font-semibold">
+                    <ZoomIn className="w-3.5 h-3.5 text-emerald-400" /> Zoom &amp; Scale
+                  </span>
                   <span className="font-mono text-zinc-300">{(zoom * 100).toFixed(0)}%</span>
                 </div>
                 <input
@@ -373,113 +411,80 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
                   step="0.05"
                   value={zoom}
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
                 />
+              </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  <button
-                    onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                    className="py-2 px-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-[11px] font-semibold text-zinc-200 flex items-center justify-center gap-1 transition-colors"
-                  >
-                    <RotateCw className="w-3 h-3 text-emerald-400" />
-                    <span>Rotate</span>
+              {/* Action Buttons Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                <button
+                  onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
+                  className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border ${
+                    fitMode === 'contain'
+                      ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50'
+                      : 'bg-zinc-900 text-zinc-300 border-zinc-800'
+                  }`}
+                >
+                  {fitMode === 'contain' ? <Minimize2 className="w-3.5 h-3.5 text-emerald-400" /> : <Maximize2 className="w-3.5 h-3.5 text-amber-400" />}
+                  <span>{fitMode === 'contain' ? 'Fit Full (No Cut)' : 'Fill & Crop'}</span>
+                </button>
+
+                <button
+                  onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                  className="py-2 px-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <RotateCw className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Rotate 90°</span>
+                </button>
+
+                {/* Move Position Buttons */}
+                <div className="grid grid-cols-4 col-span-2 gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                  <button onClick={() => nudge(0, -15)} title="Move Up" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
+                    <ChevronUp className="w-4 h-4" />
                   </button>
-
-                  <button
-                    onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
-                    className="py-2 px-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-[11px] font-semibold text-zinc-200 flex items-center justify-center gap-1 transition-colors"
-                  >
-                    {fitMode === 'cover' ? <Minimize2 className="w-3 h-3 text-amber-400" /> : <Maximize2 className="w-3 h-3 text-emerald-400" />}
-                    <span>{fitMode === 'cover' ? 'Fit Whole' : 'Fill Box'}</span>
+                  <button onClick={() => nudge(0, 15)} title="Move Down" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
+                    <ChevronDown className="w-4 h-4" />
                   </button>
-
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isProcessing}
-                    className="py-2 px-1 bg-emerald-950 border border-emerald-500/50 rounded-xl text-[11px] font-bold text-emerald-300 flex items-center justify-center gap-1 transition-colors"
-                  >
-                    <RefreshCw className={`w-3 h-3 ${isProcessing ? 'animate-spin' : ''}`} />
-                    <span>Apply</span>
+                  <button onClick={() => nudge(-15, 0)} title="Move Left" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => nudge(15, 0)} title="Move Right" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* Output Verification Box */}
-            <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-3 flex flex-col justify-between">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Output Ready
-                </span>
-                {finalSizeKB && (
-                  <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${
-                    finalSizeKB <= targetKB 
-                      ? 'bg-emerald-950 text-emerald-400 border-emerald-500/40' 
-                      : 'bg-red-950 text-red-400 border-red-500/40'
-                  }`}>
-                    {finalSizeKB} KB / {targetKB} KB
-                  </span>
-                )}
-              </div>
+              {/* Download & Reset Bar */}
+              <div className="flex items-center gap-3 pt-3">
+                <button
+                  onClick={handleReset}
+                  className="p-3 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors shrink-0"
+                  title="Upload Another Photo"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
 
-              <div className="relative w-full h-64 bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center border border-zinc-800 p-2">
-                {isProcessing ? (
-                  <div className="flex flex-col items-center gap-2 text-center p-4">
-                    <RefreshCw className="w-6 h-6 text-emerald-400 animate-spin" />
-                    <span className="text-xs text-zinc-400 font-medium">Compressing strictly under {targetKB} KB...</span>
-                  </div>
-                ) : processedUrl ? (
-                  <img
-                    src={processedUrl}
-                    alt="Formatted Document"
-                    className="max-h-full max-w-full object-contain rounded shadow-md border border-zinc-800"
-                  />
-                ) : (
-                  <span className="text-xs text-zinc-600">Generating output...</span>
-                )}
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-zinc-400">
-                  <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800">
-                    <span className="text-zinc-500 block text-[10px]">Exact File Size</span>
-                    <span className="text-emerald-400 font-bold">{finalSizeKB || '...'} KB</span>
-                  </div>
-                  <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800">
-                    <span className="text-zinc-500 block text-[10px]">Exact Dimensions</span>
-                    <span className="text-white font-bold">{targetWidth} × {targetHeight} px</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleReset}
-                    className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={handleDownload}
-                    disabled={!processedBlob || isProcessing}
-                    className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 transition-all"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Download Ready Image</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleDownload}
+                  disabled={!processedBlob || isProcessing}
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-[0.98]"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Verified Document ({finalSizeKB || targetKB} KB)</span>
+                </button>
               </div>
 
             </div>
 
           </div>
+
         </div>
       )}
 
       <div className="text-center pt-1">
         <p className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          Zero distortion engine &bull; No stretch &bull; 100% Client-Side Private
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          Live visual aspect lock &bull; 100% private in-browser engine
         </p>
       </div>
 
