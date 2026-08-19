@@ -13,16 +13,17 @@ import {
   FileText, 
   GraduationCap, 
   Image as ImageIcon, 
-  FileCheck, 
   PenTool, 
   Layers,
   Flame,
   Calendar,
   SlidersHorizontal,
-  RefreshCw
+  RefreshCw,
+  FileCheck2,
+  ShieldCheck
 } from 'lucide-react';
 
-interface UnifiedTool {
+export interface UnifiedTool {
   id: string;
   slug: string;
   name: string;
@@ -34,10 +35,10 @@ interface UnifiedTool {
   isPopular?: boolean;
 }
 
-// 1. Core High-Demand & Generator Tools
+// 1. Core High-Demand & Featured Utilities (Fixed Working Routes)
 const CORE_TOOLS: UnifiedTool[] = [
   {
-    id: 'name-date-photo',
+    id: 'name-date-photo-generator',
     slug: '/name-date-on-photo',
     name: 'Name & Date on Photo (DOP / DOB) Generator',
     description: 'Add candidate name and photo date strip on passport photo strictly under 50 KB for SSC, RRB & Police forms.',
@@ -48,7 +49,7 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'pan-photo',
+    id: 'pan-card-photo-resizer',
     slug: '/exam/pan-card-photo-resizer',
     name: 'PAN Card Photo Resizer (213 x 213 px)',
     description: 'Resize passport photo to exact 213x213 px and 300 DPI for NSDL and UTIITSL online portal forms.',
@@ -59,7 +60,7 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'pan-signature',
+    id: 'pan-card-signature-resizer',
     slug: '/exam/pan-card-signature-resizer',
     name: 'PAN Card Signature Resizer (400 x 200 px)',
     description: 'Compress signature to exact 400x200 px, 300 DPI and under 30 KB with sharp black & white contrast.',
@@ -70,8 +71,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'photo-20kb',
-    slug: '/exam/photo-resize-under-20kb',
+    id: 'photo-resize-to-20kb',
+    slug: '/exam/photo-resize-to-20kb',
     name: 'Photo Resize to 20 KB',
     description: 'Compress and resize passport photos strictly under 20 KB for official government application portals.',
     category: 'photo',
@@ -81,8 +82,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'photo-50kb',
-    slug: '/exam/photo-resize-under-50kb',
+    id: 'photo-resize-to-50kb',
+    slug: '/exam/photo-resize-to-50kb',
     name: 'Photo Resize to 50 KB',
     description: 'Resize and compress photos under 50 KB while maintaining crisp facial clarity without blur.',
     category: 'photo',
@@ -92,8 +93,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'signature-20kb',
-    slug: '/exam/ssc-gd-signature',
+    id: 'signature-resize-to-20kb',
+    slug: '/exam/signature-resize-to-20kb',
     name: 'Signature Resize to 20 KB',
     description: 'Resize scanned signature photos strictly under 20 KB with sharp contrast on clean white background.',
     category: 'signature',
@@ -103,8 +104,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'nielit-ccc',
-    slug: '/exam/nielit-ccc-photo-resizer',
+    id: 'nielit-ccc-exam-photo-sign',
+    slug: '/exam/nielit-ccc-exam-photo-and-sign-resizer',
     name: 'NIELIT CCC Exam Photo & Sign Resizer',
     description: 'Format CCC form photos to 132x170 px and signature to 170x132 px (10 KB – 20 KB).',
     category: 'exam',
@@ -114,8 +115,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'watermark-remover',
-    slug: '/exam/photo-watermark-remover',
+    id: 'online-watermark-stamp-remover',
+    slug: '/tools/online-watermark-stamp-remover',
     name: 'Online Watermark & Stamp Remover',
     description: 'Erase unwanted watermarks, dates, stamps, and text from photos using browser inpainting technology.',
     category: 'photo',
@@ -125,8 +126,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'jpg-to-pdf',
-    slug: '/cyber-cafe',
+    id: 'jpg-to-pdf-converter',
+    slug: '/tools/jpg-to-pdf-converter',
     name: 'JPG to PDF Converter',
     description: 'Combine multiple JPG, PNG, or WebP images into a single professional PDF document.',
     category: 'pdf',
@@ -136,8 +137,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'pdf-to-jpg',
-    slug: '/cyber-cafe',
+    id: 'pdf-to-jpg-converter',
+    slug: '/tools/pdf-to-jpg-converter',
     name: 'PDF to JPG Converter',
     description: 'Extract PDF document pages into high-resolution JPG images directly inside browser RAM.',
     category: 'converter',
@@ -146,8 +147,8 @@ const CORE_TOOLS: UnifiedTool[] = [
     isPopular: true,
   },
   {
-    id: 'pdf-compressor',
-    slug: '/cyber-cafe',
+    id: 'pdf-compressor-under-200kb',
+    slug: '/tools/pdf-compressor-under-200kb',
     name: 'PDF Compressor (< 200 KB)',
     description: 'Compress large PDF certificates, marksheets, and caste documents strictly under 200 KB.',
     category: 'pdf',
@@ -162,22 +163,33 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Complete 330+ Exam Presets Matrix (Passport, Signature, Thumb, Postcard 4x6 for every exam)
+  // Complete Deduplicated Matrix
   const allTools = useMemo<UnifiedTool[]>(() => {
-    const expandedPresets: UnifiedTool[] = [];
-    const seen = new Set<string>();
+    const toolMap = new Map<string, UnifiedTool>();
 
-    (examToolsData || []).forEach((item: any) => {
-      const rawSlug = item.slug || '';
-      const baseSlug = rawSlug.replace(/-(passport-photo|photo|signature|sign|thumb-impression|thumb|postcard-size-photo|postcard)$/i, '');
-      const rawTitle = (item.title || item.name || '').replace(/(Passport Size Photo|Photo|Signature|Left Thumb|Postcard Size Photo).*/i, '').trim();
+    // 1. Add Core tools first
+    CORE_TOOLS.forEach((tool) => {
+      const cleanSlug = tool.slug.toLowerCase().trim();
+      toolMap.set(cleanSlug, tool);
+    });
+
+    // 2. Expand exam presets dynamically from JSON
+    const rawList = Array.isArray(examToolsData) ? examToolsData : [];
+
+    rawList.forEach((item: any) => {
+      const rawSlug = String(item.slug || '').toLowerCase().trim();
+      const baseSlug = rawSlug
+        .replace(/-(passport-size-photo-resizer|passport-photo|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|under-20kb|under-50kb|20kb|50kb|resizer)$/i, '');
+
+      const rawTitle = String(item.title || item.name || '')
+        .replace(/(Passport Size Photo|Photo|Signature|Left Thumb|Postcard Size Photo).*/i, '')
+        .trim();
       const examTitle = rawTitle || baseSlug.replace(/-/g, ' ').toUpperCase();
-      const board = item.board || 'EXAM';
+      const board = item.badge || item.board || 'EXAM';
 
-      // 4 Essential Formats per Exam
       const variants = [
         {
-          suffix: 'passport-photo',
+          suffix: 'passport-size-photo-resizer',
           name: `${examTitle} Passport Size Photo Resizer`,
           desc: `Free online passport size photo resizer for ${examTitle}. Compress strictly between 20 KB to 50 KB (350x450 px).`,
           cat: 'exam' as const,
@@ -186,7 +198,7 @@ export default function HomePage() {
           dim: '350 × 450 px',
         },
         {
-          suffix: 'signature',
+          suffix: 'signature-crop-compress',
           name: `${examTitle} Signature Crop & Compress`,
           desc: `Free online signature crop & compress under 20 KB for ${examTitle}. Crop signature on clean white background.`,
           cat: 'signature' as const,
@@ -195,7 +207,7 @@ export default function HomePage() {
           dim: '280 × 120 px',
         },
         {
-          suffix: 'thumb-impression',
+          suffix: 'left-thumb-impression-resizer',
           name: `${examTitle} Left Thumb Impression Resizer`,
           desc: `Format candidate thumb print impression to blue/black ink under 20 KB for ${examTitle}.`,
           cat: 'signature' as const,
@@ -204,7 +216,7 @@ export default function HomePage() {
           dim: '240 × 240 px',
         },
         {
-          suffix: 'postcard-size-photo',
+          suffix: 'postcard-size-photo-4x6-resizer',
           name: `${examTitle} Postcard Size Photo (4x6 Inch) Resizer`,
           desc: `Resize full postcard size 4x6 photograph with white background under 200 KB for ${examTitle}.`,
           cat: 'photo' as const,
@@ -215,12 +227,11 @@ export default function HomePage() {
       ];
 
       variants.forEach((v) => {
-        const fullSlug = `${baseSlug}-${v.suffix}`;
-        if (!seen.has(fullSlug)) {
-          seen.add(fullSlug);
-          expandedPresets.push({
-            id: fullSlug,
-            slug: `/exam/${fullSlug}`,
+        const fullSlug = `/exam/${baseSlug}-${v.suffix}`;
+        if (!toolMap.has(fullSlug)) {
+          toolMap.set(fullSlug, {
+            id: `${baseSlug}-${v.suffix}`,
+            slug: fullSlug,
             name: v.name,
             description: v.desc,
             category: v.cat,
@@ -233,25 +244,22 @@ export default function HomePage() {
       });
     });
 
-    // Merge Core Tools + 320 Exam Presets
-    const coreSlugs = new Set(CORE_TOOLS.map((t) => t.id));
-    const finalPresets = expandedPresets.filter((p) => !coreSlugs.has(p.id));
-
-    return [...CORE_TOOLS, ...finalPresets];
+    return Array.from(toolMap.values());
   }, []);
 
-  // Category counts matching full original breakdown (~330+ items)
+  // Category counts
   const totalCount = allTools.length;
   const examCount = allTools.filter((t) => t.category === 'exam').length;
   const photoCount = allTools.filter((t) => t.category === 'photo').length;
   const signatureCount = allTools.filter((t) => t.category === 'signature').length;
-  const pdfCount = allTools.filter((t) => t.category === 'pdf').length + 7;
-  const converterCount = allTools.filter((t) => t.category === 'converter').length + 20;
+  const pdfCount = allTools.filter((t) => t.category === 'pdf').length;
+  const converterCount = allTools.filter((t) => t.category === 'converter').length;
 
-  // Filtered tools based on search and tab
+  // Filtered tools based on search and category tab
   const filteredTools = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+
     return allTools.filter((tool) => {
-      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
         tool.name.toLowerCase().includes(q) ||
@@ -259,18 +267,22 @@ export default function HomePage() {
         tool.badge.toLowerCase().includes(q) ||
         (tool.dimensions && tool.dimensions.toLowerCase().includes(q));
 
-      const matchesCategory =
-        selectedCategory === 'all' ||
-        tool.category === selectedCategory ||
-        (selectedCategory === 'exam' && (tool.category === 'exam' || tool.badge.includes('EXAM') || tool.badge.includes('POLICE') || tool.badge.includes('SSC') || tool.badge.includes('UPSC')));
+      if (!matchesSearch) return false;
 
-      return matchesSearch && matchesCategory;
+      if (selectedCategory === 'all') return true;
+      if (selectedCategory === 'exam') return tool.category === 'exam';
+      if (selectedCategory === 'photo') return tool.category === 'photo';
+      if (selectedCategory === 'signature') return tool.category === 'signature';
+      if (selectedCategory === 'pdf') return tool.category === 'pdf';
+      if (selectedCategory === 'converter') return tool.category === 'converter';
+
+      return true;
     });
   }, [allTools, searchQuery, selectedCategory]);
 
   const popularTools = useMemo(() => {
-    return allTools.filter((t) => t.isPopular);
-  }, [allTools]);
+    return CORE_TOOLS.filter((t) => t.isPopular);
+  }, []);
 
   const quickPresets = [
     { label: '⚡ Photo < 20 KB', query: '20 KB', color: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10' },
@@ -286,7 +298,7 @@ export default function HomePage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[380px] bg-emerald-500/10 blur-[150px] pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-4 pt-12 pb-6 text-center space-y-6">
+      <section className="max-w-6xl mx-auto px-4 pt-10 pb-6 text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/10">
           <Sparkles className="w-3.5 h-3.5" />
           <span>100% Client-Side Engine &bull; {totalCount}+ Live Online Tools &bull; Zero Server Upload</span>
@@ -339,13 +351,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Cyber Cafe & CSC Quick Desk */}
-      <section className="max-w-5xl mx-auto px-4 my-6">
+      {/* Cyber Cafe & CSC Center Quick Hub */}
+      <section className="max-w-6xl mx-auto px-4 my-6">
         <div className="p-6 sm:p-7 rounded-3xl bg-[#0c0d0e] border border-zinc-800/90 relative overflow-hidden shadow-2xl">
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[11px] font-semibold text-amber-400">
-                <Sparkles className="w-3.5 h-3.5" />
+                <Zap className="w-3.5 h-3.5 fill-amber-400" />
                 <span>Cyber Cafe &amp; CSC Center Quick Hub</span>
               </div>
               <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
@@ -375,7 +387,7 @@ export default function HomePage() {
 
           <div className="pt-4 mt-4 border-t border-zinc-900 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
             <span className="text-zinc-600 font-mono">FREQUENT CAFE SHORTCUTS:</span>
-            <Link href="/exam/ssc-cgl-passport-photo" className="px-2.5 py-1 rounded-md bg-zinc-900/80 hover:text-emerald-400 border border-zinc-800/80">
+            <Link href="/exam/ssc-cgl-2026-passport-size-photo-resizer" className="px-2.5 py-1 rounded-md bg-zinc-900/80 hover:text-emerald-400 border border-zinc-800/80">
               SSC CGL Photo &rarr;
             </Link>
             <Link href="/name-date-on-photo" className="px-2.5 py-1 rounded-md bg-zinc-900/80 hover:text-emerald-400 border border-zinc-800/80 text-amber-300">
@@ -384,14 +396,14 @@ export default function HomePage() {
             <Link href="/exam/pan-card-photo-resizer" className="px-2.5 py-1 rounded-md bg-zinc-900/80 hover:text-emerald-400 border border-zinc-800/80">
               PAN NSDL Photo &rarr;
             </Link>
-            <Link href="/exam/rrb-ntpc-passport-photo" className="px-2.5 py-1 rounded-md bg-zinc-900/80 hover:text-emerald-400 border border-zinc-800/80">
+            <Link href="/exam/rrb-ntpc-2026-passport-size-photo-resizer" className="px-2.5 py-1 rounded-md bg-zinc-900/80 hover:text-emerald-400 border border-zinc-800/80">
               Railway NTPC &rarr;
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Dynamic Multi-Category Tabs */}
+      {/* Dynamic Multi-Category Filter Tabs */}
       <section className="max-w-6xl mx-auto px-4 mb-6">
         <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {[
@@ -425,7 +437,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Multi-Colored Tools Grid */}
+      {/* Tools Display Grid */}
       <main className="max-w-6xl mx-auto px-4 py-4 space-y-10">
         {searchQuery.trim() !== '' ? (
           <section className="space-y-4">
@@ -436,18 +448,19 @@ export default function HomePage() {
 
             {filteredTools.length === 0 ? (
               <div className="p-12 text-center bg-zinc-900/60 border border-zinc-800 rounded-2xl text-zinc-400 text-sm">
-                No tools found matching "{searchQuery}".
+                No tools found matching &quot;{searchQuery}&quot;.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredTools.map((tool) => (
-                  <UnifiedToolCard key={tool.id} tool={tool} />
+                  <UnifiedToolCard key={tool.slug} tool={tool} />
                 ))}
               </div>
             )}
           </section>
         ) : (
           <>
+            {/* Featured Section (Shown on 'All' Tab) */}
             {selectedCategory === 'all' && (
               <section className="space-y-4">
                 <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
@@ -461,12 +474,13 @@ export default function HomePage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {popularTools.map((tool) => (
-                    <UnifiedToolCard key={`featured-${tool.id}`} tool={tool} isFeatured />
+                    <UnifiedToolCard key={`featured-${tool.slug}`} tool={tool} isFeatured />
                   ))}
                 </div>
               </section>
             )}
 
+            {/* All Tools Section */}
             <section className="space-y-4">
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
                 <h2 className="text-lg font-black text-white flex items-center gap-2">
@@ -480,14 +494,14 @@ export default function HomePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredTools.map((tool) => (
-                  <UnifiedToolCard key={tool.id} tool={tool} />
+                  <UnifiedToolCard key={tool.slug} tool={tool} />
                 ))}
               </div>
             </section>
           </>
         )}
 
-        {/* Telegram Conversion */}
+        {/* Telegram Community Conversion */}
         <TelegramBanner />
       </main>
     </div>
