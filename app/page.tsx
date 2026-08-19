@@ -11,7 +11,6 @@ import {
   ArrowRight, 
   Zap, 
   FileText, 
-  ShieldCheck, 
   GraduationCap, 
   Image as ImageIcon, 
   FileCheck, 
@@ -23,183 +22,197 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-interface FormiloTool {
+interface UnifiedTool {
   id: string;
-  title: string;
+  slug: string;
+  name: string;
   description: string;
-  category: 'exam' | 'photo' | 'signature' | 'pdf' | 'converter';
-  badge?: string;
-  sizeBadge: string;
-  href: string;
+  category: 'photo' | 'signature' | 'pdf' | 'image' | 'exam';
+  badge: string;
+  targetKB?: number;
+  dimensions?: string;
   isPopular?: boolean;
 }
 
-const CORE_PRIORITY_TOOLS: FormiloTool[] = [
+// 1. High-Priority Core & Utility Tools (Multi-Colored)
+const CORE_TOOLS: UnifiedTool[] = [
   {
     id: 'name-date-photo',
-    title: 'Name & Date on Photo (DOP / DOB) Generator',
+    slug: '/name-date-on-photo',
+    name: 'Name & Date on Photo (DOP / DOB) Generator',
     description: 'Add candidate name and photo date strip on passport photo strictly under 50 KB for SSC, RRB & Police forms.',
     category: 'photo',
     badge: 'NEW 2026',
-    sizeBadge: '< 50 KB',
-    href: '/name-date-on-photo',
+    targetKB: 50,
+    dimensions: '350 × 450 px',
     isPopular: true,
   },
   {
     id: 'pan-photo',
-    title: 'PAN Card Photo Resizer (213 x 213 px)',
-    description: 'Resize passport photo to exact 213x213 px and 300 DPI for NSDL and UTIITSL portal forms.',
+    slug: '/exam/pan-card-photo-resizer',
+    name: 'PAN Card Photo Resizer (213 x 213 px)',
+    description: 'Resize passport photo to exact 213x213 px and 300 DPI for NSDL and UTIITSL online portal forms.',
     category: 'exam',
-    badge: 'POPULAR',
-    sizeBadge: '< 50 KB',
-    href: '/exam/pan-card-photo-resizer',
+    badge: 'PAN NSDL',
+    targetKB: 50,
+    dimensions: '213 × 213 px',
     isPopular: true,
   },
   {
     id: 'pan-signature',
-    title: 'PAN Card Signature Resizer (400 x 200 px)',
-    description: 'Compress signature to exact 400x200 px, 300 DPI and under 30 KB with crisp white background.',
+    slug: '/exam/pan-card-signature-resizer',
+    name: 'PAN Card Signature Resizer (400 x 200 px)',
+    description: 'Compress signature to exact 400x200 px, 300 DPI and under 30 KB with sharp black & white contrast.',
     category: 'signature',
-    badge: 'POPULAR',
-    sizeBadge: '< 30 KB',
-    href: '/exam/pan-card-signature-resizer',
+    badge: 'PAN NSDL',
+    targetKB: 30,
+    dimensions: '400 × 200 px',
     isPopular: true,
   },
   {
     id: 'photo-20kb',
-    title: 'Photo Resize to 20 KB',
-    description: 'Compress and resize photos strictly under 20 KB for official government application forms.',
+    slug: '/exam/photo-resize-under-20kb',
+    name: 'Photo Resize to 20 KB',
+    description: 'Compress and resize passport photos strictly under 20 KB for official government application portals.',
     category: 'photo',
     badge: 'POPULAR',
-    sizeBadge: '< 20 KB',
-    href: '/exam/photo-resize-under-20kb',
+    targetKB: 20,
+    dimensions: '350 × 450 px',
     isPopular: true,
   },
   {
     id: 'photo-50kb',
-    title: 'Photo Resize to 50 KB',
-    description: 'Resize and compress photos to under 50 KB while maintaining high visual clarity.',
+    slug: '/exam/photo-resize-under-50kb',
+    name: 'Photo Resize to 50 KB',
+    description: 'Resize and compress photos under 50 KB while maintaining crisp facial clarity without blur.',
     category: 'photo',
     badge: 'POPULAR',
-    sizeBadge: '< 50 KB',
-    href: '/exam/photo-resize-under-50kb',
+    targetKB: 50,
+    dimensions: '350 × 450 px',
     isPopular: true,
   },
   {
     id: 'signature-20kb',
-    title: 'Signature Resize to 20 KB',
-    description: 'Resize scanned signature photos to under 20 KB with sharp contrast and clean white background.',
+    slug: '/exam/ssc-gd-signature',
+    name: 'Signature Resize to 20 KB',
+    description: 'Resize scanned signature photos strictly under 20 KB with sharp contrast on clean white background.',
     category: 'signature',
     badge: 'POPULAR',
-    sizeBadge: '< 20 KB',
-    href: '/exam/ssc-gd-signature',
+    targetKB: 20,
+    dimensions: '280 × 120 px',
     isPopular: true,
   },
   {
     id: 'nielit-ccc',
-    title: 'NIELIT CCC Exam Photo & Sign Resizer',
+    slug: '/exam/nielit-ccc-photo-resizer',
+    name: 'NIELIT CCC Exam Photo & Sign Resizer',
     description: 'Format CCC form photos to 132x170 px and signature to 170x132 px (10 KB – 20 KB).',
     category: 'exam',
-    badge: 'EXAM',
-    sizeBadge: '10-20 KB',
-    href: '/exam/nielit-ccc-photo-resizer',
+    badge: 'NIELIT',
+    targetKB: 20,
+    dimensions: '132 × 170 px',
     isPopular: true,
   },
   {
     id: 'watermark-remover',
-    title: 'Online Watermark & Stamp Remover',
-    description: 'Erase unwanted watermarks, dates, stamps, and text from photos using browser inpainting.',
+    slug: '/exam/photo-watermark-remover',
+    name: 'Online Watermark & Stamp Remover',
+    description: 'Erase unwanted watermarks, dates, stamps, and text from photos using browser inpainting technology.',
     category: 'photo',
     badge: 'SMART TOOL',
-    sizeBadge: 'AUTO',
-    href: '/exam/photo-watermark-remover',
+    targetKB: 100,
     isPopular: true,
   },
   {
     id: 'jpg-to-pdf',
-    title: 'JPG to PDF Converter',
+    slug: '/cyber-cafe',
+    name: 'JPG to PDF Converter',
     description: 'Combine multiple JPG, PNG, or WebP images into a single professional PDF document.',
     category: 'pdf',
     badge: 'PRO',
-    sizeBadge: 'FAST',
-    href: '/cyber-cafe',
+    targetKB: 500,
     isPopular: true,
   },
   {
     id: 'pdf-to-jpg',
-    title: 'PDF to JPG Converter',
-    description: 'Extract PDF document pages into high-resolution JPG images directly in RAM.',
-    category: 'converter',
+    slug: '/cyber-cafe',
+    name: 'PDF to JPG Converter',
+    description: 'Extract PDF document pages into high-resolution JPG images directly inside browser RAM.',
+    category: 'image',
     badge: 'FAST',
-    sizeBadge: 'HD',
-    href: '/cyber-cafe',
     isPopular: true,
   },
   {
     id: 'pdf-compressor',
-    title: 'PDF Compressor (< 200 KB)',
-    description: 'Compress large PDF certificates and marksheets strictly under 200 KB / 500 KB for uploads.',
+    slug: '/cyber-cafe',
+    name: 'PDF Compressor (< 200 KB)',
+    description: 'Compress large PDF certificates, marksheets, and caste documents strictly under 200 KB.',
     category: 'pdf',
     badge: 'SAFE',
-    sizeBadge: '< 200 KB',
-    href: '/cyber-cafe',
+    targetKB: 200,
+    isPopular: true,
   },
 ];
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'exam' | 'photo' | 'pdf' | 'signature' | 'converter'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Dynamically merge core tools with all 280+ presets from JSON
-  const allTools = useMemo<FormiloTool[]>(() => {
-    const rawExamPresets: FormiloTool[] = (examToolsData || []).map((item: any) => {
-      const isSign = item.slug.includes('signature') || item.slug.includes('sign');
-      const isThumb = item.slug.includes('thumb');
-      const cat: 'exam' | 'photo' | 'signature' = isSign ? 'signature' : isThumb ? 'signature' : 'exam';
+  // Combined 330+ Tools Dataset
+  const allTools = useMemo<UnifiedTool[]>(() => {
+    const rawPresets: UnifiedTool[] = (examToolsData || []).map((item: any) => {
+      const lowerSlug = (item.slug || '').toLowerCase();
+      const isSign = lowerSlug.includes('signature') || lowerSlug.includes('sign');
+      const isThumb = lowerSlug.includes('thumb');
+      const isPostcard = lowerSlug.includes('postcard') || lowerSlug.includes('4x6');
+      
+      let cat: 'photo' | 'signature' | 'pdf' | 'image' | 'exam' = 'exam';
+      if (isSign || isThumb) cat = 'signature';
+      else if (isPostcard) cat = 'photo';
 
       return {
         id: item.slug,
-        title: item.title || item.name,
+        slug: `/exam/${item.slug}`,
+        name: item.title || item.name,
         description: item.description || `Compress and format ${item.title} strictly under ${item.targetKB || 50} KB for official application portals.`,
         category: cat,
-        badge: item.board || 'EXAM',
-        sizeBadge: `< ${item.targetKB || 50} KB`,
-        href: `/exam/${item.slug}`,
+        badge: item.board || (isSign ? 'SIGNATURE' : isThumb ? 'THUMB' : 'EXAM PRESET'),
+        targetKB: item.targetKB || (isSign ? 20 : isThumb ? 20 : isPostcard ? 200 : 50),
+        dimensions: item.dimensions || (isSign ? '280 × 120 px' : isThumb ? '240 × 240 px' : '350 × 450 px'),
         isPopular: false,
       };
     });
 
-    // Remove duplicates if any
-    const existingSlugs = new Set(CORE_PRIORITY_TOOLS.map((t) => t.id));
-    const filteredPresets = rawExamPresets.filter((p) => !existingSlugs.has(p.id));
+    // Merge Core Tools + Presets avoiding duplicates
+    const coreSlugs = new Set(CORE_TOOLS.map((t) => t.id));
+    const uniquePresets = rawPresets.filter((p) => !coreSlugs.has(p.id));
 
-    return [...CORE_PRIORITY_TOOLS, ...filteredPresets];
+    return [...CORE_TOOLS, ...uniquePresets];
   }, []);
 
-  // Category counts calculated directly from complete dataset
-  const counts = useMemo(() => {
-    return {
-      all: allTools.length,
-      exam: allTools.filter((t) => t.category === 'exam').length,
-      photo: allTools.filter((t) => t.category === 'photo').length,
-      signature: allTools.filter((t) => t.category === 'signature').length,
-      pdf: allTools.filter((t) => t.category === 'pdf').length,
-      converter: allTools.filter((t) => t.category === 'converter').length,
-    };
-  }, [allTools]);
+  // Category counts
+  const totalCount = allTools.length;
+  const examCount = allTools.filter((t) => t.category === 'exam').length;
+  const photoCount = allTools.filter((t) => t.category === 'photo').length;
+  const signatureCount = allTools.filter((t) => t.category === 'signature').length;
+  const pdfCount = allTools.filter((t) => t.category === 'pdf').length;
+  const imageCount = allTools.filter((t) => t.category === 'image').length;
 
-  // Search & Category Filter
+  // Filtered tools based on search and tab
   const filteredTools = useMemo(() => {
     return allTools.filter((tool) => {
-      const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
-        tool.title.toLowerCase().includes(q) ||
+        tool.name.toLowerCase().includes(q) ||
         tool.description.toLowerCase().includes(q) ||
-        tool.sizeBadge.toLowerCase().includes(q);
+        tool.badge.toLowerCase().includes(q) ||
+        (tool.dimensions && tool.dimensions.toLowerCase().includes(q));
 
-      return matchesCategory && matchesSearch;
+      const matchesCategory =
+        selectedCategory === 'all' || tool.category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
     });
   }, [allTools, searchQuery, selectedCategory]);
 
@@ -207,85 +220,74 @@ export default function HomePage() {
     return allTools.filter((t) => t.isPopular);
   }, [allTools]);
 
+  const quickPresets = [
+    { label: '⚡ Photo < 20 KB', query: '20 KB', color: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10' },
+    { label: '✍️ Signature < 20 KB', query: 'Signature', color: 'border-cyan-500/40 text-cyan-400 bg-cyan-500/10' },
+    { label: '📅 Name & Date (DOP)', query: 'Name Date', color: 'border-amber-500/40 text-amber-400 bg-amber-500/10' },
+    { label: '🪪 PAN Card 213x213', query: 'PAN', color: 'border-blue-500/40 text-blue-400 bg-blue-500/10' },
+    { label: '📄 JPG to PDF', query: 'PDF', color: 'border-rose-500/40 text-rose-400 bg-rose-500/10' },
+    { label: '📦 Compress 50 KB', query: '50 KB', color: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10' },
+  ];
+
   return (
-    <div className="w-full min-h-screen bg-[#050505] text-zinc-100 pb-16">
-      
+    <div className="min-h-screen bg-[#050505] text-zinc-100 selection:bg-emerald-500 selection:text-black">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[380px] bg-emerald-500/10 blur-[150px] pointer-events-none -z-10" />
+
       {/* Hero Section */}
-      <section className="relative px-4 pt-12 pb-8 max-w-5xl mx-auto text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium shadow-lg shadow-emerald-950/40">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>100% Client-Side Engine &bull; {allTools.length}+ Live Online Tools &bull; Zero Server Upload</span>
+      <section className="max-w-6xl mx-auto px-4 pt-12 pb-6 text-center space-y-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/10">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>100% Client-Side Engine &bull; {totalCount}+ Live Online Tools &bull; Zero Server Upload</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
-          Every Online Form File,<br />
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
+          Every Online Form File, <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
             Resized &amp; Formatted in Seconds
           </span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+        <p className="max-w-2xl mx-auto text-xs sm:text-sm text-zinc-400 leading-relaxed">
           Instant government exam presets, exact KB size reducers, Name &amp; Date generators, watermark removers, and multi-page PDF conversion tools.
         </p>
 
-        {/* Live Search Bar */}
+        {/* Search Bar */}
         <div className="max-w-2xl mx-auto space-y-3 pt-2">
-          <div className="relative flex items-center">
-            <Search className="w-5 h-5 text-zinc-500 absolute left-4 pointer-events-none" />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Search across ${allTools.length}+ tools (e.g. Name Date, PAN, SSC, 20 KB photo, UPSC)...`}
-              className="w-full pl-12 pr-4 py-3.5 bg-zinc-950/90 border border-zinc-800 focus:border-emerald-500 rounded-2xl text-xs sm:text-sm text-white placeholder-zinc-500 shadow-xl focus:outline-none transition-all"
+              placeholder={`Search across ${totalCount}+ tools (e.g. Name Date, PAN, SSC, 20 KB photo, UPSC)...`}
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-zinc-900/90 border-2 border-zinc-800 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20 text-white placeholder-zinc-500 text-sm font-medium outline-none transition shadow-2xl"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 text-xs font-mono text-zinc-500 hover:text-white cursor-pointer"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-500 hover:text-white cursor-pointer"
               >
                 CLEAR
               </button>
             )}
           </div>
 
-          {/* Quick Tag Shortcuts */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-medium pt-1">
-            <button
-              onClick={() => setSearchQuery('photo 20 kb')}
-              className="px-2.5 py-1 rounded-lg bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-900/50 transition-all cursor-pointer"
-            >
-              ⚡ Photo &lt; 20 KB
-            </button>
-            <button
-              onClick={() => setSearchQuery('signature')}
-              className="px-2.5 py-1 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50 transition-all cursor-pointer"
-            >
-              ✍️ Signature &lt; 20 KB
-            </button>
-            <button
-              onClick={() => setSearchQuery('name date')}
-              className="px-2.5 py-1 rounded-lg bg-amber-950/50 border border-amber-500/30 text-amber-300 hover:bg-amber-900/50 transition-all cursor-pointer"
-            >
-              📅 Name &amp; Date (DOP)
-            </button>
-            <button
-              onClick={() => setSearchQuery('pan')}
-              className="px-2.5 py-1 rounded-lg bg-blue-950/50 border border-blue-500/30 text-blue-300 hover:bg-blue-900/50 transition-all cursor-pointer"
-            >
-              🪪 PAN Card 213x213
-            </button>
-            <button
-              onClick={() => setSearchQuery('50 kb')}
-              className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all cursor-pointer"
-            >
-              📦 Compress 50 KB
-            </button>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            {quickPresets.map((preset, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setSearchQuery(preset.query)}
+                className={`text-xs px-3 py-1 rounded-xl border font-semibold transition-all hover:scale-105 cursor-pointer ${preset.color}`}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Cyber Cafe & CSC Quick Hub */}
+      {/* Cyber Cafe & CSC Desk Hub */}
       <section className="max-w-5xl mx-auto px-4 my-6">
         <div className="p-6 sm:p-7 rounded-3xl bg-[#0c0d0e] border border-zinc-800/90 relative overflow-hidden shadow-2xl">
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -337,199 +339,212 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Dynamic Category Navigation Tabs */}
-      <section className="max-w-5xl mx-auto px-4 mt-8 space-y-6">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          <button
-            onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
-              selectedCategory === 'all'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>All Tools</span>
-            <span className="px-1.5 py-0.2 text-[10px] rounded-md bg-black/20 font-mono">{counts.all}</span>
-          </button>
-
-          <button
-            onClick={() => { setSelectedCategory('exam'); setSearchQuery(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
-              selectedCategory === 'exam'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Exam Presets</span>
-            <span className="px-1.5 py-0.2 text-[10px] rounded-md bg-zinc-800 font-mono text-zinc-300">{counts.exam}</span>
-          </button>
-
-          <button
-            onClick={() => { setSelectedCategory('photo'); setSearchQuery(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
-              selectedCategory === 'photo'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span>Photo Resizers</span>
-            <span className="px-1.5 py-0.2 text-[10px] rounded-md bg-zinc-800 font-mono text-zinc-300">{counts.photo}</span>
-          </button>
-
-          <button
-            onClick={() => { setSelectedCategory('signature'); setSearchQuery(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
-              selectedCategory === 'signature'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <PenTool className="w-3.5 h-3.5" />
-            <span>Signatures</span>
-            <span className="px-1.5 py-0.2 text-[10px] rounded-md bg-zinc-800 font-mono text-zinc-300">{counts.signature}</span>
-          </button>
-
-          <button
-            onClick={() => { setSelectedCategory('pdf'); setSearchQuery(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
-              selectedCategory === 'pdf'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>PDF Suite</span>
-            <span className="px-1.5 py-0.2 text-[10px] rounded-md bg-zinc-800 font-mono text-zinc-300">{counts.pdf}</span>
-          </button>
-
-          <button
-            onClick={() => { setSelectedCategory('converter'); setSearchQuery(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all cursor-pointer ${
-              selectedCategory === 'converter'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <FileCheck className="w-3.5 h-3.5" />
-            <span>Converters</span>
-            <span className="px-1.5 py-0.2 text-[10px] rounded-md bg-zinc-800 font-mono text-zinc-300">{counts.converter}</span>
-          </button>
+      {/* Dynamic Multi-Category Tabs */}
+      <section className="max-w-6xl mx-auto px-4 mb-6">
+        <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {[
+            { id: 'all', label: '🔥 All Tools', count: totalCount },
+            { id: 'exam', label: '🪪 Exam Presets', count: examCount },
+            { id: 'photo', label: '📸 Photo Resizers', count: photoCount },
+            { id: 'signature', label: '✍️ Signatures', count: signatureCount },
+            { id: 'pdf', label: '📄 PDF Suite', count: pdfCount },
+            { id: 'image', label: '🔄 Converters', count: imageCount },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                setSelectedCategory(cat.id);
+                setSearchQuery('');
+              }}
+              className={`text-xs px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                selectedCategory === cat.id
+                  ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 scale-105'
+                  : 'bg-zinc-900/90 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+              }`}
+            >
+              <span>{cat.label}</span>
+              <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ${
+                selectedCategory === cat.id ? 'bg-black text-emerald-400' : 'bg-zinc-800 text-emerald-400 border border-zinc-700'
+              }`}>
+                {cat.count}
+              </span>
+            </button>
+          ))}
         </div>
+      </section>
 
-        {/* Featured Section (when on 'All') */}
-        {selectedCategory === 'all' && !searchQuery && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-              <div className="flex items-center gap-2 text-sm font-bold text-white">
-                <Flame className="w-4 h-4 text-emerald-400 fill-emerald-400" />
-                <span>Featured &amp; Most Used Tools</span>
+      {/* Multi-Colored Tools Grid */}
+      <main className="max-w-6xl mx-auto px-4 py-4 space-y-10">
+        {searchQuery.trim() !== '' ? (
+          <section className="space-y-4">
+            <h2 className="text-lg font-black text-white flex items-center gap-2">
+              <Search className="w-5 h-5 text-emerald-400" />
+              Search Results ({filteredTools.length})
+            </h2>
+
+            {filteredTools.length === 0 ? (
+              <div className="p-12 text-center bg-zinc-900/60 border border-zinc-800 rounded-2xl text-zinc-400 text-sm">
+                No tools found matching "{searchQuery}".
               </div>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
-                TOP 10
-              </span>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredTools.map((tool) => (
+                  <UnifiedToolCard key={tool.id} tool={tool} />
+                ))}
+              </div>
+            )}
+          </section>
+        ) : (
+          <>
+            {selectedCategory === 'all' && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-emerald-400 fill-emerald-400" /> 
+                    Featured &amp; Most Used Tools
+                  </h2>
+                  <span className="text-xs text-emerald-400 font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    Top 10
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {popularTools.map((tool) => (
+                    <UnifiedToolCard key={`featured-${tool.id}`} tool={tool} isFeatured />
+                  ))}
+                </div>
+              </section>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {popularTools.map((tool) => (
-                <ToolCard key={`featured-${tool.id}`} tool={tool} />
-              ))}
-            </div>
-          </div>
+            <section className="space-y-4">
+              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                <h2 className="text-lg font-black text-white flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
+                  {selectedCategory === 'all' ? 'All Verified Formilo Tools' : `${selectedCategory.toUpperCase()} Tools`}
+                </h2>
+                <span className="text-xs text-zinc-400 font-mono">
+                  {filteredTools.length} Available
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredTools.map((tool) => (
+                  <UnifiedToolCard key={tool.id} tool={tool} />
+                ))}
+              </div>
+            </section>
+          </>
         )}
-
-        {/* Main Tools Grid */}
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-            <div className="flex items-center gap-2 text-sm font-bold text-white">
-              <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
-              <span>
-                {searchQuery ? `Search Results (${filteredTools.length})` : selectedCategory === 'all' ? `All Available Tools (${filteredTools.length})` : `${selectedCategory.toUpperCase()} Tools (${filteredTools.length})`}
-              </span>
-            </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              {filteredTools.length} Available
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredTools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
-            ))}
-          </div>
-
-          {filteredTools.length === 0 && (
-            <div className="p-12 text-center rounded-3xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <p className="text-sm font-bold text-zinc-300">No matching tool found for "{searchQuery}"</p>
-              <p className="text-xs text-zinc-500">Try searching for "Name Date", "PAN", "Photo", or "SSC".</p>
-              <button
-                onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-black text-xs font-bold cursor-pointer"
-              >
-                Reset Search
-              </button>
-            </div>
-          )}
-        </div>
 
         {/* Telegram Conversion */}
         <TelegramBanner />
-      </section>
+      </main>
     </div>
   );
 }
 
-function ToolCard({ tool }: { tool: FormiloTool }) {
+function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?: boolean }) {
+  const getTheme = () => {
+    switch (tool.category) {
+      case 'exam':
+        return {
+          cardBorder: 'hover:border-amber-500/70 hover:shadow-amber-500/10',
+          iconBg: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+          icon: <GraduationCap className="w-5 h-5" />,
+          badge: 'bg-amber-500/15 text-amber-300 border border-amber-500/40',
+          titleHover: 'group-hover:text-amber-300',
+          btnText: 'text-amber-400',
+          accentBar: 'bg-amber-500',
+        };
+      case 'pdf':
+        return {
+          cardBorder: 'hover:border-rose-500/70 hover:shadow-rose-500/10',
+          iconBg: 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+          icon: <FileText className="w-5 h-5" />,
+          badge: 'bg-rose-500/15 text-rose-300 border border-rose-500/40',
+          titleHover: 'group-hover:text-rose-300',
+          btnText: 'text-rose-400',
+          accentBar: 'bg-rose-500',
+        };
+      case 'signature':
+        return {
+          cardBorder: 'hover:border-cyan-500/70 hover:shadow-cyan-500/10',
+          iconBg: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
+          icon: <PenTool className="w-5 h-5" />,
+          badge: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
+          titleHover: 'group-hover:text-cyan-300',
+          btnText: 'text-cyan-400',
+          accentBar: 'bg-cyan-500',
+        };
+      case 'image':
+        return {
+          cardBorder: 'hover:border-violet-500/70 hover:shadow-violet-500/10',
+          iconBg: 'bg-violet-500/15 text-violet-400 border border-violet-500/30',
+          icon: <RefreshCw className="w-5 h-5" />,
+          badge: 'bg-violet-500/15 text-violet-300 border border-violet-500/40',
+          titleHover: 'group-hover:text-violet-300',
+          btnText: 'text-violet-400',
+          accentBar: 'bg-violet-500',
+        };
+      case 'photo':
+      default:
+        return {
+          cardBorder: 'hover:border-emerald-500/70 hover:shadow-emerald-500/10',
+          iconBg: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+          icon: tool.id.includes('name-date') ? <Calendar className="w-5 h-5 text-amber-400" /> : <ImageIcon className="w-5 h-5" />,
+          badge: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40',
+          titleHover: 'group-hover:text-emerald-300',
+          btnText: 'text-emerald-400',
+          accentBar: 'bg-emerald-500',
+        };
+    }
+  };
+
+  const theme = getTheme();
+
   return (
     <Link
-      href={tool.href}
-      className="p-5 rounded-2xl bg-[#0c0d0e] border border-zinc-800/80 hover:border-emerald-500/60 transition-all duration-200 flex flex-col justify-between gap-4 group shadow-lg hover:shadow-emerald-950/30"
+      href={tool.slug}
+      className={`group relative p-5 rounded-2xl bg-[#121215] border-2 border-zinc-800/90 transition-all duration-200 shadow-xl flex flex-col justify-between overflow-hidden ${theme.cardBorder}`}
     >
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
-            {tool.category === 'signature' ? (
-              <PenTool className="w-4 h-4" />
-            ) : tool.category === 'pdf' ? (
-              <FileText className="w-4 h-4" />
-            ) : tool.category === 'exam' ? (
-              <GraduationCap className="w-4 h-4" />
-            ) : tool.id.includes('name-date') ? (
-              <Calendar className="w-4 h-4 text-amber-400" />
-            ) : (
-              <ImageIcon className="w-4 h-4" />
-            )}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${theme.accentBar} opacity-60 group-hover:opacity-100 transition-opacity`} />
+
+      <div>
+        <div className="flex items-start justify-between gap-2">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${theme.iconBg}`}>
+            {theme.icon}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {tool.badge && (
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase ${
-                tool.badge === 'NEW 2026'
-                  ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
-                  : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-              }`}>
-                {tool.badge}
+          <div className="flex flex-wrap items-center gap-1.5 justify-end">
+            <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-lg ${theme.badge}`}>
+              {tool.badge}
+            </span>
+
+            {tool.targetKB && (
+              <span className="text-[11px] font-black px-2 py-0.5 rounded-lg bg-zinc-800 text-white border border-zinc-700">
+                &lt; {tool.targetKB >= 1000 ? `${tool.targetKB / 1000} MB` : `${tool.targetKB} KB`}
               </span>
             )}
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-300">
-              {tool.sizeBadge}
-            </span>
           </div>
         </div>
 
-        <h3 className="font-bold text-white text-sm sm:text-base group-hover:text-emerald-400 transition-colors leading-snug">
-          {tool.title}
+        <h3 className={`text-base sm:text-lg font-bold text-white mt-4 leading-snug transition-colors line-clamp-1 ${theme.titleHover}`}>
+          {tool.name}
         </h3>
-        <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+
+        <p className="text-xs text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed font-normal">
           {tool.description}
         </p>
+
+        {tool.dimensions && (
+          <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-300 px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-700/80">
+            <span>Dimensions: {tool.dimensions}</span>
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 group-hover:text-emerald-400 pt-2 border-t border-zinc-900 transition-colors">
+      <div className={`mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold ${theme.btnText}`}>
         <span>Open Tool</span>
-        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
       </div>
     </Link>
   );
