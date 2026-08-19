@@ -3,8 +3,9 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import Link from 'next/link';
+import TopShareBar from '@/components/TopShareBar';
 import TelegramBanner from '@/components/TelegramBanner';
-import { FileText, ShieldCheck, Zap, Sparkles } from 'lucide-react';
+import { FileText, ShieldCheck, Sparkles, Send } from 'lucide-react';
 import './globals.css';
 
 const inter = Inter({
@@ -28,47 +29,10 @@ export const metadata: Metadata = {
   },
   description:
     'Free online document resizer for SSC, UPSC, Railway, State PSC, and Banking forms. Compress photos and signatures strictly under 20 KB / 50 KB directly in your browser without uploading to any server.',
-  keywords: [
-    'photo resizer for govt exam',
-    'ssc signature resizer 20kb',
-    'upsc document compressor 50kb',
-    'formilo exam tool',
-    'sarkari exam photo compressor',
-    'online image resizer in kb',
-  ],
-  authors: [{ name: 'Formilo Team' }],
-  creator: 'Formilo',
-  publisher: 'Formilo',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'en_IN',
-    url: 'https://formilo-jzcl.vercel.app',
-    title: 'Formilo — 1-Click Govt Exam Document Resizer',
-    description:
-      'Compress photos and signatures to exact KB requirements for SSC, UPSC, RRB, and state police exams directly inside your browser.',
-    siteName: 'Formilo',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Formilo — 1-Click Govt Exam Document Resizer',
-    description:
-      'Instant in-browser document compressor for all competitive exam applications.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
 };
 
@@ -100,7 +64,7 @@ export default function RootLayout({
           }}
         />
 
-        {/* Google AdSense (Auto Ads) */}
+        {/* Google AdSense */}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6761614725350917"
@@ -109,7 +73,10 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#050505] text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-black">
-        {/* Top Navbar */}
+        {/* Top Viral Share Bar (WhatsApp + Copy URL) */}
+        <TopShareBar />
+
+        {/* Main Navbar */}
         <header className="sticky top-0 z-50 w-full border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
           <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5 group">
@@ -141,20 +108,18 @@ export default function RootLayout({
                 href="https://t.me/formilo_alerts_hub"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-bold px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black transition-all active:scale-95 shadow-md shadow-emerald-500/20"
+                className="text-xs font-bold px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black transition-all active:scale-95 shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
               >
-                Telegram Alerts
+                <Send className="w-3.5 h-3.5" />
+                <span>Telegram</span>
               </Link>
             </nav>
           </div>
         </header>
 
-        {/* Main Content Area */}
+        {/* Content */}
         <main className="flex-1 w-full flex flex-col">
           {children}
-          
-          {/* Telegram Viral Conversion Banner */}
-          <TelegramBanner />
         </main>
 
         {/* Global Footer */}
@@ -166,26 +131,16 @@ export default function RootLayout({
               </p>
               <p className="text-[11px] text-zinc-500 flex items-center justify-center sm:justify-start gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                Files are processed locally in RAM. No photos or signatures are uploaded or stored.
+                Files are processed locally in RAM. No photos or signatures are uploaded.
               </p>
             </div>
 
             <div className="flex items-center gap-4 text-zinc-400 font-medium">
-              <Link href="/" className="hover:text-emerald-400 transition-colors">
-                Home
-              </Link>
+              <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
               <span>•</span>
-              <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
-                Privacy Policy
-              </Link>
+              <Link href="/cyber-cafe" className="hover:text-emerald-400 transition-colors">Cyber Cafe</Link>
               <span>•</span>
-              <Link href="/terms" className="hover:text-emerald-400 transition-colors">
-                Terms of Service
-              </Link>
-              <span>•</span>
-              <Link href="/contact" className="hover:text-emerald-400 transition-colors">
-                Contact
-              </Link>
+              <Link href="/privacy" className="hover:text-emerald-400 transition-colors">Privacy</Link>
             </div>
           </div>
         </footer>
