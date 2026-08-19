@@ -5,6 +5,7 @@ import Script from 'next/script';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TopShareBar from '@/components/TopShareBar';
 
 const inter = Inter({ subsets: ['latin'] });
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
@@ -76,10 +77,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
 
-        {/* Official Google Analytics (GA4) Integration */}
+        {/* Google Analytics GA4 */}
         <Script
           async
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
@@ -100,7 +100,7 @@ export default function RootLayout({
           }}
         />
 
-        {/* Official Google AdSense Integration */}
+        {/* Google AdSense */}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5180587791480026"
@@ -109,6 +109,8 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} min-h-screen bg-[#09090b] text-zinc-100 antialiased flex flex-col justify-between`}>
+        {/* Global Top Viral Share Bar */}
+        <TopShareBar />
         <Navbar />
         <main className="flex-1">
           {children}
