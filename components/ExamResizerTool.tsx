@@ -12,8 +12,10 @@ import {
   Sliders, 
   ZoomIn, 
   Move, 
+  RotateCw,
   Sparkles,
-  Crop
+  Crop,
+  Maximize2
 } from 'lucide-react';
 
 interface PresetProps {
@@ -34,19 +36,17 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
   const [originalSize, setOriginalSize] = useState<number | null>(null);
   const [outputSize, setOutputSize] = useState<number | null>(null);
   
-  // Interactive Tool Adjustments
-  const [quality, setQuality] = useState<number>(0.85);
+  // Default Settings: Natural Contain (No auto zoom, No cutoff)
+  const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
   const [zoom, setZoom] = useState<number>(1.0);
+  const [rotation, setRotation] = useState<number>(0);
   const [panX, setPanX] = useState<number>(0);
   const [panY, setPanY] = useState<number>(0);
-  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
-  const [enhanceSign, setEnhanceSign] = useState<boolean>(
-    preset.slug.includes('signature') || preset.slug.includes('sign')
-  );
+  const [quality, setQuality] = useState<number>(0.88);
+  const [enhanceSign, setEnhanceSign] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const isSignature = preset.slug.includes('signature') || preset.slug.includes('sign');
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +63,10 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
       img.src = src;
       img.onload = () => {
         setImageElement(img);
+        // Reset to full natural view on new upload
+        setFitMode('contain');
         setZoom(1.0);
+        setRotation(0);
         setPanX(0);
         setPanY(0);
       };
@@ -91,9 +94,15 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, targetW, targetH);
 
-    // 2. Aspect Ratio Math to PREVENT Distortion/Stretching
-    const imgW = imageElement.naturalWidth;
-    const imgH = imageElement.naturalHeight;
+    // 2. Center Origin for Rotation and Scaling
+    ctx.save();
+    ctx.translate(targetW / 2 + panX, targetH / 2 + panY);
+    ctx.rotate((rotation * Math.PI) / 180);
+
+    const isRotated90 = rotation % 180 !== 0;
+    const imgW = isRotated90 ? imageElement.naturalHeight : imageElement.naturalWidth;
+    const imgH = isRotated90 ? imageElement.naturalWidth : imageElement.naturalHeight;
+
     const imgRatio = imgW / imgH;
     const targetRatio = targetW / targetH;
 
@@ -101,6 +110,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     let drawH = targetH;
 
     if (fitMode === 'contain') {
+      // Natural Fit: Shows 100% of the photo without any crop
       if (imgRatio > targetRatio) {
         drawW = targetW * zoom;
         drawH = (targetW / imgRatio) * zoom;
@@ -109,7 +119,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
         drawW = (targetH * imgRatio) * zoom;
       }
     } else {
-      // Cover (Crop without distortion)
+      // Cover: Fills the entire passport box
       if (imgRatio > targetRatio) {
         drawH = targetH * zoom;
         drawW = targetH * imgRatio * zoom;
@@ -119,20 +129,20 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
       }
     }
 
-    const drawX = (targetW - drawW) / 2 + panX;
-    const drawY = (targetH - drawH) / 2 + panY;
-
-    // 3. Signature & Contrast Enhancement Filter
+    // 3. Contrast Filter if enabled
     if (enhanceSign) {
-      ctx.filter = 'contrast(1.7) brightness(1.05) grayscale(1)';
+      ctx.filter = 'contrast(1.8) brightness(1.05) grayscale(1)';
     } else {
       ctx.filter = 'none';
     }
 
-    ctx.drawImage(imageElement, drawX, drawY, drawW, drawH);
-    ctx.filter = 'none';
+    // Draw from center
+    const actualW = isRotated90 ? drawH : drawW;
+    const actualH = isRotated90 ? drawW : drawH;
+    ctx.drawImage(imageElement, -actualW / 2, -actualH / 2, actualW, actualH);
+    ctx.restore();
 
-    // 4. Target KB Compression Loop
+    // 4. Strict Under KB Enforcement
     let q = quality;
     let dataUrl = canvas.toDataURL('image/jpeg', q);
     let calculatedKB = (dataUrl.length * 3) / 4 / 1024;
@@ -146,13 +156,17 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
     setProcessedImage(dataUrl);
     setOutputSize(Math.round(calculatedKB * 10) / 10);
     setIsProcessing(false);
-  }, [imageElement, preset, fitMode, zoom, panX, panY, enhanceSign, quality]);
+  }, [imageElement, preset, fitMode, zoom, rotation, panX, panY, enhanceSign, quality]);
 
   useEffect(() => {
     if (imageElement) {
       renderCanvas();
     }
   }, [imageElement, renderCanvas]);
+
+  const handleRotate = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
 
   const handleReset = () => {
     setSelectedImage(null);
@@ -201,7 +215,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               Click or Drag to Upload {preset.docType}
             </p>
             <p className="text-xs text-zinc-400 max-w-sm">
-              Smart auto-crop prevents image stretching &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
+              Loads 100% full photo cleanly &bull; Target: {preset.minKB} KB – {preset.maxKB} KB
             </p>
           </div>
           <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/20">
@@ -223,7 +237,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               </div>
             </div>
 
-            {/* Formatted Output Preview (Distortion Free) */}
+            {/* Formatted Output Preview */}
             <div className="space-y-2 text-center">
               <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400 flex items-center justify-center gap-1">
                 <CheckCircle className="w-3.5 h-3.5" /> Formatted ({outputSize} KB / {preset.dimensions.width}x{preset.dimensions.height}PX)
@@ -239,39 +253,49 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
             </div>
           </div>
 
-          {/* Interactive Anti-Distortion & Alignment Controls */}
+          {/* Quick Adjustment Options Toolbar */}
           <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
               <span className="font-bold text-white flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-emerald-400" /> Alignment &amp; Clean Crop Controls
+                <Sliders className="w-3.5 h-3.5 text-emerald-400" /> Image Adjustments (Optional)
               </span>
 
-              {/* Mode Switcher */}
-              <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+              {/* View Presets */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => { setFitMode('contain'); setZoom(1.0); setPanX(0); setPanY(0); }}
+                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      fitMode === 'contain' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Full Natural View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setFitMode('cover'); }}
+                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      fitMode === 'cover' ? 'bg-emerald-500 text-black shadow-sm' : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Auto Fill &amp; Crop
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setFitMode('cover')}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                    fitMode === 'cover' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
-                  }`}
+                  onClick={handleRotate}
+                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  Auto Fill &amp; Center
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFitMode('contain')}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                    fitMode === 'contain' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Fit Entire Image
+                  <RotateCw className="w-3 h-3 text-emerald-400" />
+                  <span>Rotate 90&deg;</span>
                 </button>
               </div>
             </div>
 
-            {/* Sliders Grid */}
+            {/* Custom Sliders for Fine-Tuning */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 text-xs">
-              {/* Zoom Slider */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-zinc-400">
                   <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3 text-emerald-400" /> Zoom Scale</span>
@@ -288,7 +312,6 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
                 />
               </div>
 
-              {/* Pan Horizontal */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-zinc-400">
                   <span className="flex items-center gap-1"><Move className="w-3 h-3 text-cyan-400" /> Shift X (Left/Right)</span>
@@ -305,7 +328,6 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
                 />
               </div>
 
-              {/* Pan Vertical */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-zinc-400">
                   <span className="flex items-center gap-1"><Move className="w-3 h-3 text-cyan-400" /> Shift Y (Up/Down)</span>
@@ -323,7 +345,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
               </div>
             </div>
 
-            {/* Signature Background Whitener Checkbox */}
+            {/* Signature Shadow Cleaner */}
             {isSignature && (
               <div className="pt-2 border-t border-zinc-900 flex items-center justify-between">
                 <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300 cursor-pointer">
@@ -335,7 +357,7 @@ export default function ExamResizerTool({ preset }: { preset: PresetProps }) {
                   />
                   <span className="flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    Clean Mobile Camera Shadow (Pure White Paper &amp; Dark Ink)
+                    Clean Mobile Camera Shadow (Pure White Background &amp; Dark Ink)
                   </span>
                 </label>
               </div>
