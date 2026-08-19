@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { TOOLS } from '@/lib/tools';
 import examToolsData from '@/data/exam-presets.json';
+import CyberCafeHub from '@/components/CyberCafeHub';
 
 interface UnifiedTool {
   id: string;
@@ -36,7 +37,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Combined dataset: Core Tools (169+) + Programmatic Exam Tools (160+) = 330+ Tools
+  // Combined dataset (330+ Tools)
   const allTools = useMemo<UnifiedTool[]>(() => {
     const coreList: UnifiedTool[] = (TOOLS || []).map((t) => ({
       id: t.id || t.slug,
@@ -76,7 +77,6 @@ export default function HomePage() {
     return [...coreList, ...examList];
   }, []);
 
-  // Category counts
   const totalCount = allTools.length;
   const examCount = allTools.filter((t) => t.category === 'exam' || t.badge === 'Exam Preset').length;
   const photoCount = allTools.filter((t) => t.category === 'photo').length;
@@ -84,7 +84,6 @@ export default function HomePage() {
   const signatureCount = allTools.filter((t) => t.category === 'signature').length;
   const imageCount = allTools.filter((t) => t.category === 'image').length;
 
-  // Filter tools based on search and category
   const filteredTools = useMemo(() => {
     return allTools.filter((tool) => {
       const matchesSearch =
@@ -118,11 +117,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-emerald-500 selection:text-black">
-      {/* Background Neon Ambient Lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[380px] bg-emerald-500/10 blur-[150px] pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-4 pt-12 pb-8 text-center space-y-6">
+      <section className="max-w-6xl mx-auto px-4 pt-12 pb-6 text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/10">
           <Sparkles className="w-3.5 h-3.5" />
           <span>100% Client-Side Engine • {totalCount}+ Live Online Tools • Zero Server Upload</span>
@@ -152,7 +150,6 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Quick Preset Pills */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             {quickPresets.map((preset, idx) => (
               <button
@@ -167,6 +164,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Cyber Cafe & CSC Center Quick Hub Section */}
+      <CyberCafeHub />
 
       {/* Category Tabs */}
       <section className="max-w-6xl mx-auto px-4 mb-6">
@@ -204,8 +204,6 @@ export default function HomePage() {
 
       {/* Main Tools Grid */}
       <main className="max-w-6xl mx-auto px-4 py-4 space-y-10">
-        
-        {/* Search Results Display */}
         {searchQuery.trim() !== '' ? (
           <section className="space-y-4">
             <h2 className="text-lg font-black text-white flex items-center gap-2">
@@ -215,7 +213,7 @@ export default function HomePage() {
 
             {filteredTools.length === 0 ? (
               <div className="p-12 text-center bg-zinc-900/60 border border-zinc-800 rounded-2xl text-zinc-400 text-sm">
-                No tools found matching "{searchQuery}". Try searching "20 KB", "signature", or "SSC".
+                No tools found matching "{searchQuery}".
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,7 +225,6 @@ export default function HomePage() {
           </section>
         ) : (
           <>
-            {/* Featured & Most Used Section */}
             {selectedCategory === 'all' && (
               <section className="space-y-4">
                 <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
@@ -247,7 +244,6 @@ export default function HomePage() {
               </section>
             )}
 
-            {/* Dynamic Grid by Category */}
             <section className="space-y-4">
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
                 <h2 className="text-lg font-black text-white flex items-center gap-2">
@@ -267,13 +263,11 @@ export default function HomePage() {
             </section>
           </>
         )}
-
       </main>
     </div>
   );
 }
 
-// ── UNIFIED HIGH-CONTRAST TOOL CARD ──────────────────────────────────────────
 function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?: boolean }) {
   const getTheme = () => {
     switch (tool.category) {
