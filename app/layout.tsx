@@ -17,6 +17,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
+  manifest: '/manifest.json',
   title: {
     default: 'Formilo — Free Online Photo, Signature & PDF Tools',
     template: '%s | Formilo',
@@ -74,6 +75,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        {/* Web App Manifest for PWA & Install Support */}
+        <link rel="manifest" href="/manifest.json" />
+
         {/* Official Google AdSense Integration */}
         <Script
           async
