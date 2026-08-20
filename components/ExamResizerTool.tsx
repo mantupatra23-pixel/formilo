@@ -73,8 +73,8 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reliable Native Android File Ingestion
-  const processIncomingFile = (file: File) => {
+  // Reliable Multi-Platform Image Loader
+  const handleIncomingFile = (file: File) => {
     if (!file) return;
 
     setErrorMessage(null);
@@ -89,21 +89,29 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
 
     const format = getImageFormat(file);
     if (format === 'HEIC') {
-      setErrorMessage('HEIC format is not supported. Please upload a standard JPG or PNG.');
+      setErrorMessage('HEIC format is not supported. Please choose a JPG or PNG photo.');
       return;
     }
 
     setSelectedFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = objectUrl;
-    img.onload = () => {
-      setSourceImage(img);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = dataUrl;
+      img.onload = () => {
+        setSourceImage(img);
+      };
+      img.onerror = () => {
+        setErrorMessage('Failed to decode this photo. Please try another image.');
+      };
     };
-    img.onerror = () => {
-      setErrorMessage('Failed to read image file from storage.');
+    reader.onerror = () => {
+      setErrorMessage('Failed to read file from storage.');
     };
+    reader.readAsDataURL(file);
   };
 
   const drawToCanvas = useCallback(
@@ -288,19 +296,22 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       )}
 
       {!selectedFile ? (
-        <div className="relative w-full py-12 px-4 rounded-3xl border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 bg-zinc-950/50 transition-all flex flex-col items-center justify-center text-center space-y-3 cursor-pointer overflow-hidden group">
-          
-          {/* Native Touch-Target Overlay for 100% Reliable Android Google Photos Picker */}
+        <label
+          htmlFor="exam-file-input"
+          className="relative w-full py-12 px-4 rounded-3xl border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 bg-zinc-950/50 transition-all flex flex-col items-center justify-center text-center space-y-3 cursor-pointer select-none group"
+        >
+          {/* Native Semantic File Input with Wildcard image/* */}
           <input
+            id="exam-file-input"
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/jpg"
+            accept="image/*"
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
-                processIncomingFile(e.target.files[0]);
-                e.target.value = ''; // Reset input
+                handleIncomingFile(e.target.files[0]);
+                e.target.value = '';
               }
             }}
-            className="absolute inset-0 w-full h-full opacity-0 z-30 cursor-pointer"
+            className="hidden"
           />
 
           <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/30 group-hover:scale-105 transition-transform pointer-events-none">
@@ -316,13 +327,10 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
             </p>
           </div>
 
-          <button
-            type="button"
-            className="mt-2 px-5 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs pointer-events-none"
-          >
+          <span className="mt-2 px-5 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs pointer-events-none">
             Select Document
-          </button>
-        </div>
+          </span>
+        </label>
       ) : (
         <div className="space-y-6">
           <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-4">

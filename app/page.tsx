@@ -35,7 +35,7 @@ export interface UnifiedTool {
   isPopular?: boolean;
 }
 
-// 1. Core High-Demand & Featured Utilities
+// 1. Core High-Demand & Featured Utilities (Fixed Dedicated Routes)
 const CORE_TOOLS: UnifiedTool[] = [
   {
     id: 'name-date-photo-generator',
@@ -127,7 +127,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'jpg-to-pdf-converter',
-    slug: '/cyber-cafe',
+    slug: '/tools/jpg-to-pdf-converter',
     name: 'JPG to PDF Converter',
     description: 'Combine multiple JPG, PNG, or WebP images into a single professional PDF document.',
     category: 'pdf',
@@ -138,7 +138,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'pdf-to-jpg-converter',
-    slug: '/cyber-cafe',
+    slug: '/tools/pdf-to-jpg-converter',
     name: 'PDF to JPG Converter',
     description: 'Extract PDF document pages into high-resolution JPG images directly inside browser RAM.',
     category: 'converter',
@@ -148,7 +148,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'pdf-compressor-under-200kb',
-    slug: '/cyber-cafe',
+    slug: '/tools/pdf-compressor-under-200kb',
     name: 'PDF Compressor (< 200 KB)',
     description: 'Compress large PDF certificates, marksheets, and caste documents strictly under 200 KB.',
     category: 'pdf',
@@ -172,7 +172,7 @@ export default function HomePage() {
       toolMap.set(tool.slug.toLowerCase().trim(), tool);
     });
 
-    // 2. Track Base Exams to prevent 4x multiplication
+    // 2. Track Base Exams to prevent duplicate variants
     const seenExamBases = new Set<string>();
     const rawList = Array.isArray(examToolsData) ? examToolsData : [];
 
@@ -183,7 +183,7 @@ export default function HomePage() {
         .trim();
 
       if (!baseSlug || seenExamBases.has(baseSlug)) {
-        return; // SKIP: Exam already formatted into variants!
+        return;
       }
       seenExamBases.add(baseSlug);
 
@@ -335,6 +335,7 @@ export default function HomePage() {
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
               >
@@ -383,6 +384,7 @@ export default function HomePage() {
                 <span>Bookmark on PC</span>
               </Link>
               <button
+                type="button"
                 onClick={() => { setSelectedCategory('exam'); setSearchQuery(''); }}
                 className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
               >
@@ -423,6 +425,7 @@ export default function HomePage() {
           ].map((cat) => (
             <button
               key={cat.id}
+              type="button"
               onClick={() => {
                 setSelectedCategory(cat.id);
                 setSearchQuery('');
@@ -621,4 +624,3 @@ function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?:
     </Link>
   );
 }
-
