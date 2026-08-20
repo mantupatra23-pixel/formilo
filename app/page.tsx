@@ -19,7 +19,8 @@ import {
   Calendar,
   SlidersHorizontal,
   RefreshCw,
-  X
+  X,
+  Fingerprint
 } from 'lucide-react';
 
 export interface UnifiedTool {
@@ -34,7 +35,7 @@ export interface UnifiedTool {
   isPopular?: boolean;
 }
 
-// 1. Core High-Demand & Featured Tools
+// 1. Core High-Demand & Featured Utilities
 const CORE_TOOLS: UnifiedTool[] = [
   {
     id: 'name-date-photo-generator',
@@ -52,7 +53,7 @@ const CORE_TOOLS: UnifiedTool[] = [
     slug: '/exam/pan-card-photo-resizer',
     name: 'PAN Card Photo Resizer (213 x 213 px)',
     description: 'Resize passport photo to exact 213x213 px and 300 DPI for NSDL and UTIITSL online portal forms.',
-    category: 'exam',
+    category: 'photo',
     badge: 'PAN NSDL',
     targetKB: 50,
     dimensions: '213 × 213 px',
@@ -115,10 +116,10 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'online-watermark-stamp-remover',
-    slug: '/tools/online-watermark-stamp-remover',
+    slug: '/exam/photo-watermark-remover',
     name: 'Online Watermark & Stamp Remover',
     description: 'Erase unwanted watermarks, dates, stamps, and text from photos using browser inpainting technology.',
-    category: 'photo',
+    category: 'converter',
     badge: 'SMART TOOL',
     targetKB: 100,
     dimensions: 'Auto Clean',
@@ -126,7 +127,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'jpg-to-pdf-converter',
-    slug: '/tools/jpg-to-pdf-converter',
+    slug: '/cyber-cafe',
     name: 'JPG to PDF Converter',
     description: 'Combine multiple JPG, PNG, or WebP images into a single professional PDF document.',
     category: 'pdf',
@@ -137,7 +138,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'pdf-to-jpg-converter',
-    slug: '/tools/pdf-to-jpg-converter',
+    slug: '/cyber-cafe',
     name: 'PDF to JPG Converter',
     description: 'Extract PDF document pages into high-resolution JPG images directly inside browser RAM.',
     category: 'converter',
@@ -147,7 +148,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'pdf-compressor-under-200kb',
-    slug: '/tools/pdf-compressor-under-200kb',
+    slug: '/cyber-cafe',
     name: 'PDF Compressor (< 200 KB)',
     description: 'Compress large PDF certificates, marksheets, and caste documents strictly under 200 KB.',
     category: 'pdf',
@@ -162,7 +163,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Strict 1-Pass Unique Exam Generator (0% Duplicate Guarantee)
+  // Format-Wise & Deduplicated Registry Matrix
   const allTools = useMemo<UnifiedTool[]>(() => {
     const toolMap = new Map<string, UnifiedTool>();
 
@@ -171,8 +172,8 @@ export default function HomePage() {
       toolMap.set(tool.slug.toLowerCase().trim(), tool);
     });
 
-    // 2. Track unique exam bases so each exam is processed only ONCE
-    const processedExams = new Set<string>();
+    // 2. Track Base Exams to prevent 4x multiplication
+    const seenExamBases = new Set<string>();
     const rawList = Array.isArray(examToolsData) ? examToolsData : [];
 
     rawList.forEach((item: any) => {
@@ -181,10 +182,10 @@ export default function HomePage() {
         .replace(/-(passport-size-photo-resizer|passport-photo|photo-resizer|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|under-20kb|under-50kb|20kb|50kb|resizer)$/gi, '')
         .trim();
 
-      if (!baseSlug || processedExams.has(baseSlug)) {
-        return; // SKIP: Already processed this exam!
+      if (!baseSlug || seenExamBases.has(baseSlug)) {
+        return; // SKIP: Exam already formatted into variants!
       }
-      processedExams.add(baseSlug);
+      seenExamBases.add(baseSlug);
 
       const rawTitle = String(item.title || item.name || '')
         .replace(/(Passport Size Photo|Photo|Signature|Left Thumb|Postcard Size Photo).*/i, '')
@@ -192,12 +193,13 @@ export default function HomePage() {
       const examTitle = rawTitle || baseSlug.replace(/-/g, ' ').toUpperCase();
       const board = item.badge || item.board || 'EXAM';
 
-      const variants = [
+      // 4 Standard Format-Wise Presets Per Exam
+      const formatVariants = [
         {
           suffix: 'passport-size-photo-resizer',
           name: `${examTitle} Passport Size Photo Resizer`,
           desc: `Free online passport size photo resizer for ${examTitle}. Compress strictly between 20 KB to 50 KB (350x450 px).`,
-          cat: 'exam' as const,
+          cat: 'photo' as const,
           badge: board,
           kb: 50,
           dim: '350 × 450 px',
@@ -231,7 +233,7 @@ export default function HomePage() {
         },
       ];
 
-      variants.forEach((v) => {
+      formatVariants.forEach((v) => {
         const fullSlug = `/exam/${baseSlug}-${v.suffix}`;
         if (!toolMap.has(fullSlug)) {
           toolMap.set(fullSlug, {
@@ -252,15 +254,15 @@ export default function HomePage() {
     return Array.from(toolMap.values());
   }, []);
 
-  // Category counts
+  // Format Category Counters
   const totalCount = allTools.length;
-  const examCount = allTools.filter((t) => t.category === 'exam').length;
+  const examCount = allTools.filter((t) => t.badge !== 'PRO' && t.badge !== 'SAFE' && t.badge !== 'FAST').length;
   const photoCount = allTools.filter((t) => t.category === 'photo').length;
   const signatureCount = allTools.filter((t) => t.category === 'signature').length;
   const pdfCount = allTools.filter((t) => t.category === 'pdf').length;
   const converterCount = allTools.filter((t) => t.category === 'converter').length;
 
-  // Filtered tools
+  // Format-Wise Filter Logic
   const filteredTools = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
@@ -275,7 +277,7 @@ export default function HomePage() {
       if (!matchesSearch) return false;
 
       if (selectedCategory === 'all') return true;
-      if (selectedCategory === 'exam') return tool.category === 'exam';
+      if (selectedCategory === 'exam') return tool.badge !== 'PRO' && tool.badge !== 'SAFE' && tool.badge !== 'FAST';
       if (selectedCategory === 'photo') return tool.category === 'photo';
       if (selectedCategory === 'signature') return tool.category === 'signature';
       if (selectedCategory === 'pdf') return tool.category === 'pdf';
@@ -306,7 +308,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 pt-10 pb-6 text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/10">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>100% Client-Side Engine &bull; {totalCount}+ Live Unique Tools &bull; Zero Server Upload</span>
+          <span>100% Client-Side Engine &bull; {totalCount}+ Unique Tools &bull; Zero Server Upload</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
@@ -408,7 +410,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Category Tabs */}
+      {/* Format-Wise Category Switcher Tabs */}
       <section className="max-w-6xl mx-auto px-4 mb-6">
         <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {[
@@ -442,7 +444,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tools Grid */}
+      {/* Main Grid Section */}
       <main className="max-w-6xl mx-auto px-4 py-4 space-y-10">
         {searchQuery.trim() !== '' ? (
           <section className="space-y-4">
@@ -456,7 +458,7 @@ export default function HomePage() {
                 No tools found matching &quot;{searchQuery}&quot;.
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                 {filteredTools.map((tool) => (
                   <UnifiedToolCard key={tool.slug} tool={tool} />
                 ))}
@@ -477,7 +479,7 @@ export default function HomePage() {
                     Top 10
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                   {popularTools.map((tool) => (
                     <UnifiedToolCard key={`featured-${tool.slug}`} tool={tool} isFeatured />
                   ))}
@@ -485,7 +487,7 @@ export default function HomePage() {
               </section>
             )}
 
-            {/* All Tools Section */}
+            {/* Format-Wise Tools Section */}
             <section className="space-y-4">
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
                 <h2 className="text-lg font-black text-white flex items-center gap-2">
@@ -497,7 +499,7 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                 {filteredTools.map((tool) => (
                   <UnifiedToolCard key={tool.slug} tool={tool} />
                 ))}
@@ -539,7 +541,7 @@ function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?:
         return {
           cardBorder: 'hover:border-cyan-500/70 hover:shadow-cyan-500/10',
           iconBg: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
-          icon: <PenTool className="w-5 h-5" />,
+          icon: tool.badge === 'THUMB' ? <Fingerprint className="w-5 h-5" /> : <PenTool className="w-5 h-5" />,
           badge: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
           titleHover: 'group-hover:text-cyan-300',
           btnText: 'text-cyan-400',
@@ -574,7 +576,7 @@ function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?:
   return (
     <Link
       href={tool.slug}
-      className={`group relative p-5 rounded-2xl bg-[#121215] border-2 border-zinc-800/90 transition-all duration-200 shadow-xl flex flex-col justify-between overflow-hidden ${theme.cardBorder}`}
+      className={`group relative p-5 rounded-2xl bg-[#0c0d0e] border border-zinc-800 transition-all duration-200 shadow-xl flex flex-col justify-between overflow-hidden ${theme.cardBorder}`}
     >
       <div className={`absolute top-0 left-0 right-0 h-1 ${theme.accentBar} opacity-60 group-hover:opacity-100 transition-opacity`} />
 
@@ -590,14 +592,14 @@ function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?:
             </span>
 
             {tool.targetKB && (
-              <span className="text-[11px] font-black px-2 py-0.5 rounded-lg bg-zinc-800 text-white border border-zinc-700">
+              <span className="text-[11px] font-black px-2 py-0.5 rounded-lg bg-zinc-900 text-white border border-zinc-800">
                 &lt; {tool.targetKB >= 1000 ? `${tool.targetKB / 1000} MB` : `${tool.targetKB} KB`}
               </span>
             )}
           </div>
         </div>
 
-        <h3 className={`text-base sm:text-lg font-bold text-white mt-4 leading-snug transition-colors line-clamp-1 ${theme.titleHover}`}>
+        <h3 className={`text-base font-bold text-white mt-4 leading-snug transition-colors line-clamp-1 ${theme.titleHover}`}>
           {tool.name}
         </h3>
 
@@ -606,16 +608,17 @@ function UnifiedToolCard({ tool, isFeatured }: { tool: UnifiedTool; isFeatured?:
         </p>
 
         {tool.dimensions && (
-          <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-300 px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-700/80">
+          <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-400 px-2 py-0.5 rounded-md bg-black border border-zinc-800">
             <span>Dimensions: {tool.dimensions}</span>
           </div>
         )}
       </div>
 
-      <div className={`mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold ${theme.btnText}`}>
+      <div className={`mt-5 pt-3 border-t border-zinc-850 flex items-center justify-between text-xs font-bold ${theme.btnText}`}>
         <span>Open Tool</span>
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
       </div>
     </Link>
   );
 }
+
