@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import TelegramBanner from '@/components/TelegramBanner';
 import ExamResizerTool from '@/components/ExamResizerTool';
+import PanCardPhotoChecker from '@/components/PanCardPhotoChecker';
 import { getToolBySlug } from '@/lib/toolsData';
 import { 
   Zap, 
@@ -10,8 +11,7 @@ import {
   ArrowRight, 
   ShieldCheck, 
   FileCheck, 
-  HelpCircle,
-  Lock
+  Lock 
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -43,7 +43,7 @@ export interface ExamPresetConfig {
 function resolveExamPreset(rawSlug: string): ExamPresetConfig {
   const cleanSlug = decodeURIComponent(rawSlug || 'govt-exam-photo').toLowerCase().trim();
   
-  // 1. Check if exact tool exists in verified registry
+  // 1. Exact match from verified registry
   const matchedTool = getToolBySlug(cleanSlug);
 
   // 2. Target KB Detection
@@ -211,7 +211,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${preset.examName} ${preset.docType} Resizer (Strictly < ${preset.targetKB} KB) - Formilo`,
     description: `Free online ${preset.docType.toLowerCase()} resizer for ${preset.examName} conducted by ${preset.boardName}. Compress strictly between ${preset.minKB} KB to ${preset.targetKB} KB with ${preset.dimensionText}. 100% private in-browser tool.`,
     alternates: {
-      canonical: `https://formilo.vercel.app/exam/${preset.slug}`,
+      canonical: `https://formilo-jzcl.vercel.app/exam/${preset.slug}`,
     },
     openGraph: {
       title: `${preset.examName} ${preset.docType} Resizer`,
@@ -224,6 +224,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
   const preset = resolveExamPreset(slug);
+
+  // Check if current page is the PAN Card Photo Resizer
+  const isPanPhotoTool = preset.slug === 'pan-card-photo-resizer' || preset.slug.includes('pan-card-photo');
 
   const relatedFormats = [
     { title: `${preset.examName} Passport Photo`, slug: `${preset.baseSlug}-passport-size-photo-resizer`, sizeText: '< 50 KB' },
@@ -268,8 +271,12 @@ export default async function ExamPage({ params }: PageProps) {
           </span>
         </div>
 
-        {/* Interactive Resizer Engine */}
-        <ExamResizerTool preset={preset} config={preset} />
+        {/* Interactive Engine: PAN Photo Checker vs Generic Exam Resizer */}
+        {isPanPhotoTool ? (
+          <PanCardPhotoChecker />
+        ) : (
+          <ExamResizerTool preset={preset} config={preset} />
+        )}
 
         {/* Bottom Ad Container */}
         <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
