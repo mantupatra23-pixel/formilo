@@ -9,14 +9,14 @@ import {
   ZoomIn, 
   RotateCw, 
   AlertTriangle, 
-  CheckCircle2,
-  Trash2,
-  Maximize2,
-  Minimize2,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight
+  CheckCircle2, 
+  Trash2, 
+  Maximize2, 
+  Minimize2, 
+  ChevronUp, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight 
 } from 'lucide-react';
 import { compressImageToTarget, getImageFormat } from '@/lib/imageCompression';
 
@@ -70,18 +70,13 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
     initialPanY: 0,
   });
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleDropzoneClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-      fileInputRef.current.click();
-    }
-  };
+  // Reliable Native Android File Ingestion
+  const processIncomingFile = (file: File) => {
+    if (!file) return;
 
-  const handleFileChange = (file: File) => {
     setErrorMessage(null);
     setProcessedUrl(null);
     setProcessedBlob(null);
@@ -107,7 +102,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       setSourceImage(img);
     };
     img.onerror = () => {
-      setErrorMessage('Failed to read image file.');
+      setErrorMessage('Failed to read image file from storage.');
     };
   };
 
@@ -202,7 +197,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = setTimeout(() => {
         triggerCompression();
-      }, 200);
+      }, 150);
     }
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -264,24 +259,11 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
     setZoom(1);
     setRotation(0);
     setFitMode('contain');
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div className="w-full bg-[#0c0d0e] border border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-6">
       
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="image/jpeg,image/png,image/webp,image/jpg"
-        onChange={(e) => {
-          if (e.target.files && e.target.files[0]) {
-            handleFileChange(e.target.files[0]);
-          }
-        }}
-        className="hidden"
-      />
-
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-black/70 rounded-2xl border border-zinc-800 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -306,14 +288,26 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
       )}
 
       {!selectedFile ? (
-        <div
-          onClick={handleDropzoneClick}
-          className="w-full py-12 px-4 rounded-3xl border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 bg-zinc-950/50 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/30">
+        <div className="relative w-full py-12 px-4 rounded-3xl border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 bg-zinc-950/50 transition-all flex flex-col items-center justify-center text-center space-y-3 cursor-pointer overflow-hidden group">
+          
+          {/* Native Touch-Target Overlay for 100% Reliable Android Google Photos Picker */}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/jpg"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                processIncomingFile(e.target.files[0]);
+                e.target.value = ''; // Reset input
+              }
+            }}
+            className="absolute inset-0 w-full h-full opacity-0 z-30 cursor-pointer"
+          />
+
+          <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/30 group-hover:scale-105 transition-transform pointer-events-none">
             <UploadCloud className="w-7 h-7" />
           </div>
-          <div className="space-y-1">
+
+          <div className="space-y-1 pointer-events-none">
             <p className="text-sm sm:text-base font-bold text-white">
               Tap to Choose Photo or Document
             </p>
@@ -321,6 +315,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
               HD Auto-Framing for {examName} • JPG, PNG
             </p>
           </div>
+
           <button
             type="button"
             className="mt-2 px-5 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs pointer-events-none"
@@ -348,7 +343,6 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
               </div>
             </div>
 
-            {/* Viewport Canvas with crisp CSS rendering */}
             <div 
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -361,7 +355,6 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
                   aspectRatio: `${targetWidth} / ${targetHeight}`,
                   maxHeight: '260px',
                   maxWidth: '100%',
-                  imageRendering: 'crisp-edges',
                 }}
                 className="object-contain rounded-lg shadow-2xl border-2 border-emerald-500/60 bg-white"
               />
@@ -378,7 +371,6 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
               )}
             </div>
 
-            {/* Controls */}
             <div className="space-y-3 pt-1">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400">
@@ -400,6 +392,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
                 <button
+                  type="button"
                   onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
                   className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border ${
                     fitMode === 'contain'
@@ -412,31 +405,25 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                  className="py-2 px-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
+                  className="py-2 px-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 flex items-center justify-center gap-1 transition-colors"
                 >
                   <RotateCw className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Rotate 90°</span>
                 </button>
 
                 <div className="grid grid-cols-4 col-span-2 gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
-                  <button onClick={() => nudge(0, -15)} title="Move Up" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => nudge(0, 15)} title="Move Down" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => nudge(-15, 0)} title="Move Left" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => nudge(15, 0)} title="Move Right" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center">
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <button type="button" onClick={() => nudge(0, -15)} title="Move Up" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center"><ChevronUp className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => nudge(0, 15)} title="Move Down" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center"><ChevronDown className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => nudge(-15, 0)} title="Move Left" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => nudge(15, 0)} title="Move Right" className="py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300 flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 pt-3">
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="p-3 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors shrink-0"
                 >
@@ -444,6 +431,7 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleDownload}
                   disabled={!processedBlob || isProcessing}
                   className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-[0.98]"
