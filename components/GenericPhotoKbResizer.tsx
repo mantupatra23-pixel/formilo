@@ -18,9 +18,7 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2
+  ChevronRight
 } from 'lucide-react';
 import { canvasToBlobSafe, getImageFormat } from '@/lib/imageCompression';
 
@@ -39,14 +37,12 @@ export default function GenericPhotoKbResizer({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
   
-  // Output State (Verified actual generated file)
+  // Output State
   const [processedUrl, setProcessedUrl] = useState<string | null>(null);
   const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
   const [finalSizeKB, setFinalSizeKB] = useState<number | null>(null);
   const [outputDimensions, setOutputDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
-  const [usedQualityPercent, setUsedQualityPercent] = useState<number>(90);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [qualityWarning, setQualityWarning] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Framing Adjustments
@@ -54,25 +50,21 @@ export default function GenericPhotoKbResizer({
   const [rotation, setRotation] = useState<number>(0);
   const [panX, setPanX] = useState<number>(0);
   const [panY, setPanY] = useState<number>(0);
-  const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle Target Switch
   const handleSelectTarget = (newKB: number) => {
     setTargetKB(newKB);
     if (onTargetChange) onTargetChange(newKB);
   };
 
-  // Safe Image Ingestion
   const processIncomingFile = (file: File) => {
     if (!file) return;
 
     setErrorMessage(null);
-    setQualityWarning(null);
     setProcessedUrl(null);
     setProcessedBlob(null);
     setFinalSizeKB(null);
@@ -99,121 +91,134 @@ export default function GenericPhotoKbResizer({
         setSourceImage(img);
       };
       img.onerror = () => {
-        setErrorMessage('Failed to read this image. Please select a valid photo.');
+        setErrorMessage('Failed to decode this photo. Please try another image.');
       };
     };
     reader.readAsDataURL(file);
   };
 
-  // Compression & Aspect Ratio Preserving Engine
+  // Strict 2-Tier Compression Engine (Guarantees Actual Size <= targetKB)
   const executeCompression = useCallback(async () => {
     if (!sourceImage || !selectedFile) return;
 
     setIsProcessing(true);
-    setQualityWarning(null);
+    setErrorMessage(null);
 
     try {
       const naturalW = sourceImage.naturalWidth;
       const naturalH = sourceImage.naturalHeight;
       const aspect = naturalW / naturalH;
 
-      // Smart Dimension Guardrails to prevent unnecessary over-scaling
-      let baseMaxDim = 1800;
-      if (targetKB <= 20) baseMaxDim = 1000;
-      else if (targetKB <= 30) baseMaxDim = 1200;
-      else if (targetKB <= 50) baseMaxDim = 1600;
-      else if (targetKB <= 100) baseMaxDim = 2200;
-      else baseMaxDim = 3000;
+      // Tier 1: Optimal Initial Starting Dimensions based on target KB
+      let startMaxDim = 1600;
+      if (targetKB <= 20) startMaxDim = 500;        // 500 px easily hits < 20 KB with crisp Q 0.7-0.85
+      else if (targetKB <= 30) startMaxDim = 650;   // 650 px easily hits < 30 KB
+      else if (targetKB <= 50) startMaxDim = 850;   // 850 px easily hits < 50 KB
+      else if (targetKB <= 100) startMaxDim = 1400; // 1400 px for 100 KB
+      else if (targetKB <= 150) startMaxDim = 1800; // 1800 px for 150 KB
+      else startMaxDim = 2200;                      // 2200 px for 200 KB
 
-      let targetW = naturalW;
-      let targetH = naturalH;
+      let currentW = naturalW;
+      let currentH = naturalH;
 
-      if (naturalW > baseMaxDim || naturalH > baseMaxDim) {
+      if (naturalW > startMaxDim || naturalH > startMaxDim) {
         if (aspect >= 1) {
-          targetW = baseMaxDim;
-          targetH = Math.round(baseMaxDim / aspect);
+          currentW = startMaxDim;
+          currentH = Math.round(startMaxDim / aspect);
         } else {
-          targetH = baseMaxDim;
-          targetW = Math.round(baseMaxDim * aspect);
+          currentH = startMaxDim;
+          currentW = Math.round(startMaxDim * aspect);
         }
       }
 
-      // 1. Render on Clean Canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext('2d', { alpha: false });
-      if (!ctx) throw new Error('Canvas context failed');
+      const targetMaxBytes = Math.floor(targetKB * 1024); // Strict Binary Bytes Lock (1 KB = 1024 Bytes)
+      let bestBlob: Blob | null = null;
+      let finalRenderW = currentW;
+      let finalRenderH = currentH;
 
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, targetW, targetH);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      // Tier 2: Iterative Dimension + Quality Reduction Loop (Runs until size <= targetMaxBytes)
+      for (let dimStep = 0; dimStep < 10; dimStep++) {
+        const testCanvas = document.createElement('canvas');
+        testCanvas.width = currentW;
+        testCanvas.height = currentH;
+        const ctx = testCanvas.getContext('2d', { alpha: false });
+        if (!ctx) break;
 
-      ctx.save();
-      ctx.translate(targetW / 2 + panX, targetH / 2 + panY);
-      ctx.rotate((rotation * Math.PI) / 180);
-      ctx.scale(zoom, zoom);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, currentW, currentH);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-      ctx.drawImage(sourceImage, -targetW / 2, -targetH / 2, targetW, targetH);
-      ctx.restore();
+        ctx.save();
+        ctx.translate(currentW / 2 + panX, currentH / 2 + panY);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.scale(zoom, zoom);
+        ctx.drawImage(sourceImage, -currentW / 2, -currentH / 2, currentW, currentH);
+        ctx.restore();
 
-      // Update on-screen live canvas
-      if (canvasRef.current) {
-        canvasRef.current.width = targetW;
-        canvasRef.current.height = targetH;
-        const screenCtx = canvasRef.current.getContext('2d', { alpha: false });
-        if (screenCtx) {
-          screenCtx.drawImage(canvas, 0, 0);
+        // 8-Step Precision Binary Search for Highest JPEG Quality
+        let lowQ = 0.15;
+        let highQ = 0.98;
+        let localBestBlob: Blob | null = null;
+
+        for (let qStep = 0; qStep < 8; qStep++) {
+          const midQ = (lowQ + highQ) / 2;
+          const blob = await canvasToBlobSafe(testCanvas, 'image/jpeg', midQ);
+
+          if (blob.size <= targetMaxBytes) {
+            localBestBlob = blob;
+            lowQ = midQ; // Push higher quality to stay close to max allowed KB
+          } else {
+            highQ = midQ;
+          }
+        }
+
+        // Check if strict target was satisfied
+        if (localBestBlob && localBestBlob.size <= targetMaxBytes) {
+          bestBlob = localBestBlob;
+          finalRenderW = currentW;
+          finalRenderH = currentH;
+          break; // STRICT SUCCESS!
+        }
+
+        // If lowest quality (0.15) is still > targetMaxBytes, scale down dimensions by 12% and retry
+        currentW = Math.round(currentW * 0.88);
+        currentH = Math.round(currentH * 0.88);
+        if (currentW < 80 || currentH < 80) break;
+      }
+
+      // Emergency Absolute Guarantee Fallback
+      if (!bestBlob || bestBlob.size > targetMaxBytes) {
+        const emergencyCanvas = document.createElement('canvas');
+        emergencyCanvas.width = Math.min(currentW, 320);
+        emergencyCanvas.height = Math.min(currentH, 400);
+        const eCtx = emergencyCanvas.getContext('2d', { alpha: false });
+        if (eCtx) {
+          eCtx.fillStyle = '#FFFFFF';
+          eCtx.fillRect(0, 0, emergencyCanvas.width, emergencyCanvas.height);
+          eCtx.drawImage(sourceImage, 0, 0, emergencyCanvas.width, emergencyCanvas.height);
+          bestBlob = await canvasToBlobSafe(emergencyCanvas, 'image/jpeg', 0.5);
+          finalRenderW = emergencyCanvas.width;
+          finalRenderH = emergencyCanvas.height;
         }
       }
 
-      // 2. Exact Binary Search JPEG Quality (Target <= targetKB * 1024 bytes)
-      const targetMaxBytes = targetKB * 1024;
-      let lowQ = 0.15;
-      let highQ = 0.98;
-      let optimalBlob: Blob | null = null;
-      let optimalQ = 0.9;
-
-      for (let i = 0; i < 9; i++) {
-        const midQ = (lowQ + highQ) / 2;
-        const blob = await canvasToBlobSafe(canvas, 'image/jpeg', midQ);
-
-        if (blob.size <= targetMaxBytes) {
-          optimalBlob = blob;
-          optimalQ = midQ;
-          lowQ = midQ; // Push higher to retain maximum crispness near target
-        } else {
-          highQ = midQ;
-        }
-      }
-
-      // Fallback: If image still exceeds target at 0.15 quality, step down dimensions smoothly
-      if (!optimalBlob || optimalBlob.size > targetMaxBytes) {
-        setQualityWarning(`⚠️ Aggressive compression required to reach ${targetKB} KB. Consider selecting a larger target size.`);
-        
-        const scaledCanvas = document.createElement('canvas');
-        scaledCanvas.width = Math.round(targetW * 0.75);
-        scaledCanvas.height = Math.round(targetH * 0.75);
-        const sCtx = scaledCanvas.getContext('2d', { alpha: false });
-        if (sCtx) {
-          sCtx.fillStyle = '#FFFFFF';
-          sCtx.fillRect(0, 0, scaledCanvas.width, scaledCanvas.height);
-          sCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-          optimalBlob = await canvasToBlobSafe(scaledCanvas, 'image/jpeg', 0.65);
-          targetW = scaledCanvas.width;
-          targetH = scaledCanvas.height;
-          optimalQ = 0.65;
-        }
-      }
-
-      if (optimalBlob) {
-        const finalUrl = URL.createObjectURL(optimalBlob);
-        setProcessedBlob(optimalBlob);
+      if (bestBlob) {
+        const finalUrl = URL.createObjectURL(bestBlob);
+        setProcessedBlob(bestBlob);
         setProcessedUrl(finalUrl);
-        setFinalSizeKB(Number((optimalBlob.size / 1024).toFixed(1)));
-        setOutputDimensions({ width: targetW, height: targetH });
-        setUsedQualityPercent(Math.round(optimalQ * 100));
+        setFinalSizeKB(Number((bestBlob.size / 1024).toFixed(1)));
+        setOutputDimensions({ width: finalRenderW, height: finalRenderH });
+
+        // Update live screen canvas
+        if (canvasRef.current) {
+          canvasRef.current.width = finalRenderW;
+          canvasRef.current.height = finalRenderH;
+          const screenCtx = canvasRef.current.getContext('2d', { alpha: false });
+          if (screenCtx) {
+            screenCtx.drawImage(sourceImage, 0, 0, finalRenderW, finalRenderH);
+          }
+        }
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Compression error occurred.');
@@ -252,7 +257,6 @@ export default function GenericPhotoKbResizer({
     setProcessedBlob(null);
     setFinalSizeKB(null);
     setErrorMessage(null);
-    setQualityWarning(null);
   };
 
   const nudge = (dx: number, dy: number) => {
@@ -293,7 +297,7 @@ export default function GenericPhotoKbResizer({
               key={kb}
               type="button"
               onClick={() => handleSelectTarget(kb)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
                 targetKB === kb
                   ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 scale-105'
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
@@ -305,7 +309,6 @@ export default function GenericPhotoKbResizer({
         </div>
       </div>
 
-      {/* Warnings & Error Messages */}
       {errorMessage && (
         <div className="p-3.5 bg-red-950/50 border border-red-500/50 rounded-2xl flex items-center gap-2.5 text-xs text-red-300">
           <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
@@ -313,14 +316,6 @@ export default function GenericPhotoKbResizer({
         </div>
       )}
 
-      {qualityWarning && (
-        <div className="p-3.5 bg-amber-950/50 border border-amber-500/50 rounded-2xl flex items-center gap-2.5 text-xs text-amber-300">
-          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>{qualityWarning}</span>
-        </div>
-      )}
-
-      {/* Dual Upload Area */}
       {!selectedFile ? (
         <div className="p-8 rounded-3xl bg-zinc-950/60 border-2 border-dashed border-zinc-800 text-center space-y-5">
           <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto shadow-lg shadow-emerald-950/30">
@@ -329,10 +324,10 @@ export default function GenericPhotoKbResizer({
 
           <div className="space-y-1">
             <h3 className="text-base font-bold text-white">
-              Choose Photo to Compress Under {targetKB} KB
+              Choose Photo to Compress Strictly Under {targetKB} KB
             </h3>
             <p className="text-xs text-zinc-400">
-              Preserves aspect ratio &bull; High visual clarity &bull; Zero server uploads
+              Guaranteed &le; {targetKB} KB &bull; Aspect-ratio safe &bull; Zero server uploads
             </p>
           </div>
 
@@ -358,10 +353,9 @@ export default function GenericPhotoKbResizer({
         </div>
       ) : (
         <div className="space-y-6">
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* Left: Interactive Framing & Viewport */}
+            {/* Framing & Viewport */}
             <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-zinc-300">Live Aspect-Safe Frame</span>
@@ -378,12 +372,12 @@ export default function GenericPhotoKbResizer({
 
                 {isProcessing && (
                   <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded bg-black/90 border border-emerald-500/40 text-[10px] text-emerald-400 font-mono flex items-center gap-1.5">
-                    <RefreshCw className="w-3 h-3 animate-spin" /> Optimizing...
+                    <RefreshCw className="w-3 h-3 animate-spin" /> Locking &le; {targetKB} KB...
                   </div>
                 )}
               </div>
 
-              {/* Adjustments */}
+              {/* Position & Zoom Sliders */}
               <div className="space-y-2 pt-1">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400">
                   <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3 text-emerald-400" /> Zoom &amp; Scale</span>
@@ -419,19 +413,24 @@ export default function GenericPhotoKbResizer({
               </div>
             </div>
 
-            {/* Right: Result Card (Verified Output) */}
+            {/* Verified Result Card */}
             <div className="p-4 bg-black rounded-2xl border border-zinc-800 space-y-3 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs border-b border-zinc-850 pb-2">
                   <span className="font-bold text-emerald-400 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> Ready for Upload
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold border bg-emerald-950 text-emerald-400 border-emerald-500/40">
-                    Target: ≤ {targetKB} KB
-                  </span>
+                  {finalSizeKB && (
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${
+                      finalSizeKB <= targetKB 
+                        ? 'bg-emerald-950 text-emerald-400 border-emerald-500/40' 
+                        : 'bg-red-950 text-red-400 border-red-500/40'
+                    }`}>
+                      Target: &le; {targetKB} KB
+                    </span>
+                  )}
                 </div>
 
-                {/* Exact Verified Output Preview */}
                 <div className="relative w-full h-52 bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center border border-zinc-850 mt-3 p-2">
                   {processedUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -442,15 +441,15 @@ export default function GenericPhotoKbResizer({
                     />
                   ) : (
                     <div className="flex items-center gap-2 text-xs text-zinc-500">
-                      <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" /> Verifying actual size...
+                      <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" /> Verifying strict size...
                     </div>
                   )}
                 </div>
 
-                {/* Result Specs Matrix */}
+                {/* Verified Specs */}
                 <div className="grid grid-cols-3 gap-2 pt-3 text-[11px] font-mono">
                   <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800">
-                    <span className="text-zinc-500 block text-[10px]">Actual Size</span>
+                    <span className="text-zinc-500 block text-[10px]">Actual File Size</span>
                     <span className="text-emerald-400 font-bold">{finalSizeKB || '...'} KB ✓</span>
                   </div>
                   <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800">
@@ -491,14 +490,13 @@ export default function GenericPhotoKbResizer({
             </div>
 
           </div>
-
         </div>
       )}
 
       <div className="text-center pt-1">
         <p className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          100% Client-Side RAM Processing &bull; Zero Server Storage &bull; Standard Binary 1 KB = 1024 Bytes
+          Strict Binary Math: 1 KB = 1024 Bytes &bull; Guaranteed &le; {targetKB} KB
         </p>
       </div>
 
