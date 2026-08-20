@@ -11,7 +11,10 @@ import {
   ArrowRight, 
   ShieldCheck, 
   FileCheck, 
-  Lock 
+  Lock,
+  HelpCircle,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -43,10 +46,8 @@ export interface ExamPresetConfig {
 function resolveExamPreset(rawSlug: string): ExamPresetConfig {
   const cleanSlug = decodeURIComponent(rawSlug || 'govt-exam-photo').toLowerCase().trim();
   
-  // 1. Exact match from verified registry
   const matchedTool = getToolBySlug(cleanSlug);
 
-  // 2. Target KB Detection
   let targetKB = matchedTool?.targetKB || 50;
   let minKB = matchedTool?.minKB || 20;
 
@@ -67,7 +68,6 @@ function resolveExamPreset(rawSlug: string): ExamPresetConfig {
     minKB = 100;
   }
 
-  // 3. Document Type & Dimension Configuration
   const isSignature = cleanSlug.includes('signature') || cleanSlug.includes('sign');
   const isThumb = cleanSlug.includes('thumb');
   const isPostcard = cleanSlug.includes('postcard') || cleanSlug.includes('4x6');
@@ -148,14 +148,12 @@ function resolveExamPreset(rawSlug: string): ExamPresetConfig {
     dimensionText = '240 × 240 px';
   }
 
-  // 4. Base Slug and Exam Name Parsing
   const baseSlug = cleanSlug
     .replace(/-(passport-size-photo-resizer|passport-photo|photo-resizer|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|handwritten-declaration-resizer|declaration|under-20kb|under-50kb|20kb|50kb|resizer)$/gi, '');
 
   const words = (baseSlug || 'Govt Exam').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1));
   const examName = words.join(' ');
 
-  // 5. Board Name Detection
   const boardName = cleanSlug.includes('odisha') 
     ? 'OPRB' 
     : cleanSlug.includes('maharashtra') 
@@ -225,21 +223,35 @@ export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
   const preset = resolveExamPreset(slug);
 
-  // Check if current page is the PAN Card Photo Resizer
   const isPanPhotoTool = preset.slug === 'pan-card-photo-resizer' || preset.slug.includes('pan-card-photo');
 
   const relatedFormats = [
-    { title: `${preset.examName} Passport Photo`, slug: `${preset.baseSlug}-passport-size-photo-resizer`, sizeText: '< 50 KB' },
-    { title: `${preset.examName} Signature Crop & Compress`, slug: `${preset.baseSlug}-signature-crop-compress`, sizeText: '< 20 KB' },
-    { title: `${preset.examName} Left Thumb Impression`, slug: `${preset.baseSlug}-left-thumb-impression-resizer`, sizeText: '< 20 KB' },
-    { title: `${preset.examName} Postcard Photo (4x6 Inch)`, slug: `${preset.baseSlug}-postcard-size-photo-4x6-resizer`, sizeText: '< 200 KB' },
+    { title: `${preset.examName} Passport Photo`, slug: `${preset.baseSlug}-passport-size-photo-resizer`, sizeText: '< 50 KB', badge: 'EXAM' },
+    { title: `${preset.examName} Signature Crop & Compress`, slug: `${preset.baseSlug}-signature-crop-compress`, sizeText: '< 20 KB', badge: 'SIGN' },
+    { title: `${preset.examName} Left Thumb Impression`, slug: `${preset.baseSlug}-left-thumb-impression-resizer`, sizeText: '< 20 KB', badge: 'THUMB' },
+    { title: `${preset.examName} Postcard Photo (4x6 Inch)`, slug: `${preset.baseSlug}-postcard-size-photo-4x6-resizer`, sizeText: '< 200 KB', badge: '< 200 KB' },
   ].filter(item => item.slug !== preset.slug);
 
+  const faqList = [
+    {
+      q: `What is the official photo & signature file size limit for ${preset.examName}?`,
+      a: `For ${preset.examName}, the allowed file size for ${preset.docType.toLowerCase()} is strictly between ${preset.minKB} KB and ${preset.targetKB} KB in JPG/JPEG format with exact dimensions of ${preset.dimensionText}.`
+    },
+    {
+      q: `Will resizing my photo or signature reduce image clarity or cause rejection?`,
+      a: `No. Formilo uses high-precision bi-cubic step-down downscaling and dynamic quality locking to ensure facial features and ink strokes remain razor sharp while staying strictly under ${preset.targetKB} KB.`
+    },
+    {
+      q: `Is my personal identity document or photo uploaded to any server?`,
+      a: `No. All cropping, aspect framing, and JPEG compression algorithms run 100% locally inside your device RAM using client-side HTML5 Canvas. Zero data is sent to external servers.`
+    }
+  ];
+
   return (
-    <div className="w-full min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
+    <main className="w-full min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* Breadcrumb Navigation */}
+        {/* 1. Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium overflow-x-auto pb-1">
           <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">Home</Link>
           <span>/</span>
@@ -248,7 +260,7 @@ export default async function ExamPage({ params }: PageProps) {
           <span className="text-emerald-400 font-semibold truncate">{preset.examName}</span>
         </nav>
 
-        {/* Header Section */}
+        {/* 2. Header Section with Spec Badge */}
         <div className="space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
@@ -264,29 +276,29 @@ export default async function ExamPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* Top Ad Container */}
+        {/* 3. Top Ad Container */}
         <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
           <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
             Sponsored / Advertisement
           </span>
         </div>
 
-        {/* Interactive Engine: PAN Photo Checker vs Generic Exam Resizer */}
+        {/* 4. Interactive Tool Box */}
         {isPanPhotoTool ? (
           <PanCardPhotoChecker />
         ) : (
           <ExamResizerTool preset={preset} config={preset} />
         )}
 
-        {/* Bottom Ad Container */}
+        {/* 5. Bottom Ad Container */}
         <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
           <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
             Sponsored / Advertisement
           </span>
         </div>
 
-        {/* Official Upload Guidelines Specifications */}
-        <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4">
+        {/* 6. Official Upload Guidelines Specifications (4-Box Grid) */}
+        <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
           <div className="flex items-center gap-2 font-bold text-white text-sm">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{preset.examName} Official Upload Guidelines</span>
@@ -315,12 +327,12 @@ export default async function ExamPage({ params }: PageProps) {
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-zinc-200">Background &amp; Quality Requirement:</p>
-              <p>{preset.bgColor}. Make sure candidate facial features or signature strokes are crisp, evenly lit, and free from blur before submitting.</p>
+              <p>{preset.bgColor}. Ensure candidate facial features or signature strokes are crisp, evenly lit, and free from blur before submitting.</p>
             </div>
           </div>
         </div>
 
-        {/* Step-by-Step Instructions & FAQ */}
+        {/* 7. Step-by-Step Instructions & Privacy Guarantee (2-Box Grid) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
             <div className="flex items-center gap-2 font-bold text-white text-sm">
@@ -328,9 +340,9 @@ export default async function ExamPage({ params }: PageProps) {
               <span>How to Resize for {preset.examName}</span>
             </div>
             <ol className="list-decimal list-inside space-y-2 text-zinc-400 leading-relaxed">
-              <li>Click <strong>&quot;Choose Image&quot;</strong> or drop your document into the box above.</li>
-              <li>Use the zoom and alignment slider to frame the document correctly.</li>
-              <li>Click <strong>&quot;Generate &amp; Download&quot;</strong> to instantly get your verified file under {preset.targetKB} KB.</li>
+              <li>Tap <strong>&quot;Choose Document&quot;</strong> and select your photo or signature.</li>
+              <li>Use the zoom and directional alignment controls to center your subject.</li>
+              <li>Click <strong>&quot;Download Verified Document&quot;</strong> to get your compliant file under {preset.targetKB} KB.</li>
             </ol>
           </div>
 
@@ -340,17 +352,21 @@ export default async function ExamPage({ params }: PageProps) {
               <span>Zero Server Upload Guarantee</span>
             </div>
             <p className="text-zinc-400 leading-relaxed">
-              All images and documents are processed locally inside your web browser RAM using HTML5 Canvas. No confidential identity documents or personal photographs are ever uploaded to any cloud server.
+              All images and documents are processed locally inside your web browser RAM using HTML5 Canvas. No confidential identity documents or personal photographs are ever uploaded or stored on any server.
             </p>
           </div>
         </div>
 
-        {/* Related Exam Format Presets */}
+        {/* 8. Related Format Presets */}
         {relatedFormats.length > 0 && (
           <div className="space-y-4 pt-2">
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
-              RELATED {preset.examName.toUpperCase()} FORMAT PRESETS
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-emerald-400" />
+                RELATED {preset.examName.toUpperCase()} FORMAT PRESETS
+              </h3>
+              <span className="text-xs text-zinc-500 font-mono">Quick Access</span>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {relatedFormats.map((f) => (
@@ -359,15 +375,19 @@ export default async function ExamPage({ params }: PageProps) {
                   href={`/exam/${f.slug}`}
                   className="p-4 rounded-2xl bg-[#0c0d0e] border border-zinc-800 hover:border-emerald-500/50 transition-all flex flex-col justify-between gap-3 group"
                 >
-                  <div>
+                  <div className="space-y-1.5">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-zinc-900 text-zinc-300 border border-zinc-800">
+                      {f.badge}
+                    </span>
                     <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
                       {f.title}
                     </h4>
-                    <span className="text-[11px] font-mono text-emerald-400">{f.sizeText}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-zinc-500 group-hover:text-emerald-400 font-medium">
-                    <span>Open Tool</span>
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-850 text-xs">
+                    <span className="font-mono text-emerald-400 text-[11px] font-bold">{f.sizeText}</span>
+                    <span className="text-zinc-400 group-hover:text-emerald-400 font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Open <ArrowRight className="w-3 h-3" />
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -375,10 +395,27 @@ export default async function ExamPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Telegram Community Banner */}
+        {/* 9. Frequently Asked Questions Section */}
+        <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
+          <div className="flex items-center gap-2 font-bold text-white text-sm">
+            <HelpCircle className="w-4 h-4 text-emerald-400" />
+            <span>Frequently Asked Questions</span>
+          </div>
+
+          <div className="space-y-3 text-xs text-zinc-400">
+            {faqList.map((faq, idx) => (
+              <div key={idx} className="p-3.5 rounded-2xl bg-black border border-zinc-850 space-y-1">
+                <p className="font-bold text-white text-[13px]">{faq.q}</p>
+                <p className="leading-relaxed text-zinc-400 text-xs">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 10. Telegram Conversion Banner */}
         <TelegramBanner />
 
       </div>
-    </div>
+    </main>
   );
 }
