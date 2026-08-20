@@ -14,12 +14,12 @@ import {
   ShieldCheck, 
   ZoomIn, 
   RotateCw, 
-  Trash2,
-  Sliders,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight
+  Trash2, 
+  Sliders, 
+  ChevronUp, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight 
 } from 'lucide-react';
 import { canvasToBlobSafe } from '@/lib/imageCompression';
 
@@ -35,7 +35,7 @@ export default function PanCardPhotoChecker() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
   
-  // Single Source-of-Truth Output State (Same Blob for Preview & Download)
+  // Single Source-of-Truth Output State
   const [processedUrl, setProcessedUrl] = useState<string | null>(null);
   const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
   const [finalSizeKB, setFinalSizeKB] = useState<number>(0);
@@ -45,7 +45,7 @@ export default function PanCardPhotoChecker() {
   const [readinessScore, setReadinessScore] = useState<number>(0);
   const [checkList, setCheckList] = useState<CheckItem[]>([]);
 
-  // Framing Adjustments (Source Space)
+  // Framing Adjustments
   const [zoom, setZoom] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
   const [panX, setPanX] = useState<number>(0);
@@ -67,7 +67,7 @@ export default function PanCardPhotoChecker() {
       label: 'Dimensions (213 × 213 px)',
       passed: exactDim,
       value: `${img.naturalWidth} × ${img.naturalHeight} px`,
-      detail: exactDim ? 'Exact official size' : 'Will be framed directly to 213×213 px',
+      detail: exactDim ? 'Exact official size' : 'Will be framed directly to 213 × 213 px',
     });
 
     const sizeKB = file.size / 1024;
@@ -134,7 +134,6 @@ export default function PanCardPhotoChecker() {
 
     setIsProcessing(true);
     try {
-      // Step A: Single Final 213x213 Canvas
       const canvas = document.createElement('canvas');
       canvas.width = 213;
       canvas.height = 213;
@@ -142,13 +141,11 @@ export default function PanCardPhotoChecker() {
 
       if (!ctx) throw new Error('Canvas context initialization failed');
 
-      // Step B: Set High Quality Rendering Parameters
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, 213, 213);
 
-      // Step C: Center-Origin Crop & Aspect-Ratio Preservation (No Stretch)
       ctx.save();
       ctx.translate(106.5 + panX, 106.5 + panY);
       ctx.rotate((rotation * Math.PI) / 180);
@@ -161,19 +158,16 @@ export default function PanCardPhotoChecker() {
       let drawW = 213;
       let drawH = 213;
 
-      // Fit to square without distortion
       if (aspect > 1) {
         drawW = 213 * aspect;
       } else {
         drawH = 213 / aspect;
       }
 
-      // Draw directly from original high-resolution source
       ctx.drawImage(sourceImage, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.restore();
 
-      // Step D: Binary Search JPEG Quality (Starts at 0.98, targets 38 KB - 48 KB without over-compression)
-      const targetMaxBytes = 49 * 1024; // Strictly < 50 KB
+      const targetMaxBytes = 49 * 1024;
       let lowQ = 0.4;
       let highQ = 0.98;
       let optimalBlob: Blob | null = null;
@@ -184,7 +178,7 @@ export default function PanCardPhotoChecker() {
 
         if (blob.size <= targetMaxBytes) {
           optimalBlob = blob;
-          lowQ = midQ; // Push higher to preserve sharpness near 45 KB
+          lowQ = midQ;
         } else {
           highQ = midQ;
         }
@@ -194,7 +188,6 @@ export default function PanCardPhotoChecker() {
         optimalBlob = await canvasToBlobSafe(canvas, 'image/jpeg', 0.5);
       }
 
-      // Step E: Same ObjectURL for Preview and Download
       const finalUrl = URL.createObjectURL(optimalBlob);
       setProcessedBlob(optimalBlob);
       setProcessedUrl(finalUrl);
@@ -204,7 +197,6 @@ export default function PanCardPhotoChecker() {
     }
   }, [sourceImage, selectedFile, panX, panY, zoom, rotation]);
 
-  // Debounced auto-render on framing adjust
   useEffect(() => {
     if (sourceImage) {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -237,7 +229,7 @@ export default function PanCardPhotoChecker() {
   const handleDownload = () => {
     if (!processedBlob || !processedUrl) return;
     const link = document.createElement('a');
-    link.download = `pan-card-photo-213x213.jpg`;
+    link.download = 'pan-card-photo-213x213.jpg';
     link.href = processedUrl;
     document.body.appendChild(link);
     link.click();
@@ -288,12 +280,13 @@ export default function PanCardPhotoChecker() {
               PAN Card Photo Checker &amp; Single-Pass Resizer
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400">
-              Upload from gallery or take a live camera photo. Direct render to $213 \times 213\text{ px}$ with zero distortion and high-quality binary size compression.
+              Upload from gallery or take a live camera photo. Direct render to 213 × 213 px with zero distortion and high-quality size compression.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto pt-2">
             <button
+              type="button"
               onClick={() => galleryInputRef.current?.click()}
               className="py-3.5 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
             >
@@ -302,6 +295,7 @@ export default function PanCardPhotoChecker() {
             </button>
 
             <button
+              type="button"
               onClick={() => cameraInputRef.current?.click()}
               className="py-3.5 px-5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
@@ -312,7 +306,7 @@ export default function PanCardPhotoChecker() {
 
           <div className="pt-2 text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Strict NSDL / UTIITSL $213 \times 213\text{ px}$ &bull; Target: $35\text{--}48\text{ KB}$ (&lt; 50 KB)</span>
+            <span>Strict NSDL / UTIITSL 213 × 213 px &bull; Target: 35–48 KB (&lt; 50 KB)</span>
           </div>
         </div>
       ) : (
@@ -342,12 +336,13 @@ export default function PanCardPhotoChecker() {
                   )}
                 </div>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Single-canvas direct bicubic sampling &bull; Exact $213 \times 213\text{ px}$
+                  Single-canvas direct bicubic sampling &bull; Exact 213 × 213 px
                 </p>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={handleAutoFix}
               disabled={isProcessing}
               className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer shrink-0"
@@ -393,7 +388,7 @@ export default function PanCardPhotoChecker() {
               </div>
             </div>
 
-            {/* Live 1:1 Preview Box (Uses Exact Output Blob) */}
+            {/* Live Preview Box */}
             <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
@@ -405,9 +400,9 @@ export default function PanCardPhotoChecker() {
                   </span>
                 </div>
 
-                {/* 1:1 Exact Preview Render (Displays identical generated file) */}
                 <div className="relative w-full h-56 bg-zinc-950 rounded-2xl overflow-hidden flex items-center justify-center border border-zinc-800 mt-3 p-2">
                   {processedUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={processedUrl}
                       alt="Verified 213x213 PAN Photo"
@@ -445,6 +440,7 @@ export default function PanCardPhotoChecker() {
 
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <button
+                      type="button"
                       onClick={() => setRotation((prev) => (prev + 90) % 360)}
                       className="py-1.5 px-2 bg-black hover:bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-300 flex items-center justify-center gap-1 transition-colors"
                     >
@@ -453,10 +449,10 @@ export default function PanCardPhotoChecker() {
                     </button>
 
                     <div className="grid grid-cols-4 gap-1 bg-black p-1 rounded-xl border border-zinc-800">
-                      <button onClick={() => nudge(0, -8)} title="Up" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronUp className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => nudge(0, 8)} title="Down" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronDown className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => nudge(-8, 0)} title="Left" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronLeft className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => nudge(8, 0)} title="Right" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronRight className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => nudge(0, -8)} title="Up" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronUp className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => nudge(0, 8)} title="Down" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronDown className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => nudge(-8, 0)} title="Left" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => nudge(8, 0)} title="Right" className="py-1 bg-zinc-900 hover:bg-zinc-800 rounded text-zinc-300 flex items-center justify-center"><ChevronRight className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                 </div>
@@ -465,6 +461,7 @@ export default function PanCardPhotoChecker() {
               {/* Action Buttons */}
               <div className="flex items-center gap-2 pt-4">
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="p-3.5 rounded-2xl bg-black hover:bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors"
                   title="Upload Another Photo"
@@ -473,6 +470,7 @@ export default function PanCardPhotoChecker() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleDownload}
                   disabled={!processedBlob || isProcessing}
                   className="flex-1 py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-95 cursor-pointer"
