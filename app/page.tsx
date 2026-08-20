@@ -14,13 +14,14 @@ import {
   GraduationCap, 
   Image as ImageIcon, 
   PenTool, 
-  Layers,
-  Flame,
-  Calendar,
-  SlidersHorizontal,
-  RefreshCw,
-  X,
-  Fingerprint
+  Layers, 
+  Flame, 
+  Calendar, 
+  SlidersHorizontal, 
+  RefreshCw, 
+  X, 
+  Fingerprint,
+  Sliders
 } from 'lucide-react';
 
 export interface UnifiedTool {
@@ -35,7 +36,7 @@ export interface UnifiedTool {
   isPopular?: boolean;
 }
 
-// 1. Core High-Demand & Featured Utilities (Fixed Dedicated Routes)
+// 1. Core High-Demand & Featured Utilities
 const CORE_TOOLS: UnifiedTool[] = [
   {
     id: 'name-date-photo-generator',
@@ -72,7 +73,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'photo-resize-to-20kb',
-    slug: '/exam/photo-resize-to-20kb',
+    slug: '/photo-resizer-20kb',
     name: 'Photo Resize to 20 KB',
     description: 'Compress and resize passport photos strictly under 20 KB for official government application portals.',
     category: 'photo',
@@ -83,7 +84,7 @@ const CORE_TOOLS: UnifiedTool[] = [
   },
   {
     id: 'photo-resize-to-50kb',
-    slug: '/exam/photo-resize-to-50kb',
+    slug: '/photo-resizer-50kb',
     name: 'Photo Resize to 50 KB',
     description: 'Resize and compress photos under 50 KB while maintaining crisp facial clarity without blur.',
     category: 'photo',
@@ -167,12 +168,12 @@ export default function HomePage() {
   const allTools = useMemo<UnifiedTool[]>(() => {
     const toolMap = new Map<string, UnifiedTool>();
 
-    // 1. Add Core tools
+    // 1. Add Core Tools
     CORE_TOOLS.forEach((tool) => {
       toolMap.set(tool.slug.toLowerCase().trim(), tool);
     });
 
-    // 2. Track Base Exams to prevent duplicate variants
+    // 2. Track Base Exams to prevent 4x multiplication
     const seenExamBases = new Set<string>();
     const rawList = Array.isArray(examToolsData) ? examToolsData : [];
 
@@ -322,7 +323,7 @@ export default function HomePage() {
           Instant government exam presets, exact KB size reducers, Name &amp; Date generators, watermark removers, and multi-page PDF conversion tools.
         </p>
 
-        {/* Search Bar */}
+        {/* Live Search Bar */}
         <div className="max-w-2xl mx-auto space-y-3 pt-2">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
@@ -409,6 +410,49 @@ export default function HomePage() {
               Railway NTPC &rarr;
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* 📸 Dedicated Photo Size & KB Tools Section */}
+      <section className="max-w-6xl mx-auto px-4 my-8 space-y-4">
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+          <h2 className="text-lg font-black text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-emerald-400" />
+            📸 Photo Size &amp; KB Tools
+          </h2>
+          <span className="text-xs text-emerald-400 font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 font-mono">
+            6 Preset Sizes
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { kb: 20, label: '20 KB', title: 'Photo Resizer', slug: '/photo-resizer-20kb', desc: 'Strict SSC & Police' },
+            { kb: 30, label: '30 KB', title: 'Photo Resizer', slug: '/photo-resizer-30kb', desc: 'Bank & State PSC' },
+            { kb: 50, label: '50 KB', title: 'Photo Resizer', slug: '/photo-resizer-50kb', desc: 'Universal Standard' },
+            { kb: 100, label: '100 KB', title: 'Photo Resizer', slug: '/photo-resizer-100kb', desc: 'High-Res Docs' },
+            { kb: 150, label: '150 KB', title: 'Photo Resizer', slug: '/photo-resizer-150kb', desc: 'JEE, NEET & NTA' },
+            { kb: 200, label: '200 KB', title: 'Photo Resizer', slug: '/photo-resizer-200kb', desc: '4x6 Postcard Photo' },
+          ].map((tool) => (
+            <Link
+              key={tool.kb}
+              href={tool.slug}
+              className="p-4 rounded-2xl bg-[#0c0d0e] border border-zinc-800 hover:border-emerald-500/50 transition-all flex flex-col justify-between gap-3 group text-center"
+            >
+              <div className="space-y-1">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-black font-mono bg-emerald-950 text-emerald-400 border border-emerald-500/40">
+                  {tool.label}
+                </span>
+                <h3 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors pt-1">
+                  {tool.title}
+                </h3>
+                <p className="text-[10px] text-zinc-500 line-clamp-1">{tool.desc}</p>
+              </div>
+              <div className="text-[11px] text-emerald-400 font-bold flex items-center justify-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                Open &rarr;
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
