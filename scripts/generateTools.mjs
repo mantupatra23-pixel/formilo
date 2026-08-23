@@ -6,139 +6,127 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ── 1. MASTER EXAM & PORTAL MATRIX ───────────────────────────────────────────
-const EXAM_ENTITIES = [
-  // Staff Selection Commission
-  { name: 'SSC CGL', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'SSC CHSL', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'SSC MTS', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'SSC GD Constable', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'SSC CPO SI', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'SSC Stenographer', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'SSC JE', category: 'ssc', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
+// Top GSC Keyword Clusters: State Police, Central, Medical, High Courts & Document Utilities
+const HIGH_INTENT_EXAMS = [
+  // 1. Surging State Police & Defense Recruitment
+  { name: 'Bihar Police Constable & SI', baseSlug: 'bihar-police', board: 'CSBC / BPSSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'UP Police Constable & SI', baseSlug: 'up-police', board: 'UPPRPB', kbPhoto: 50, kbSign: 20 },
+  { name: 'Odisha Police Constable', baseSlug: 'odisha-police-constable', board: 'OPRB', kbPhoto: 50, kbSign: 20 },
+  { name: 'Maharashtra Police Bharti', baseSlug: 'maharashtra-police-bharti', board: 'MahaPolice', kbPhoto: 50, kbSign: 20 },
+  { name: 'Delhi Police Constable & Driver', baseSlug: 'delhi-police', board: 'SSC / DP', kbPhoto: 50, kbSign: 20 },
+  { name: 'Indian Army Agniveer GD & Tech', baseSlug: 'indian-army-agniveer', board: 'Indian Army', kbPhoto: 50, kbSign: 20 },
+  { name: 'Indian Air Force Agniveervayu', baseSlug: 'indian-air-force-agniveervayu', board: 'IAF', kbPhoto: 50, kbSign: 20 },
+  { name: 'Indian Navy Agniveer SSR MR', baseSlug: 'indian-navy-agniveer-ssr-mr', board: 'Indian Navy', kbPhoto: 50, kbSign: 20 },
+  { name: 'Coast Guard Navik DB GD', baseSlug: 'coast-guard-navik', board: 'ICG', kbPhoto: 50, kbSign: 20 },
+  { name: 'ITBP Constable & Tradesman', baseSlug: 'itbp-constable', board: 'ITBP', kbPhoto: 50, kbSign: 20 },
+  { name: 'CISF Constable Tradesman & HCM', baseSlug: 'cisf-constable-hcm', board: 'CISF', kbPhoto: 50, kbSign: 20 },
+  { name: 'BSF Constable Tradesman & RO RM', baseSlug: 'bsf-constable', board: 'BSF', kbPhoto: 50, kbSign: 20 },
 
-  // UPSC & Civil Services
-  { name: 'UPSC IAS Civil Services', category: 'upsc', photoKb: 100, photoW: 350, photoH: 450, sigKb: 40, sigW: 350, sigH: 150 },
-  { name: 'UPSC NDA', category: 'upsc', photoKb: 100, photoW: 350, photoH: 450, sigKb: 40, sigW: 350, sigH: 150 },
-  { name: 'UPSC CDS', category: 'upsc', photoKb: 100, photoW: 350, photoH: 450, sigKb: 40, sigW: 350, sigH: 150 },
-  { name: 'UPSC CAPF', category: 'upsc', photoKb: 100, photoW: 350, photoH: 450, sigKb: 40, sigW: 350, sigH: 150 },
-  { name: 'UPSC EPFO', category: 'upsc', photoKb: 100, photoW: 350, photoH: 450, sigKb: 40, sigW: 350, sigH: 150 },
+  // 2. High Search Authority Banking & Insurance
+  { name: 'SBI PO & Clerk Recruitment', baseSlug: 'sbi-po-clerk', board: 'State Bank of India', kbPhoto: 50, kbSign: 20 },
+  { name: 'IBPS PO & Clerk Examination', baseSlug: 'ibps-po-clerk', board: 'IBPS', kbPhoto: 50, kbSign: 20 },
+  { name: 'IBPS RRB Officer Scale & Assistant', baseSlug: 'ibps-rrb-officer-assistant', board: 'IBPS', kbPhoto: 50, kbSign: 20 },
+  { name: 'RBI Grade B & Assistant', baseSlug: 'rbi-grade-b-assistant', board: 'Reserve Bank of India', kbPhoto: 50, kbSign: 20 },
+  { name: 'EPFO SSA & Stenographer', baseSlug: 'epfo-ssa-steno', board: 'EPFO / NTA', kbPhoto: 50, kbSign: 20 },
+  { name: 'LIC AAO & ADO Recruitment', baseSlug: 'lic-aao-ado', board: 'Life Insurance Corporation', kbPhoto: 50, kbSign: 20 },
 
-  // Banking & Insurance
-  { name: 'IBPS PO', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
-  { name: 'IBPS Clerk', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
-  { name: 'IBPS RRB Officer', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
-  { name: 'SBI PO', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
-  { name: 'SBI Clerk Junior Associate', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
-  { name: 'RBI Grade B', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
-  { name: 'LIC AAO', category: 'banking', photoKb: 50, photoW: 200, photoH: 230, sigKb: 20, sigW: 140, sigH: 60 },
+  // 3. Central & State Public Service Commissions
+  { name: 'UPSC IAS Civil Services Examination', baseSlug: 'upsc-ias-civil-services', board: 'UPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'UPSC CDS & NDA Examination', baseSlug: 'upsc-cds-nda', board: 'UPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'UPPSC Combined State Upper Subordinate', baseSlug: 'uppsc-pcs', board: 'UPPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'BPSC Combined Competitive Exam (CCE)', baseSlug: 'bpsc-cce', board: 'BPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'MPPSC State Service Examination', baseSlug: 'mppsc-state-service', board: 'MPPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'RPSC RAS & RTS Examination', baseSlug: 'rpsc-ras', board: 'RPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'WBPSC WBCS Executive', baseSlug: 'wbpsc-wbcs', board: 'WBPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'TSPSC Group 1 2 3 Services', baseSlug: 'tspsc-group-services', board: 'TSPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'APPSC Group 1 & 2 Examination', baseSlug: 'appsc-group-services', board: 'APPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'KPSC KAS Examination', baseSlug: 'kpsc-kas', board: 'KPSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'TNPSC Group 2 & 4 Services', baseSlug: 'tnpsc-group-services', board: 'TNPSC', kbPhoto: 50, kbSign: 20 },
 
-  // Railways (RRB)
-  { name: 'RRB NTPC', category: 'railway', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'RRB Group D', category: 'railway', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'RRB ALP', category: 'railway', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'RRB Technician', category: 'railway', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'RPF Constable SI', category: 'railway', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
+  // 4. National Entrance & Medical Councils
+  { name: 'NTA NEET UG Postcard & Photo', baseSlug: 'nta-neet-ug', board: 'National Testing Agency', kbPhoto: 200, kbSign: 20 },
+  { name: 'JEE Main Candidate Registration', baseSlug: 'jee-main', board: 'National Testing Agency', kbPhoto: 200, kbSign: 20 },
+  { name: 'CUET UG Examination', baseSlug: 'cuet-ug', board: 'NTA', kbPhoto: 200, kbSign: 20 },
+  { name: 'AIIMS Nursing & Paramedical', baseSlug: 'aiims-nursing-paramedical', board: 'AIIMS New Delhi', kbPhoto: 50, kbSign: 20 },
+  { name: 'NORCET Nursing Officer Examination', baseSlug: 'norcet-nursing-officer', board: 'AIIMS', kbPhoto: 50, kbSign: 20 },
 
-  // National Entrance Exams
-  { name: 'NEET UG', category: 'entrance', photoKb: 200, photoW: 400, photoH: 500, sigKb: 30, sigW: 280, sigH: 120 },
-  { name: 'JEE Main', category: 'entrance', photoKb: 200, photoW: 350, photoH: 450, sigKb: 30, sigW: 280, sigH: 120 },
-  { name: 'JEE Advanced', category: 'entrance', photoKb: 100, photoW: 350, photoH: 450, sigKb: 30, sigW: 280, sigH: 120 },
-  { name: 'CUET UG', category: 'entrance', photoKb: 100, photoW: 350, photoH: 450, sigKb: 30, sigW: 280, sigH: 120 },
-  { name: 'GATE Exam', category: 'entrance', photoKb: 100, photoW: 480, photoH: 640, sigKb: 50, sigW: 320, sigH: 160 },
-  { name: 'CTET', category: 'entrance', photoKb: 100, photoW: 350, photoH: 450, sigKb: 30, sigW: 280, sigH: 120 },
-  { name: 'UGC NET', category: 'entrance', photoKb: 200, photoW: 350, photoH: 450, sigKb: 30, sigW: 280, sigH: 120 },
+  // 5. High Court, Subordinate Courts & Legal Services
+  { name: 'Allahabad High Court Group C D & RO ARO', baseSlug: 'allahabad-high-court-ro-aro', board: 'NTA / AHC', kbPhoto: 50, kbSign: 20 },
+  { name: 'Patna High Court Assistant & Stenographer', baseSlug: 'patna-high-court-assistant', board: 'Patna HC', kbPhoto: 50, kbSign: 20 },
+  { name: 'Delhi High Court Judicial Service', baseSlug: 'delhi-high-court-judicial', board: 'Delhi HC', kbPhoto: 50, kbSign: 20 },
+  { name: 'Supreme Court of India Junior Court Assistant', baseSlug: 'supreme-court-jca', board: 'SCI', kbPhoto: 50, kbSign: 20 },
 
-  // Defence Forces
-  { name: 'Indian Army Agniveer', category: 'defence', photoKb: 20, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Indian Air Force Agniveervayu', category: 'defence', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Indian Navy Agniveer SSR MR', category: 'defence', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Coast Guard Navik', category: 'defence', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
+  // 6. State Selection Subordinate Boards
+  { name: 'DSSSB TGT PGT & Special Educator', baseSlug: 'dsssb-teacher-recruitment', board: 'DSSSB', kbPhoto: 50, kbSign: 20 },
+  { name: 'HSSC CET Group C D Recruitment', baseSlug: 'hssc-cet-recruitment', board: 'HSSC Haryana', kbPhoto: 50, kbSign: 20 },
+  { name: 'UKSSSC Graduate Level & Forest Guard', baseSlug: 'uksssc-recruitment', board: 'UKSSSC', kbPhoto: 50, kbSign: 20 },
+  { name: 'RSMSSB CET Patwari & Village Officer', baseSlug: 'rsmssb-cet-patwari', board: 'RSMSSB', kbPhoto: 50, kbSign: 20 },
 
-  // State Police & Recruitment Boards
-  { name: 'UP Police Constable', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Bihar Police Constable CSBC', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Delhi Police Constable', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Rajasthan Police Constable', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'MP Police Constable', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Odisha Police Constable OPRB', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'West Bengal Police WBPRB', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'Maharashtra Police Bharti', category: 'state-police', photoKb: 50, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-
-  // Identity & Government Portals
-  { name: 'Driving License Sarathi', category: 'gov-service', photoKb: 20, photoW: 350, photoH: 450, sigKb: 20, sigW: 280, sigH: 120 },
-  { name: 'PAN Card NSDL UTI', category: 'gov-service', photoKb: 50, photoW: 213, photoH: 213, sigKb: 30, sigW: 400, sigH: 200 },
-  { name: 'Passport Seva Kendra', category: 'gov-service', photoKb: 50, photoW: 413, photoH: 531, sigKb: 30, sigW: 280, sigH: 120 },
+  // 7. Identity & Official Form Presets
+  { name: 'Sarathi Parivahan Driving Licence', baseSlug: 'sarathi-parivahan-driving-licence', board: 'MoRTH', kbPhoto: 50, kbSign: 20 },
+  { name: 'SSO Rajasthan Identity Portal', baseSlug: 'sso-rajasthan-profile', board: 'Govt of Rajasthan', kbPhoto: 50, kbSign: 20 }
 ];
 
-function generateDynamicTools() {
-  const generatedTools = [];
+const generatedRegistry = [];
 
-  for (const entity of EXAM_ENTITIES) {
-    const baseSlug = entity.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+HIGH_INTENT_EXAMS.forEach((item) => {
+  const base = item.baseSlug;
+  const title = item.name;
+  const board = item.board;
 
-    // 1. Photo Tool Auto Generation
-    generatedTools.push({
-      id: `${baseSlug}-photo-resizer`,
-      slug: `${baseSlug}-photo-resizer`,
-      name: `${entity.name} Photo Resizer`,
-      category: 'photo',
-      description: `Format and compress candidate passport photograph for ${entity.name} online form strictly under ${entity.photoKb} KB with ${entity.photoW}×${entity.photoH} px resolution.`,
-      shortDescription: `Official ${entity.name} photo under ${entity.photoKb} KB.`,
-      targetKB: entity.photoKb,
-      targetWidth: entity.photoW,
-      targetHeight: entity.photoH,
-      instructions: [
-        `Upload your front-facing passport photograph.`,
-        `The engine automatically applies ${entity.photoW}×${entity.photoH} px dimensions and optimizes size under ${entity.photoKb} KB.`,
-        `Click Download to get your application-ready JPG file.`
-      ],
-      faq: [
-        {
-          question: `What is the photo size limit for ${entity.name}?`,
-          answer: `Official recruitment guidelines mandate candidate photos to be strictly under ${entity.photoKb} KB in JPG/JPEG format.`
-        }
-      ],
-      relatedTools: [`${baseSlug}-signature-resizer`, 'signature-resize-20kb', 'jpg-to-pdf'],
-      enabled: true,
-      badge: 'Exam Preset',
-      seoTitle: `${entity.name} Photo Resizer Online (Under ${entity.photoKb} KB) — Free | Formilo`,
-      seoDescription: `Format and resize ${entity.name} application photos under ${entity.photoKb} KB online for free. Official dimensions & size guaranteed.`
-    });
+  // Variant 1: Passport Size Photo
+  generatedRegistry.push({
+    id: `${base}-passport-size-photo-resizer`,
+    slug: `/exam/${base}-passport-size-photo-resizer`,
+    name: `${title} Passport Size Photo Resizer`,
+    description: `Free online passport size photo resizer for ${title} (${board}). Compress strictly under ${item.kbPhoto} KB with clear facial clarity.`,
+    category: 'photo',
+    badge: board,
+    targetKB: item.kbPhoto,
+    dimensions: '350 × 450 px',
+    isPopular: false,
+  });
 
-    // 2. Signature Tool Auto Generation
-    generatedTools.push({
-      id: `${baseSlug}-signature-resizer`,
-      slug: `${baseSlug}-signature-resizer`,
-      name: `${entity.name} Signature Resizer`,
-      category: 'signature',
-      description: `Resize and enhance scanned signature for ${entity.name} portal strictly under ${entity.sigKb} KB with sharp white background.`,
-      shortDescription: `Official ${entity.name} signature under ${entity.sigKb} KB.`,
-      targetKB: entity.sigKb,
-      targetWidth: entity.sigW,
-      targetHeight: entity.sigH,
-      instructions: [
-        `Upload your scanned signature.`,
-        `The algorithm compresses the file below ${entity.sigKb} KB and locks ${entity.sigW}×${entity.sigH} px size.`,
-        `Download your formatted signature.`
-      ],
-      faq: [
-        {
-          question: `What are the signature specifications for ${entity.name}?`,
-          answer: `The signature must be signed with black/blue ink on white paper and uploaded under ${entity.sigKb} KB.`
-        }
-      ],
-      relatedTools: [`${baseSlug}-photo-resizer`, 'photo-resize-20kb', 'jpg-to-pdf'],
-      enabled: true,
-      badge: 'Exam Preset',
-      seoTitle: `${entity.name} Signature Resizer Online (Under ${entity.sigKb} KB) — Free | Formilo`,
-      seoDescription: `Resize scanned signature for ${entity.name} online form under ${entity.sigKb} KB with high contrast.`
-    });
-  }
+  // Variant 2: Signature Crop & Compress
+  generatedRegistry.push({
+    id: `${base}-signature-crop-compress`,
+    slug: `/exam/${base}-signature-crop-compress`,
+    name: `${title} Signature Crop & Compress`,
+    description: `Crop and compress official signature strictly under ${item.kbSign} KB for ${title} on clean white background.`,
+    category: 'signature',
+    badge: 'SIGN',
+    targetKB: item.kbSign,
+    dimensions: '280 × 120 px',
+    isPopular: false,
+  });
 
-  const outputPath = path.join(__dirname, '..', 'lib', 'autoGeneratedTools.json');
-  fs.writeFileSync(outputPath, JSON.stringify(generatedTools, null, 2), 'utf-8');
-  console.log(`✅ Successfully generated ${generatedTools.length} automated programmatic tools at lib/autoGeneratedTools.json!`);
-}
+  // Variant 3: Left Thumb Impression
+  generatedRegistry.push({
+    id: `${base}-left-thumb-impression-resizer`,
+    slug: `/exam/${base}-left-thumb-impression-resizer`,
+    name: `${title} Left Thumb Impression Resizer`,
+    description: `Format blue/black ink thumb impression photo strictly under ${item.kbSign} KB for ${title}.`,
+    category: 'signature',
+    badge: 'THUMB',
+    targetKB: item.kbSign,
+    dimensions: '240 × 240 px',
+    isPopular: false,
+  });
 
-generateDynamicTools();
+  // Variant 4: Postcard Size Photo (4x6)
+  generatedRegistry.push({
+    id: `${base}-postcard-size-photo-4x6-resizer`,
+    slug: `/exam/${base}-postcard-size-photo-4x6-resizer`,
+    name: `${title} Postcard Size Photo (4x6 Inch) Resizer`,
+    description: `Resize 4x6 inch postcard photograph strictly under 200 KB for ${title} online submission.`,
+    category: 'photo',
+    badge: '< 200 KB',
+    targetKB: 200,
+    dimensions: '480 × 720 px',
+    isPopular: false,
+  });
+});
+
+const outputPath = path.join(__dirname, '../lib/autoGeneratedTools.json');
+fs.writeFileSync(outputPath, JSON.stringify(generatedRegistry, null, 2), 'utf-8');
+console.log(`✅ Successfully generated ${generatedRegistry.length} search-intent programmatic tools!`);
