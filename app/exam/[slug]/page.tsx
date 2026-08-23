@@ -1,6 +1,7 @@
 // app/exam/[slug]/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import TelegramBanner from '@/components/TelegramBanner';
 import ExamResizerTool from '@/components/ExamResizerTool';
 import PanCardPhotoChecker from '@/components/PanCardPhotoChecker';
@@ -13,8 +14,7 @@ import {
   FileCheck, 
   Lock,
   HelpCircle,
-  Layers,
-  Sparkles
+  Layers
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -43,9 +43,100 @@ export interface ExamPresetConfig {
   bgColor: string;
 }
 
-function resolveExamPreset(rawSlug: string): ExamPresetConfig {
-  const cleanSlug = decodeURIComponent(rawSlug || 'govt-exam-photo').toLowerCase().trim();
+// 1. Recursive Slug Sanitizer to Eliminate Corrupted & Nested Suffix Loops
+function cleanBaseSlug(raw: string): string {
+  let s = String(raw || '').toLowerCase().trim();
   
+  const suffixes = [
+    '-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
+    '-postcard-size-photo-4x6-postcard-size-photo-4x6-resizer',
+    '-postcard-photo-4x6-signature-crop-compress',
+    '-postcard-photo-4x6-left-thumb-impression-resizer',
+    '-postcard-photo-4x6-passport-size-photo-resizer',
+    '-postcard-size-photo-4x6-resizer',
+    '-postcard-size-photo-4x6',
+    '-postcard-photo-4x6',
+    '-postcard-size-photo',
+    '-postcard-photo',
+    '-postcard',
+    '-4x6',
+    '-passport-size-photo-resizer',
+    '-passport-size-photo',
+    '-passport-photo-resizer',
+    '-passport-photo',
+    '-photo-resizer',
+    '-photo',
+    '-signature-resize-to-20kb-signature-crop-compress',
+    '-signature-crop-compress-signature-crop-compress',
+    '-signature-crop-compress',
+    '-signature-resizer',
+    '-signature',
+    '-sign-resizer',
+    '-sign',
+    '-left-left-thumb-impression-resizer',
+    '-left-thumb-impression-resizer',
+    '-thumb-impression-resizer',
+    '-thumb-impression',
+    '-left-thumb',
+    '-thumb',
+    '-handwritten-declaration-resizer',
+    '-declaration',
+    '-under-20kb',
+    '-under-30kb',
+    '-under-50kb',
+    '-under-100kb',
+    '-under-200kb',
+    '-20kb',
+    '-30kb',
+    '-50kb',
+    '-100kb',
+    '-200kb',
+    '-resizer',
+  ];
+
+  let matched = true;
+  while (matched) {
+    matched = false;
+    for (const suf of suffixes) {
+      if (s.endsWith(suf)) {
+        s = s.slice(0, -suf.length);
+        matched = true;
+      }
+    }
+  }
+
+  return s.replace(/-(left|postcard|photo|sign|pre)$/gi, '').replace(/^-+|-+$/g, '');
+}
+
+// 2. Normalizes Any Malformed URL into the Clean Standard Variant
+function getCanonicalNormalizedSlug(rawSlug: string): string {
+  const clean = decodeURIComponent(rawSlug || '').toLowerCase().trim();
+
+  // Special Standalone Core Presets
+  if (clean === 'pan-card-photo-resizer' || clean === 'pan-card-signature-resizer' || clean === 'signature-resize-to-20kb' || clean === 'nielit-ccc-exam-photo-and-sign-resizer' || clean === 'photo-watermark-remover') {
+    return clean;
+  }
+  if (clean.includes('pan-card-postcard')) return 'pan-card-photo-resizer';
+  if (clean.includes('signature-resize-to-20kb')) return 'signature-resize-to-20kb';
+
+  const base = cleanBaseSlug(clean);
+  if (!base) return 'govt-exam-photo-resizer';
+
+  if (clean.includes('thumb')) {
+    return `${base}-left-thumb-impression-resizer`;
+  }
+  if (clean.includes('signature') || clean.includes('sign')) {
+    return `${base}-signature-crop-compress`;
+  }
+  if (clean.includes('postcard') || clean.includes('4x6')) {
+    return `${base}-postcard-size-photo-4x6-resizer`;
+  }
+
+  return `${base}-passport-size-photo-resizer`;
+}
+
+function resolveExamPreset(rawSlug: string): ExamPresetConfig {
+  const cleanSlug = getCanonicalNormalizedSlug(rawSlug);
   const matchedTool = getToolBySlug(cleanSlug);
 
   let targetKB = matchedTool?.targetKB || 50;
@@ -148,9 +239,7 @@ function resolveExamPreset(rawSlug: string): ExamPresetConfig {
     dimensionText = '240 × 240 px';
   }
 
-  const baseSlug = cleanSlug
-    .replace(/-(passport-size-photo-resizer|passport-photo|photo-resizer|photo|signature-crop-compress|signature-resizer|signature|sign|left-thumb-impression-resizer|thumb-impression|thumb|postcard-size-photo-4x6-resizer|postcard-size-photo|postcard|handwritten-declaration-resizer|declaration|under-20kb|under-50kb|20kb|50kb|resizer)$/gi, '');
-
+  const baseSlug = cleanBaseSlug(cleanSlug);
   const words = (baseSlug || 'Govt Exam').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1));
   const examName = words.join(' ');
 
@@ -203,13 +292,15 @@ function resolveExamPreset(rawSlug: string): ExamPresetConfig {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const preset = resolveExamPreset(slug);
+  const canonicalSlug = getCanonicalNormalizedSlug(slug);
+  const preset = resolveExamPreset(canonicalSlug);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
 
   return {
     title: `${preset.examName} ${preset.docType} Resizer (Strictly < ${preset.targetKB} KB) - Formilo`,
     description: `Free online ${preset.docType.toLowerCase()} resizer for ${preset.examName} conducted by ${preset.boardName}. Compress strictly between ${preset.minKB} KB to ${preset.targetKB} KB with ${preset.dimensionText}. 100% private in-browser tool.`,
     alternates: {
-      canonical: `https://formilo-jzcl.vercel.app/exam/${preset.slug}`,
+      canonical: `${siteUrl}/exam/${canonicalSlug}`,
     },
     openGraph: {
       title: `${preset.examName} ${preset.docType} Resizer`,
@@ -221,8 +312,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
-  const preset = resolveExamPreset(slug);
+  const canonicalSlug = getCanonicalNormalizedSlug(slug);
 
+  // Auto 301 Permanent Redirect for any duplicate or corrupted slugs
+  if (slug !== canonicalSlug) {
+    redirect(`/exam/${canonicalSlug}`);
+  }
+
+  const preset = resolveExamPreset(canonicalSlug);
   const isPanPhotoTool = preset.slug === 'pan-card-photo-resizer' || preset.slug.includes('pan-card-photo');
 
   const relatedFormats = [
@@ -404,7 +501,7 @@ export default async function ExamPage({ params }: PageProps) {
 
           <div className="space-y-3 text-xs text-zinc-400">
             {faqList.map((faq, idx) => (
-              <div key={idx} className="p-3.5 rounded-2xl bg-black border border-zinc-850 space-y-1">
+              <div key={idx} className="p-3.5 rounded-2xl bg-black border border-zinc-855 space-y-1">
                 <p className="font-bold text-white text-[13px]">{faq.q}</p>
                 <p className="leading-relaxed text-zinc-400 text-xs">{faq.a}</p>
               </div>
