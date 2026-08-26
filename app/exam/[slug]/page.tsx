@@ -294,7 +294,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const canonicalSlug = getCanonicalNormalizedSlug(slug);
   const preset = resolveExamPreset(canonicalSlug);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://formilo-jzcl.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.formilo.in';
 
   return {
     title: `${preset.examName} ${preset.docType} Resizer (Strictly < ${preset.targetKB} KB) - Formilo`,

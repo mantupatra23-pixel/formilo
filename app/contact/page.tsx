@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Contact & Support — Formilo',
   description: 'Have questions, feedback, or need a specific exam preset tool added? Contact the Formilo support team.',
   alternates: {
-    canonical: 'https://formilo-jzcl.vercel.app/contact',
+    canonical: 'https://www.formilo.in/contact',
   },
 };
 

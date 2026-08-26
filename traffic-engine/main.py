@@ -12,7 +12,7 @@ app = FastAPI(title="Formilo 24/7 Traffic Engine")
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-BASE_SITE_URL = os.getenv("BASE_SITE_URL", "https://formilo-jzcl.vercel.app")
+BASE_SITE_URL = os.getenv("BASE_SITE_URL", "https://www.formilo.in")
 RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
 
 CAMPAIGNS = [

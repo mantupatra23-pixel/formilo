@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Add Name and Date on Photo Online Free (DOP Resizer Under 50 KB)',
   description: 'Add candidate name and date of photo (DOP) on passport size photo for SSC CGL, GD, RRB, and Police recruitment forms. 100% private in-browser generator.',
   alternates: {
-    canonical: 'https://formilo-jzcl.vercel.app/name-date-on-photo',
+    canonical: 'https://www.formilo.in/name-date-on-photo',
   },
 };
 

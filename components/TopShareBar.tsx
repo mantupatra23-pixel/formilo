@@ -8,13 +8,13 @@ export default function TopShareBar() {
   const [copied, setCopied] = useState(false);
 
   const handleWhatsAppShare = () => {
-    const text = "⚡ Formilo — Free Sarkari Exam Photo, Signature & PDF Resizer (Under 20KB/50KB):\nhttps://formilo-jzcl.vercel.app";
+    const text = "⚡ Formilo — Free Sarkari Exam Photo, Signature & PDF Resizer (Under 20KB/50KB):\nhttps://www.formilo.in";
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href || 'https://formilo-jzcl.vercel.app');
+      await navigator.clipboard.writeText(window.location.href || 'https://www.formilo.in');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

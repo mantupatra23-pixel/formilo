@@ -24,7 +24,7 @@ export default function UniversalExamToolClient({ tool }: { tool: ToolConfig }) 
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const toolUrl = `https://formilo-jzcl.vercel.app/exam/${tool.slug}`;
+  const toolUrl = `https://www.formilo.in/exam/${tool.slug}`;
   const shareMessage = `⚡ Maine *${tool.examName}* online form ke liye photo/signature bina quality kharab kiye strictly < *${tool.targetKB} KB* me convert kar liya!\n\nAap bhi apne form ke documents 100% private free me yahan se format karein:\n${toolUrl}`;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

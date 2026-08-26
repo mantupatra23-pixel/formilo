@@ -43,7 +43,7 @@ export default async function EmbedToolPage({ params }: Props) {
       <footer className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-500">
         <span>100% Client-Side Private Tool</span>
         <Link
-          href={`https://formilo-jzcl.vercel.app/exam/${tool.slug}`}
+          href={`https://www.formilo.in/exam/${tool.slug}`}
           target="_blank"
           rel="dofollow"
           className="text-emerald-400 hover:underline flex items-center gap-1 font-semibold"

@@ -20,7 +20,7 @@ export default function ToolClient({ tool }: ToolClientProps) {
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentToolUrl = typeof window !== 'undefined' ? window.location.href : `https://formilo-jzcl.vercel.app/tools/${tool.slug}`;
+  const currentToolUrl = typeof window !== 'undefined' ? window.location.href : `https://www.formilo.in/tools/${tool.slug}`;
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];

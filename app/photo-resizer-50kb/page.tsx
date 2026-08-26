@@ -10,7 +10,7 @@ const data = KB_PRESETS_DATA[50];
 export const metadata: Metadata = {
   title: data.seoTitle,
   description: data.metaDescription,
-  alternates: { canonical: `https://formilo-jzcl.vercel.app/${data.slug}` }
+  alternates: { canonical: `https://www.formilo.in/${data.slug}` }
 };
 
 export default function PhotoResizer50KbPage() {
