@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://formilo-jzcl.vercel.app'),
+  metadataBase: new URL('https://www.formilo.in'),
   title: {
     default: 'Formilo — 100% Private Govt Exam Photo, Signature & PDF Tools',
     template: '%s | Formilo',
@@ -37,6 +37,16 @@ export const metadata: Metadata = {
     ],
     shortcut: '/logo.png',
     apple: '/logo.png',
+  },
+  alternates: {
+    canonical: 'https://www.formilo.in',
+  },
+  openGraph: {
+    title: 'Formilo — 100% Private Govt Exam Photo, Signature & PDF Tools',
+    description: 'Compress photos and signatures strictly under 20 KB / 50 KB directly in your browser with zero server uploads.',
+    url: 'https://www.formilo.in',
+    siteName: 'Formilo',
+    type: 'website',
   },
 };
 
