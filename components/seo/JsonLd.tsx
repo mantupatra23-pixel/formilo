@@ -10,7 +10,7 @@ export default function JsonLd({ tool }: JsonLdProps) {
     '@type': 'WebApplication',
     name: tool.name,
     description: tool.description,
-    url: `https://formilo.vercel.app/${tool.slug}`,
+    url: `https://www.formilo.in/${tool.slug}`,
     applicationCategory: 'UtilityApplication',
     operatingSystem: 'All',
     offers: {
