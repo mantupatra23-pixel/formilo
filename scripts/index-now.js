@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const HOST = 'www.formilo.in';
-const API_KEY = 'formilo_index_engine_2026';
+const API_KEY = 'formilo-index-engine-2026';
 const KEY_LOCATION = `https://${HOST}/${API_KEY}.txt`;
 
 // Load all programmatic exam routes
