@@ -3,102 +3,1379 @@
     "slug": "ssc-cgl-2026",
     "title": "SSC CGL 2026",
     "board": "SSC",
-    "toolsCount": 3
-  },
-  {
-    "slug": "ssc-gd-constable-2026",
-    "title": "SSC GD Constable 2026",
-    "board": "SSC",
-    "toolsCount": 2
+    "photoKb": 50,
+    "signKb": 20
   },
   {
     "slug": "ssc-chsl-2026",
-    "title": "SSC CHSL 2026",
+    "title": "SSC CHSL 10+2",
     "board": "SSC",
-    "toolsCount": 2
+    "photoKb": 50,
+    "signKb": 20
   },
   {
-    "slug": "nta-neet-ug-2026",
-    "title": "NTA NEET UG 2026",
-    "board": "NTA NEET",
-    "toolsCount": 4
+    "slug": "ssc-gd-constable-2026",
+    "title": "SSC GD Constable CAPF",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
   },
   {
-    "slug": "nta-jee-main-2026",
-    "title": "JEE Main 2026",
-    "board": "NTA JEE",
-    "toolsCount": 3
+    "slug": "ssc-mts-havaldar-2026",
+    "title": "SSC MTS & Havaldar",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
   },
   {
-    "slug": "sbi-po-clerk-2026",
-    "title": "SBI PO & Clerk 2026",
-    "board": "SBI",
-    "toolsCount": 4
+    "slug": "ssc-cpo-si-delhi-police",
+    "title": "SSC CPO SI Delhi Police CAPF",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
   },
   {
-    "slug": "ibps-po-clerk-rrb-2026",
-    "title": "IBPS PO / Clerk / RRB 2026",
-    "board": "IBPS",
-    "toolsCount": 4
+    "slug": "ssc-stenographer-grade-c-d",
+    "title": "SSC Stenographer Grade C & D",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
   },
   {
-    "slug": "rrb-ntpc-alp-technician-2026",
-    "title": "RRB NTPC & ALP 2026",
+    "slug": "ssc-je-junior-engineer",
+    "title": "SSC Junior Engineer (JE)",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ssc-selection-post-phase-13",
+    "title": "SSC Selection Post Phase 13",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ssc-jht-hindi-translator",
+    "title": "SSC Junior Hindi Translator",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rrb-ntpc-graduate-2026",
+    "title": "RRB NTPC Graduate Level",
     "board": "RRB",
-    "toolsCount": 3
+    "photoKb": 70,
+    "signKb": 70
   },
   {
-    "slug": "up-police-constable-si-2026",
-    "title": "UP Police Constable & SI 2026",
-    "board": "UPPRPB",
-    "toolsCount": 3
+    "slug": "rrb-ntpc-undergraduate-2026",
+    "title": "RRB NTPC Under Graduate 10+2",
+    "board": "RRB",
+    "photoKb": 70,
+    "signKb": 70
   },
   {
-    "slug": "bihar-police-csbc-bpssc-2026",
-    "title": "Bihar Police & Daroga SI 2026",
-    "board": "CSBC / BPSSC",
-    "toolsCount": 2
+    "slug": "rrb-alp-assistant-loco-pilot",
+    "title": "RRB ALP Assistant Loco Pilot",
+    "board": "RRB",
+    "photoKb": 70,
+    "signKb": 70
   },
   {
-    "slug": "odisha-police-oprb-2026",
-    "title": "Odisha Police Constable 2026",
-    "board": "OPRB",
-    "toolsCount": 2
+    "slug": "rrb-technician-grade-1-3",
+    "title": "RRB Technician Grade 1 & 3",
+    "board": "RRB",
+    "photoKb": 70,
+    "signKb": 70
   },
   {
-    "slug": "maharashtra-police-bharti-2026",
-    "title": "Maharashtra Police Bharti 2026",
-    "board": "MahaPolice",
-    "toolsCount": 2
+    "slug": "rrb-group-d-level-1",
+    "title": "RRB Group D Track Maintainer",
+    "board": "RRB",
+    "photoKb": 70,
+    "signKb": 70
   },
   {
-    "slug": "indian-army-agniveer-rally-2026",
-    "title": "Indian Army Agniveer Rally 2026",
-    "board": "Indian Army",
-    "toolsCount": 2
+    "slug": "rrb-je-railway-engineer",
+    "title": "RRB Junior Engineer JE",
+    "board": "RRB",
+    "photoKb": 70,
+    "signKb": 70
   },
   {
-    "slug": "iaf-agniveervayu-2026",
-    "title": "Indian Air Force Agniveervayu 2026",
+    "slug": "rpf-si-railway-police",
+    "title": "RPF Sub Inspector (SI)",
+    "board": "RPF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rpf-constable-recruitment",
+    "title": "RPF Police Constable",
+    "board": "RPF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rrb-paramedical-staff",
+    "title": "RRB Paramedical Staff Nurse",
+    "board": "RRB",
+    "photoKb": 70,
+    "signKb": 70
+  },
+  {
+    "slug": "sbi-po-probationary-officer",
+    "title": "SBI PO Probationary Officer",
+    "board": "SBI",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "sbi-clerk-junior-associate",
+    "title": "SBI Clerk Junior Associate",
+    "board": "SBI",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "sbi-cbo-circle-based-officer",
+    "title": "SBI Circle Based Officer (CBO)",
+    "board": "SBI",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ibps-po-crp-recruitment",
+    "title": "IBPS PO CRP Officer Scale I",
+    "board": "IBPS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ibps-clerk-examination",
+    "title": "IBPS Clerk CRP Clerical",
+    "board": "IBPS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ibps-so-specialist-officer",
+    "title": "IBPS Specialist Officer (SO)",
+    "board": "IBPS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ibps-rrb-officer-scale-1-2-3",
+    "title": "IBPS RRB Gramin Bank Officer",
+    "board": "IBPS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ibps-rrb-office-assistant-multipurpose",
+    "title": "IBPS RRB Office Assistant",
+    "board": "IBPS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rbi-grade-b-general-officer",
+    "title": "RBI Grade B Officer",
+    "board": "RBI",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rbi-assistant-recruitment",
+    "title": "RBI Assistant Recruitment",
+    "board": "RBI",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "lic-aao-generalist-specialist",
+    "title": "LIC AAO Assistant Admin Officer",
+    "board": "LIC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "lic-ado-apprentice-development",
+    "title": "LIC ADO Development Officer",
+    "board": "LIC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "lic-hfl-assistant-manager",
+    "title": "LIC HFL Housing Finance",
+    "board": "LIC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "nabard-grade-a-assistant-manager",
+    "title": "NABARD Grade A Manager",
+    "board": "NABARD",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "sebi-grade-a-officer",
+    "title": "SEBI Grade A Officer",
+    "board": "SEBI",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "niacl-ao-administrative-officer",
+    "title": "NIACL AO Generalist / Specialist",
+    "board": "NIACL",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "epfo-ssa-social-security-assistant",
+    "title": "EPFO SSA Assistant & Steno",
+    "board": "NTA / EPFO",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "uiic-ao-administrative-officer",
+    "title": "UIIC AO Insurance Officer",
+    "board": "UIIC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsc-nda-na-naval-academy",
+    "title": "UPSC NDA & NA Examination",
+    "board": "UPSC",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "upsc-cds-combined-defence",
+    "title": "UPSC CDS Combined Defence",
+    "board": "UPSC",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "afcat-air-force-officer",
+    "title": "AFCAT Indian Air Force Flying & Ground",
     "board": "IAF",
-    "toolsCount": 3
+    "photoKb": 50,
+    "signKb": 20
   },
   {
-    "slug": "allahabad-high-court-ro-aro-2026",
-    "title": "Allahabad High Court RO/ARO & Group C/D 2026",
+    "slug": "indian-army-agniveer-gd",
+    "title": "Indian Army Agniveer General Duty (GD)",
+    "board": "Indian Army",
+    "photoKb": 20,
+    "signKb": 10
+  },
+  {
+    "slug": "indian-army-agniveer-technical",
+    "title": "Indian Army Agniveer Tech & Clerk",
+    "board": "Indian Army",
+    "photoKb": 20,
+    "signKb": 10
+  },
+  {
+    "slug": "indian-army-agniveer-tradesman",
+    "title": "Indian Army Agniveer Tradesman 8th 10th",
+    "board": "Indian Army",
+    "photoKb": 20,
+    "signKb": 10
+  },
+  {
+    "slug": "indian-navy-agniveer-ssr",
+    "title": "Indian Navy Agniveer SSR",
+    "board": "Indian Navy",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "indian-navy-agniveer-mr",
+    "title": "Indian Navy Agniveer MR Matric",
+    "board": "Indian Navy",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "iaf-agniveervayu-intake-2026",
+    "title": "IAF Indian Air Force Agniveervayu",
+    "board": "IAF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "indian-coast-guard-navik-gd",
+    "title": "Coast Guard Navik General Duty",
+    "board": "ICG",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "indian-coast-guard-navik-db",
+    "title": "Coast Guard Navik Domestic Branch",
+    "board": "ICG",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cisf-constable-tradesman-fireman",
+    "title": "CISF Constable Fireman & Tradesman",
+    "board": "CISF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cisf-asi-steno-hcm",
+    "title": "CISF Head Constable Ministerial & ASI",
+    "board": "CISF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bsf-constable-tradesman-ro-rm",
+    "title": "BSF Constable Tradesman & Head Constable",
+    "board": "BSF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "crpf-constable-technical-tradesman",
+    "title": "CRPF Constable Technical & Tradesman",
+    "board": "CRPF",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "itbp-constable-tradesman-telecom",
+    "title": "ITBP Constable Telecom & Tradesman",
+    "board": "ITBP",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ssb-constable-tradesman-sub-inspector",
+    "title": "SSB Sashastra Seema Bal Tradesman",
+    "board": "SSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "assam-rifles-technical-tradesman",
+    "title": "Assam Rifles Rally Tradesman",
+    "board": "Assam Rifles",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "up-police-constable-civil",
+    "title": "UP Police Constable Civil & PAC",
+    "board": "UPPRPB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "up-police-si-daroga-recruitment",
+    "title": "UP Police Sub Inspector (SI)",
+    "board": "UPPRPB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "up-police-computer-operator-grade-a",
+    "title": "UP Police Computer Operator & Programmer",
+    "board": "UPPRPB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bihar-police-constable-csbc-exam",
+    "title": "Bihar Police Constable (CSBC)",
+    "board": "CSBC",
+    "photoKb": 25,
+    "signKb": 25
+  },
+  {
+    "slug": "bihar-police-si-daroga-bpssc",
+    "title": "Bihar Police Daroga SI (BPSSC)",
+    "board": "BPSSC",
+    "photoKb": 25,
+    "signKb": 25
+  },
+  {
+    "slug": "delhi-police-constable-executive",
+    "title": "Delhi Police Constable Executive",
+    "board": "SSC / DP",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "delhi-police-head-constable-ministerial",
+    "title": "Delhi Police Head Constable (AWO/TPO)",
+    "board": "SSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rajasthan-police-constable-recruitment",
+    "title": "Rajasthan Police Constable RAC",
+    "board": "Rajasthan Police",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mp-police-constable-esb",
+    "title": "MP Police Constable (ESB)",
+    "board": "MPESB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "haryana-police-constable-hssc",
+    "title": "Haryana Police Constable Commando",
+    "board": "HSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "odisha-police-constable-civil-sepoy",
+    "title": "Odisha Police Constable & Sepoy",
+    "board": "OPRB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "maharashtra-police-bharti-constable-driver",
+    "title": "Maharashtra Police Bharti (MahaPolice)",
+    "board": "MahaPolice",
+    "photoKb": 50,
+    "signKb": 50
+  },
+  {
+    "slug": "wb-police-constable-wbp-lady-constable",
+    "title": "West Bengal Police Constable (WBPRB)",
+    "board": "WBPRB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "kolkata-police-constable-si",
+    "title": "Kolkata Police Constable & SI",
+    "board": "WBPRB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "punjab-police-constable-district-armed",
+    "title": "Punjab Police Constable & SI",
+    "board": "Punjab Police",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "gujarat-police-lrd-constable-psi",
+    "title": "Gujarat Police LRD Constable & PSI",
+    "board": "LRB Gujarat",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "jharkhand-police-constable-jcce",
+    "title": "Jharkhand Police Constable (JCCE)",
+    "board": "JSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cg-police-constable-def-recruitment",
+    "title": "Chhattisgarh CG Police Constable DEF",
+    "board": "CG Police",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "assam-police-constable-commando",
+    "title": "Assam Police AB UB Constable & SI",
+    "board": "SLPRB Assam",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ts-police-constable-tslprb",
+    "title": "Telangana Police Constable (TSLPRB)",
+    "board": "TSLPRB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ap-police-constable-slprb",
+    "title": "Andhra Pradesh Police Constable (SLPRB)",
+    "board": "AP SLPRB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "karnataka-police-ksp-civil-armed-constable",
+    "title": "Karnataka Police KSP Constable & PSI",
+    "board": "KSP",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tnusrb-police-constable-jail-warder-fireman",
+    "title": "TN Police Constable (TNUSRB)",
+    "board": "TNUSRB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "kerala-police-constable-kpsc",
+    "title": "Kerala Police Constable (Kerala PSC)",
+    "board": "KPSC",
+    "photoKb": 30,
+    "signKb": 30
+  },
+  {
+    "slug": "uttarakhand-police-constable-ukpsc",
+    "title": "Uttarakhand Police Constable & PAC",
+    "board": "UKPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "hp-police-constable-recruitment",
+    "title": "Himachal Pradesh HP Police Constable",
+    "board": "HP Police",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsc-civil-services-ias-ips-prelims",
+    "title": "UPSC Civil Services (IAS / IPS / IFS)",
+    "board": "UPSC",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "upsc-engineering-services-ies-ese",
+    "title": "UPSC Engineering Services (IES/ESE)",
+    "board": "UPSC",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "uppsc-combined-state-upper-subordinate-pcs",
+    "title": "UPPSC Combined State PCS Upper Subordinate",
+    "board": "UPPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "uppsc-ro-aro-samiksha-adhikari",
+    "title": "UPPSC RO / ARO Samiksha Adhikari",
+    "board": "UPPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bpsc-combined-competitive-examination-cce",
+    "title": "BPSC Integrated 70th / 71st CCE",
+    "board": "BPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mppsc-state-service-prelims-mains",
+    "title": "MPPSC State Service Examination (SSE)",
+    "board": "MPPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rpsc-ras-rts-combined-competitive",
+    "title": "RPSC RAS & RTS Combined Exam",
+    "board": "RPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "wbpsc-west-bengal-civil-service-wbcs",
+    "title": "WBPSC West Bengal Civil Service (WBCS)",
+    "board": "WBPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "opsc-odisha-civil-services-oas",
+    "title": "OPSC Odisha Civil Services (OAS/OPS)",
+    "board": "OPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "opsc-aso-assistant-section-officer",
+    "title": "OPSC Assistant Section Officer (ASO)",
+    "board": "OPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mpsc-maharashtra-rajyaseva-civil-services",
+    "title": "MPSC Rajyaseva Civil Services Group A B",
+    "board": "MPSC",
+    "photoKb": 50,
+    "signKb": 50
+  },
+  {
+    "slug": "tnpsc-group-1-services-prelims",
+    "title": "TNPSC Group 1 Combined Civil Services",
+    "board": "TNPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tnpsc-group-2-2a-services",
+    "title": "TNPSC Group 2 & 2A Services",
+    "board": "TNPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tnpsc-group-4-vao-services",
+    "title": "TNPSC Group 4 & VAO Examination",
+    "board": "TNPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "kpsc-kas-karnataka-administrative-services",
+    "title": "KPSC Karnataka Administrative Services (KAS)",
+    "board": "KPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "appsc-group-1-services",
+    "title": "APPSC Group 1 Executive & Non-Executive",
+    "board": "APPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "appsc-group-2-services",
+    "title": "APPSC Group 2 Services Executive",
+    "board": "APPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tspsc-group-1-services",
+    "title": "TSPSC Group 1 Services Telangana",
+    "board": "TSPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tspsc-group-2-services",
+    "title": "TSPSC Group 2 Services Telangana",
+    "board": "TSPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tspsc-group-3-services",
+    "title": "TSPSC Group 3 Junior Assistant / Steno",
+    "board": "TSPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tspsc-group-4-services",
+    "title": "TSPSC Group 4 Junior Assistant Typist",
+    "board": "TSPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "gpsc-gujarat-administrative-service-gas",
+    "title": "GPSC Gujarat Administrative Service Class 1 2",
+    "board": "GPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ppsc-punjab-civil-services-executive",
+    "title": "PPSC Punjab Civil Services (Executive Branch)",
+    "board": "PPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "hpsc-haryana-civil-services-hcs",
+    "title": "HPSC Haryana Civil Services (HCS Executive)",
+    "board": "HPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ukpsc-combined-state-upper-pcs",
+    "title": "UKPSC Combined State Upper Subordinate PCS",
+    "board": "UKPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ukpsc-ro-aro-samiksha-adhikari",
+    "title": "UKPSC RO / ARO High Court / Secretariat",
+    "board": "UKPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "jpsc-combined-civil-services-examination",
+    "title": "JPSC Combined Civil Services (Jharkhand)",
+    "board": "JPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cgpsc-state-services-examination",
+    "title": "CGPSC State Service Exam (Chhattisgarh)",
+    "board": "CGPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "apsc-combined-competitive-exam-cce",
+    "title": "APSC Combined Competitive Exam CCE Assam",
+    "board": "APSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "jkpsc-combined-competitive-exam-cce",
+    "title": "JKPSC Combined Competitive Exam (KAS)",
+    "board": "JKPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsssc-pet-preliminary-eligibility-test",
+    "title": "UPSSSC PET Preliminary Eligibility Test",
+    "board": "UPSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsssc-vdo-gram-vikas-adhikari",
+    "title": "UPSSSC VDO Gram Vikas Adhikari",
+    "board": "UPSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsssc-lekhpal-rajasva-chakbandi",
+    "title": "UPSSSC Rajasva & Chakbandi Lekhpal",
+    "board": "UPSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsssc-junior-assistant-clerk",
+    "title": "UPSSSC Junior Assistant & Typist",
+    "board": "UPSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "upsssc-forest-guard-van-daroga",
+    "title": "UPSSSC Forest Guard & Wildlife Guard",
+    "board": "UPSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bssc-cgl-3rd-4th-graduate-level",
+    "title": "BSSC 4th Graduate Level CGL Exam",
+    "board": "BSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bssc-inter-level-combined-exam",
+    "title": "BSSC 2nd Inter Level Combined Exam (10+2)",
+    "board": "BSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rsmssb-cet-graduate-level-exam",
+    "title": "RSMSSB CET Graduate Level (Rajasthan)",
+    "board": "RSMSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rsmssb-cet-senior-secondary-level",
+    "title": "RSMSSB CET Senior Secondary Level (12th)",
+    "board": "RSMSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rsmssb-patwari-recruitment-exam",
+    "title": "RSMSSB Patwari Revenue Exam",
+    "board": "RSMSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rsmssb-ldc-junior-assistant",
+    "title": "RSMSSB LDC Clerk Grade II & Junior Assistant",
+    "board": "RSMSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rsmssb-animal-attendant-pashu-paricharak",
+    "title": "RSMSSB Pashu Paricharak Animal Attendant",
+    "board": "RSMSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "hssc-cet-group-c-mains-exam",
+    "title": "HSSC CET Group C Recruitment",
+    "board": "HSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "hssc-cet-group-d-recruitment",
+    "title": "HSSC CET Group D Multi Tasking",
+    "board": "HSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "osssc-cre-combined-recruitment-exam",
+    "title": "OSSSC CRE Combined Recruitment (RI/Amin)",
+    "board": "OSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "osssc-junior-assistant-ja-peo",
+    "title": "OSSSC Junior Assistant (JA) & PEO",
+    "board": "OSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "uksssc-graduate-level-vdo-vpdo",
+    "title": "UKSSSC Graduate Level VDO VPDO",
+    "board": "UKSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "uksssc-intermediate-level-clerk-steno",
+    "title": "UKSSSC Intermediate Level Junior Assistant",
+    "board": "UKSSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "jssc-cgl-combined-graduate-standard",
+    "title": "JSSC CGL Combined Graduate Level",
+    "board": "JSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "jssc-excise-constable-jece",
+    "title": "JSSC Excise Constable (JECE)",
+    "board": "JSSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cg-vyapam-patwari-recruitment",
+    "title": "CG Vyapam Patwari RDP Training",
+    "board": "CG Vyapam",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cg-vyapam-hostel-warden-chhatrawas",
+    "title": "CG Vyapam Hostel Warden (Chhatrawas)",
+    "board": "CG Vyapam",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mp-esb-group-4-assistant-grade-3-steno",
+    "title": "MP ESB Group 4 Assistant Grade 3 Steno",
+    "board": "MPESB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mp-esb-sub-engineer-civil-electrical",
+    "title": "MP ESB Sub Engineer Draftsman",
+    "board": "MPESB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "dsssb-special-educator-tgt-pgt-prt",
+    "title": "DSSSB TGT PGT & Special Educator",
+    "board": "DSSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "dsssb-dass-grade-2-4-junior-assistant",
+    "title": "DSSSB DASS Grade II / IV & LDC",
+    "board": "DSSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "dsssb-nursing-officer-pharmacist",
+    "title": "DSSSB Nursing Officer & Pharmacist",
+    "board": "DSSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "jkssb-panchayat-secretary-vlw-faa",
+    "title": "JKSSB Panchayat Secretary & Accounts Assistant",
+    "board": "JKSSB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "cbse-ctet-central-teacher-eligibility",
+    "title": "CTET Central Teacher Eligibility Paper 1 & 2",
+    "board": "CBSE",
+    "photoKb": 100,
+    "signKb": 30
+  },
+  {
+    "slug": "bpsc-tre-teacher-recruitment-phase-4",
+    "title": "BPSC Teacher TRE 4.0 (Primary & Secondary)",
+    "board": "BPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "uptet-uttar-pradesh-teacher-eligibility",
+    "title": "UPTET Primary & Upper Primary Paper",
+    "board": "UPDELED",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "up-super-tet-prt-assistant-teacher",
+    "title": "UP Super TET Assistant Primary Teacher",
+    "board": "UPDELED",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "reet-rajasthan-eligibility-examination",
+    "title": "REET Level 1 & Level 2 Teacher",
+    "board": "BSER",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rpsc-school-lecturer-1st-grade",
+    "title": "RPSC School Lecturer 1st Grade Teacher",
+    "board": "RPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rpsc-senior-teacher-2nd-grade",
+    "title": "RPSC Senior Teacher 2nd Grade",
+    "board": "RPSC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bihar-stet-secondary-teacher-eligibility",
+    "title": "Bihar STET Paper 1 & Paper 2",
+    "board": "BSEB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "htet-haryana-teacher-eligibility-test",
+    "title": "HTET PRT TGT PGT Eligibility",
+    "board": "BSEH",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mptet-varg-1-2-3-shikshak-patrata",
+    "title": "MPTET Varg 1 2 3 Shikshak Patrata",
+    "board": "MPESB",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "otet-odisha-teacher-eligibility-test",
+    "title": "OTET & OSSTET Secondary Teacher",
+    "board": "BSE Odisha",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "tntet-tamil-nadu-teacher-eligibility",
+    "title": "TNTET Tamil Nadu Teacher Paper 1 2",
+    "board": "TRB TN",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ktet-kerala-teacher-eligibility-test",
+    "title": "KTET Kerala Teacher Category 1 2 3 4",
+    "board": "Pareeksha Bhavan",
+    "photoKb": 30,
+    "signKb": 30
+  },
+  {
+    "slug": "mahatet-maharashtra-teacher-eligibility",
+    "title": "MahaTET Maharashtra Teacher Paper 1 2",
+    "board": "MSCE Pune",
+    "photoKb": 50,
+    "signKb": 50
+  },
+  {
+    "slug": "wbtet-west-bengal-primary-tet",
+    "title": "WB Primary TET Assistant Teacher",
+    "board": "WBBPE",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "kvs-prt-tgt-pgt-recruitment-exam",
+    "title": "KVS Kendriya Vidyalaya PRT TGT PGT",
+    "board": "KVS / NTA",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "nvs-navodaya-vidyalaya-teacher-steno",
+    "title": "NVS Navodaya Vidyalaya TGT PGT Staff",
+    "board": "NVS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "emrs-eklavya-model-residential-school",
+    "title": "EMRS Eklavya Model School Principal & TGT",
+    "board": "NESTS",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ugc-net-junior-research-fellowship-jrf",
+    "title": "UGC NET Assistant Professor & JRF",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "csir-ugc-net-junior-research-fellowship",
+    "title": "CSIR UGC NET Chemical / Physical Sciences",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "nta-neet-ug-medical-entrance",
+    "title": "NEET UG Medical MBBS / BDS Entrance",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "nta-neet-pg-national-board-exam",
+    "title": "NEET PG Doctor Residency Entrance",
+    "board": "NBEMS",
+    "photoKb": 100,
+    "signKb": 30
+  },
+  {
+    "slug": "nta-jee-main-engineering-btech",
+    "title": "JEE Main B.Tech / B.Arch Entrance",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "iit-jee-advanced-engineering",
+    "title": "JEE Advanced IIT Entrance Examination",
+    "board": "IIT",
+    "photoKb": 200,
+    "signKb": 50
+  },
+  {
+    "slug": "gate-graduate-aptitude-test-engineering",
+    "title": "GATE Graduate Aptitude Test in Engineering",
+    "board": "IIT",
+    "photoKb": 200,
+    "signKb": 50
+  },
+  {
+    "slug": "nta-cuet-ug-central-university-entrance",
+    "title": "CUET UG Central University Degree Entrance",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "nta-cuet-pg-post-graduate-entrance",
+    "title": "CUET PG Master Degree Admission Entrance",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "aiims-norcet-nursing-officer-recruitment",
+    "title": "AIIMS NORCET Nursing Officer Examination",
+    "board": "AIIMS New Delhi",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "aiims-bsc-msc-nursing-paramedical",
+    "title": "AIIMS B.Sc & M.Sc Nursing Entrance",
+    "board": "AIIMS New Delhi",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "clat-common-law-admission-test-ug-pg",
+    "title": "CLAT Common Law Admission Test (LLB/LLM)",
+    "board": "Consortium of NLUs",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "cat-common-admission-test-iim-mba",
+    "title": "CAT IIM MBA Admission Examination",
+    "board": "IIM",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "nimcet-nit-mca-common-entrance-test",
+    "title": "NIMCET NIT MCA Common Entrance Test",
+    "board": "NIT",
+    "photoKb": 100,
+    "signKb": 50
+  },
+  {
+    "slug": "nchmct-jee-hotel-management-entrance",
+    "title": "NCHMCT JEE Hotel Management Entrance",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "nift-national-institute-fashion-technology",
+    "title": "NIFT B.Des M.Des Fashion Entrance Test",
+    "board": "NTA",
+    "photoKb": 200,
+    "signKb": 30
+  },
+  {
+    "slug": "allahabad-high-court-ro-aro-group-c-d",
+    "title": "Allahabad High Court RO ARO & Group C D",
     "board": "AHC / NTA",
-    "toolsCount": 3
+    "photoKb": 200,
+    "signKb": 30
   },
   {
-    "slug": "pan-card-nsdl-utiitsl",
-    "title": "PAN Card NSDL / UTIITSL 2026",
-    "board": "Income Tax / NSDL",
-    "toolsCount": 3
+    "slug": "patna-high-court-assistant-group-b-steno",
+    "title": "Patna High Court Assistant & Stenographer",
+    "board": "Patna HC",
+    "photoKb": 100,
+    "signKb": 20
   },
   {
-    "slug": "sarathi-parivahan-driving-licence",
-    "title": "Sarathi Parivahan Driving Licence",
+    "slug": "delhi-high-court-jja-judicial-assistant",
+    "title": "Delhi High Court Junior Judicial Assistant",
+    "board": "Delhi HC",
+    "photoKb": 100,
+    "signKb": 20
+  },
+  {
+    "slug": "bombay-high-court-clerk-peon-hamal",
+    "title": "Bombay High Court Clerk & Peon",
+    "board": "Bombay HC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "rajasthan-high-court-ldc-junior-assistant",
+    "title": "Rajasthan High Court LDC & Junior Assistant",
+    "board": "RHC Jodhpur",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "mp-high-court-assistant-grade-3-steno",
+    "title": "MP High Court Assistant Grade 3 & Steno",
+    "board": "MPHC Jabalpur",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "gujarat-high-court-assistant-peon-process",
+    "title": "Gujarat High Court Assistant & Peon",
+    "board": "Gujarat HC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "calcutta-high-court-data-entry-group-d",
+    "title": "Calcutta High Court LDC DEO & Group D",
+    "board": "Calcutta HC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "madras-high-court-examiner-reader-driver",
+    "title": "Madras High Court Examiner Reader & Driver",
+    "board": "Madras HC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "supreme-court-of-india-junior-court-assistant",
+    "title": "Supreme Court of India (SCI) JCA Assistant",
+    "board": "SCI New Delhi",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "india-post-gds-gramin-dak-sevak",
+    "title": "India Post GDS Gramin Dak Sevak (BPM/ABPM)",
+    "board": "India Post",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "sarathi-parivahan-driving-licence-ll-dl",
+    "title": "Sarathi Parivahan Driving Licence Learning",
     "board": "MoRTH",
-    "toolsCount": 2
+    "photoKb": 20,
+    "signKb": 20
+  },
+  {
+    "slug": "pan-card-nsdl-utiitsl-online-portal",
+    "title": "PAN Card NSDL & UTIITSL (213x213 px)",
+    "board": "NSDL / UTI",
+    "photoKb": 30,
+    "signKb": 30
+  },
+  {
+    "slug": "uidai-aadhaar-card-update-photo-sign",
+    "title": "UIDAI Aadhaar Update Supporting Document",
+    "board": "UIDAI",
+    "photoKb": 200,
+    "signKb": 50
+  },
+  {
+    "slug": "sso-rajasthan-single-sign-on-portal",
+    "title": "SSO Rajasthan Identity Profile Update",
+    "board": "Govt of Rajasthan",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "samagra-id-mp-ekyc-photo-portal",
+    "title": "MP Samagra ID eKYC Photo Resizer",
+    "board": "Govt of MP",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "isro-icrb-scientist-engineer-assistant",
+    "title": "ISRO ICRB Scientist Engineer & Assistant",
+    "board": "ISRO",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "drdo-ceptam-senior-technical-assistant-sta",
+    "title": "DRDO CEPTAM Tech A & STA B Assistant",
+    "board": "DRDO",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "barc-bhabha-atomic-research-centre-ocess",
+    "title": "BARC Scientific Officer & Stipendiary Trainee",
+    "board": "BARC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "sail-steel-authority-management-trainee",
+    "title": "SAIL Management Trainee & OCTT Recruitment",
+    "board": "SAIL",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "iocl-indian-oil-apprentice-non-executive",
+    "title": "IOCL Indian Oil Trade & Technician Apprentice",
+    "board": "IOCL",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "ongc-oil-and-natural-gas-graduate-trainee",
+    "title": "ONGC Graduate Trainee Class 1 Executive",
+    "board": "ONGC",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "bel-bharat-electronics-probationary-engineer",
+    "title": "BEL Probationary Engineer & Project Trainee",
+    "board": "BEL",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "coal-india-cil-management-trainee-mt",
+    "title": "Coal India Management Trainee (CIL MT)",
+    "board": "Coal India",
+    "photoKb": 50,
+    "signKb": 20
+  },
+  {
+    "slug": "aai-airports-authority-junior-executive-atc",
+    "title": "AAI ATC Junior Executive & Manager",
+    "board": "AAI",
+    "photoKb": 50,
+    "signKb": 20
   }
 ]
