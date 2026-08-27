@@ -1,4 +1,3 @@
-// app/exam/[slug]/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -6,6 +5,7 @@ import TelegramBanner from '@/components/TelegramBanner';
 import ExamResizerTool from '@/components/ExamResizerTool';
 import PanCardPhotoChecker from '@/components/PanCardPhotoChecker';
 import { getToolBySlug } from '@/lib/toolsData';
+import { generateFAQSchema, generateAppSchema } from '@/lib/schema';
 import { 
   Zap, 
   CheckCircle2, 
@@ -55,8 +55,8 @@ function cleanBaseSlug(raw: string): string {
     '-postcard-photo-4x6-passport-size-photo-resizer',
     '-postcard-size-photo-4x6-resizer',
     '-postcard-size-photo-4x6',
-    '-postcard-photo-4x6',
     '-postcard-size-photo',
+    '-postcard-photo-4x6',
     '-postcard-photo',
     '-postcard',
     '-4x6',
@@ -112,8 +112,13 @@ function cleanBaseSlug(raw: string): string {
 function getCanonicalNormalizedSlug(rawSlug: string): string {
   const clean = decodeURIComponent(rawSlug || '').toLowerCase().trim();
 
-  // Special Standalone Core Presets
-  if (clean === 'pan-card-photo-resizer' || clean === 'pan-card-signature-resizer' || clean === 'signature-resize-to-20kb' || clean === 'nielit-ccc-exam-photo-and-sign-resizer' || clean === 'photo-watermark-remover') {
+  if (
+    clean === 'pan-card-photo-resizer' || 
+    clean === 'pan-card-signature-resizer' || 
+    clean === 'signature-resize-to-20kb' || 
+    clean === 'nielit-ccc-exam-photo-and-sign-resizer' || 
+    clean === 'photo-watermark-remover'
+  ) {
     return clean;
   }
   if (clean.includes('pan-card-postcard')) return 'pan-card-photo-resizer';
@@ -322,6 +327,21 @@ export default async function ExamPage({ params }: PageProps) {
   const preset = resolveExamPreset(canonicalSlug);
   const isPanPhotoTool = preset.slug === 'pan-card-photo-resizer' || preset.slug.includes('pan-card-photo');
 
+  // Automated Google Rich Snippet Schemas (Position 0 & WebApplication)
+  const faqSchema = generateFAQSchema({
+    toolName: `${preset.examName} ${preset.docType}`,
+    slug: `/exam/${canonicalSlug}`,
+    targetKB: preset.targetKB,
+    dimensions: preset.dimensionText,
+    description: `Official ${preset.docType.toLowerCase()} resizer and format compressor for ${preset.examName}.`
+  });
+
+  const appSchema = generateAppSchema({
+    toolName: `${preset.examName} ${preset.docType} Resizer`,
+    slug: `/exam/${canonicalSlug}`,
+    description: `Format official document strictly under ${preset.targetKB} KB (${preset.dimensionText}) with zero server upload.`
+  });
+
   const relatedFormats = [
     { title: `${preset.examName} Passport Photo`, slug: `${preset.baseSlug}-passport-size-photo-resizer`, sizeText: '< 50 KB', badge: 'EXAM' },
     { title: `${preset.examName} Signature Crop & Compress`, slug: `${preset.baseSlug}-signature-crop-compress`, sizeText: '< 20 KB', badge: 'SIGN' },
@@ -345,174 +365,186 @@ export default async function ExamPage({ params }: PageProps) {
   ];
 
   return (
-    <main className="w-full min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        {/* 1. Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium overflow-x-auto pb-1">
-          <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">Home</Link>
-          <span>/</span>
-          <Link href="/#exam-presets" className="hover:text-emerald-400 transition-colors shrink-0">Exam Presets</Link>
-          <span>/</span>
-          <span className="text-emerald-400 font-semibold truncate">{preset.examName}</span>
-        </nav>
+    <>
+      {/* Structured Google Search JSON-LD Schemas */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }}
+      />
 
-        {/* 2. Header Section with Spec Badge */}
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
-            <span>Official Dimension &amp; Size Lock: &lt; {preset.targetKB} KB</span>
-          </div>
+      <main className="w-full min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          
+          {/* 1. Breadcrumb Navigation */}
+          <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium overflow-x-auto pb-1">
+            <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">Home</Link>
+            <span>/</span>
+            <Link href="/#exam-presets" className="hover:text-emerald-400 transition-colors shrink-0">Exam Presets</Link>
+            <span>/</span>
+            <span className="text-emerald-400 font-semibold truncate">{preset.examName}</span>
+          </nav>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            {preset.examName} <span className="text-emerald-400">{preset.docType}</span> Resizer
-          </h1>
-
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-3xl">
-            Free online {preset.docType.toLowerCase()} resizer and format compressor for <strong>{preset.examName}</strong> conducted by {preset.boardName}. Automatically locks file size strictly between {preset.minKB} KB to {preset.targetKB} KB ({preset.dimensionText}) in JPG/JPEG format with 100% private in-browser processing.
-          </p>
-        </div>
-
-        {/* 3. Top Ad Container */}
-        <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
-          <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
-            Sponsored / Advertisement
-          </span>
-        </div>
-
-        {/* 4. Interactive Tool Box */}
-        {isPanPhotoTool ? (
-          <PanCardPhotoChecker />
-        ) : (
-          <ExamResizerTool preset={preset} config={preset} />
-        )}
-
-        {/* 5. Bottom Ad Container */}
-        <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
-          <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
-            Sponsored / Advertisement
-          </span>
-        </div>
-
-        {/* 6. Official Upload Guidelines Specifications (4-Box Grid) */}
-        <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2 font-bold text-white text-sm">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{preset.examName} Official Upload Guidelines</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
-              <span className="text-zinc-500">Board / Authority</span>
-              <p className="font-bold text-white text-xs truncate">{preset.boardName}</p>
+          {/* 2. Header Section with Spec Badge */}
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
+              <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
+              <span>Official Dimension &amp; Size Lock: &lt; {preset.targetKB} KB</span>
             </div>
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
-              <span className="text-zinc-500">Allowed File Size</span>
-              <p className="font-bold text-emerald-400 text-xs">{preset.minKB} KB - {preset.targetKB} KB</p>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
-              <span className="text-zinc-500">Exact Dimensions</span>
-              <p className="font-bold text-white text-xs truncate">{preset.width} &times; {preset.height} px</p>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
-              <span className="text-zinc-500">Resolution &amp; DPI</span>
-              <p className="font-bold text-emerald-400 text-xs">{preset.dpi} DPI</p>
-            </div>
-          </div>
 
-          <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-850 flex items-start gap-3 text-xs text-zinc-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-zinc-200">Background &amp; Quality Requirement:</p>
-              <p>{preset.bgColor}. Ensure candidate facial features or signature strokes are crisp, evenly lit, and free from blur before submitting.</p>
-            </div>
-          </div>
-        </div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {preset.examName} <span className="text-emerald-400">{preset.docType}</span> Resizer
+            </h1>
 
-        {/* 7. Step-by-Step Instructions & Privacy Guarantee (2-Box Grid) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
-            <div className="flex items-center gap-2 font-bold text-white text-sm">
-              <FileCheck className="w-4 h-4 text-emerald-400" />
-              <span>How to Resize for {preset.examName}</span>
-            </div>
-            <ol className="list-decimal list-inside space-y-2 text-zinc-400 leading-relaxed">
-              <li>Tap <strong>&quot;Choose Document&quot;</strong> and select your photo or signature.</li>
-              <li>Use the zoom and directional alignment controls to center your subject.</li>
-              <li>Click <strong>&quot;Download Verified Document&quot;</strong> to get your compliant file under {preset.targetKB} KB.</li>
-            </ol>
-          </div>
-
-          <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
-            <div className="flex items-center gap-2 font-bold text-white text-sm">
-              <Lock className="w-4 h-4 text-emerald-400" />
-              <span>Zero Server Upload Guarantee</span>
-            </div>
-            <p className="text-zinc-400 leading-relaxed">
-              All images and documents are processed locally inside your web browser RAM using HTML5 Canvas. No confidential identity documents or personal photographs are ever uploaded or stored on any server.
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-3xl">
+              Free online {preset.docType.toLowerCase()} resizer and format compressor for <strong>{preset.examName}</strong> conducted by {preset.boardName}. Automatically locks file size strictly between {preset.minKB} KB to {preset.targetKB} KB ({preset.dimensionText}) in JPG/JPEG format with 100% private in-browser processing.
             </p>
           </div>
-        </div>
 
-        {/* 8. Related Format Presets */}
-        {relatedFormats.length > 0 && (
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-400" />
-                RELATED {preset.examName.toUpperCase()} FORMAT PRESETS
-              </h3>
-              <span className="text-xs text-zinc-500 font-mono">Quick Access</span>
+          {/* 3. Top Ad Container */}
+          <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
+            <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
+              Sponsored / Advertisement
+            </span>
+          </div>
+
+          {/* 4. Interactive Tool Box */}
+          {isPanPhotoTool ? (
+            <PanCardPhotoChecker />
+          ) : (
+            <ExamResizerTool preset={preset} config={preset} />
+          )}
+
+          {/* 5. Bottom Ad Container */}
+          <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
+            <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
+              Sponsored / Advertisement
+            </span>
+          </div>
+
+          {/* 6. Official Upload Guidelines Specifications (4-Box Grid) */}
+          <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
+            <div className="flex items-center gap-2 font-bold text-white text-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>{preset.examName} Official Upload Guidelines</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {relatedFormats.map((f) => (
-                <Link
-                  key={f.slug}
-                  href={`/exam/${f.slug}`}
-                  className="p-4 rounded-2xl bg-[#0c0d0e] border border-zinc-800 hover:border-emerald-500/50 transition-all flex flex-col justify-between gap-3 group"
-                >
-                  <div className="space-y-1.5">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-zinc-900 text-zinc-300 border border-zinc-800">
-                      {f.badge}
-                    </span>
-                    <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
-                      {f.title}
-                    </h4>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-850 text-xs">
-                    <span className="font-mono text-emerald-400 text-[11px] font-bold">{f.sizeText}</span>
-                    <span className="text-zinc-400 group-hover:text-emerald-400 font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      Open <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </Link>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+                <span className="text-zinc-500">Board / Authority</span>
+                <p className="font-bold text-white text-xs truncate">{preset.boardName}</p>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+                <span className="text-zinc-500">Allowed File Size</span>
+                <p className="font-bold text-emerald-400 text-xs">{preset.minKB} KB - {preset.targetKB} KB</p>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+                <span className="text-zinc-500">Exact Dimensions</span>
+                <p className="font-bold text-white text-xs truncate">{preset.width} &times; {preset.height} px</p>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-black border border-zinc-800/80 space-y-1">
+                <span className="text-zinc-500">Resolution &amp; DPI</span>
+                <p className="font-bold text-emerald-400 text-xs">{preset.dpi} DPI</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-855 flex items-start gap-3 text-xs text-zinc-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-zinc-200">Background &amp; Quality Requirement:</p>
+                <p>{preset.bgColor}. Ensure candidate facial features or signature strokes are crisp, evenly lit, and free from blur before submitting.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Step-by-Step Instructions & Privacy Guarantee (2-Box Grid) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
+              <div className="flex items-center gap-2 font-bold text-white text-sm">
+                <FileCheck className="w-4 h-4 text-emerald-400" />
+                <span>How to Resize for {preset.examName}</span>
+              </div>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-400 leading-relaxed">
+                <li>Tap <strong>&quot;Choose Document&quot;</strong> and select your photo or signature.</li>
+                <li>Use the zoom and directional alignment controls to center your subject.</li>
+                <li>Click <strong>&quot;Download Verified Document&quot;</strong> to get your compliant file under {preset.targetKB} KB.</li>
+              </ol>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
+              <div className="flex items-center gap-2 font-bold text-white text-sm">
+                <Lock className="w-4 h-4 text-emerald-400" />
+                <span>Zero Server Upload Guarantee</span>
+              </div>
+              <p className="text-zinc-400 leading-relaxed">
+                All images and documents are processed locally inside your web browser RAM using HTML5 Canvas. No confidential identity documents or personal photographs are ever uploaded or stored on any server.
+              </p>
+            </div>
+          </div>
+
+          {/* 8. Related Format Presets */}
+          {relatedFormats.length > 0 && (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-emerald-400" />
+                  RELATED {preset.examName.toUpperCase()} FORMAT PRESETS
+                </h3>
+                <span className="text-xs text-zinc-500 font-mono">Quick Access</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {relatedFormats.map((f) => (
+                  <Link
+                    key={f.slug}
+                    href={`/exam/${f.slug}`}
+                    className="p-4 rounded-2xl bg-[#0c0d0e] border border-zinc-800 hover:border-emerald-500/50 transition-all flex flex-col justify-between gap-3 group"
+                  >
+                    <div className="space-y-1.5">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-zinc-900 text-zinc-300 border border-zinc-800">
+                        {f.badge}
+                      </span>
+                      <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
+                        {f.title}
+                      </h4>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-850 text-xs">
+                      <span className="font-mono text-emerald-400 text-[11px] font-bold">{f.sizeText}</span>
+                      <span className="text-zinc-400 group-hover:text-emerald-400 font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        Open <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 9. Frequently Asked Questions Section */}
+          <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
+            <div className="flex items-center gap-2 font-bold text-white text-sm">
+              <HelpCircle className="w-4 h-4 text-emerald-400" />
+              <span>Frequently Asked Questions</span>
+            </div>
+
+            <div className="space-y-3 text-xs text-zinc-400">
+              {faqList.map((faq, idx) => (
+                <div key={idx} className="p-3.5 rounded-2xl bg-black border border-zinc-850 space-y-1">
+                  <p className="font-bold text-white text-[13px]">{faq.q}</p>
+                  <p className="leading-relaxed text-zinc-400 text-xs">{faq.a}</p>
+                </div>
               ))}
             </div>
           </div>
-        )}
 
-        {/* 9. Frequently Asked Questions Section */}
-        <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2 font-bold text-white text-sm">
-            <HelpCircle className="w-4 h-4 text-emerald-400" />
-            <span>Frequently Asked Questions</span>
-          </div>
+          {/* 10. Telegram Conversion Banner */}
+          <TelegramBanner />
 
-          <div className="space-y-3 text-xs text-zinc-400">
-            {faqList.map((faq, idx) => (
-              <div key={idx} className="p-3.5 rounded-2xl bg-black border border-zinc-855 space-y-1">
-                <p className="font-bold text-white text-[13px]">{faq.q}</p>
-                <p className="leading-relaxed text-zinc-400 text-xs">{faq.a}</p>
-              </div>
-            ))}
-          </div>
         </div>
-
-        {/* 10. Telegram Conversion Banner */}
-        <TelegramBanner />
-
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
