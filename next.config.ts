@@ -5,12 +5,34 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   async redirects() {
     return [
-      // 1. Redirect indexed legacy KB tools to dedicated high-CTR landing pages
+      // 1. Force 301 Redirect from Vercel preview domains to Main Domain
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'formilo-jzcl.vercel.app',
+          },
+        ],
+        destination: 'https://www.formilo.in/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'formilo-jzcl-git-main-mantupatra23-8293s-projects.vercel.app',
+          },
+        ],
+        destination: 'https://www.formilo.in/:path*',
+        permanent: true,
+      },
+
+      // 2. Redirect Legacy Tools routes to Clean Dedicated Landing Pages
       {
         source: '/tools/photo-resize-to-20-kb',
         destination: '/photo-resizer-20kb',
@@ -72,7 +94,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 2. Redirect legacy PDF tools to new clean utility routes
+      // 3. Redirect Legacy PDF Routes
       {
         source: '/tools/pdf-compress-to-200-kb',
         destination: '/tools/pdf-compressor-under-200kb',
@@ -84,7 +106,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 3. Fix corrupted / nested duplicate URL patterns from Googlebot
+      // 4. Clean Nested / Corrupted Loop Suffixes to Canonical URLs
       {
         source: '/exam/:path*-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
         destination: '/exam/:path*-postcard-size-photo-4x6-resizer',
@@ -115,6 +137,18 @@ const nextConfig: NextConfig = {
         destination: '/exam/signature-resize-to-20kb',
         permanent: true,
       },
+
+      // 5. Redirect Legacy PAN Tools
+      {
+        source: '/tools/pan-card-photo-resizer',
+        destination: '/exam/pan-card-photo-resizer',
+        permanent: true,
+      },
+      {
+        source: '/tools/pan-card-signature-resizer',
+        destination: '/exam/pan-card-signature-resizer',
+        permanent: true,
+      },
       {
         source: '/exam/pan-card-postcard-size-photo-4x6-resizer',
         destination: '/exam/pan-card-photo-resizer',
@@ -126,21 +160,9 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 4. Redirect legacy indexed PAN & specific tools to dynamic exam routes
+      // 6. Generic Fallback for /tools/:slug -> /exam/:slug (Excluding static utilities)
       {
-        source: '/tools/pan-card-photo-resizer',
-        destination: '/exam/pan-card-photo-resizer',
-        permanent: true,
-      },
-      {
-        source: '/tools/pan-card-signature-resizer',
-        destination: '/exam/pan-card-signature-resizer',
-        permanent: true,
-      },
-
-      // 5. Universal Fallback: Any other legacy /tools/[slug] redirected to /exam/[slug]
-      {
-        source: '/tools/:slug((?!jpg-to-pdf-converter|pdf-to-jpg-converter|pdf-compressor-under-200kb).*)',
+        source: '/tools/:slug((?!jpg-to-pdf-converter|pdf-to-jpg-converter|pdf-compressor-under-200kb|compress-pdf-to-100kb|compress-pdf-to-200kb|compress-pdf-to-500kb|pdf-size-reducer-300kb|photo-resizer-35kb|photo-resizer-80kb|image-resizer-1mb|image-resizer-1-5mb|make-background-white-of-signature).*)',
         destination: '/exam/:slug',
         permanent: true,
       },
