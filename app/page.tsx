@@ -14,10 +14,9 @@ import {
   GraduationCap, 
   FileText, 
   Image as ImageIcon, 
-  PenTool, 
   Layers 
 } from 'lucide-react';
-import { getAllTools, getRegistryStats, ToolItem } from '@/lib/toolsData';
+import { getAllTools, getRegistryStats } from '@/lib/toolsData';
 import { examsData } from '@/data/exams';
 import ToolCard from '@/components/tools/ToolCard';
 
@@ -89,6 +88,10 @@ export default function HomePage() {
       return tool.category === selectedCategory;
     });
   }, [allTools, searchQuery, selectedCategory]);
+
+  const popularTools = useMemo(() => {
+    return allTools.filter((t) => t.popular);
+  }, [allTools]);
 
   // Checker Validation
   const activeRule = CHECKER_RULES[selectedCheckerKey];
@@ -244,53 +247,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 3. DEDICATED PHOTO SIZE & KB TOOLS ROW */}
-        <section id="photo-tools" className="space-y-4">
-          <div className="flex items-center justify-between border-b border-[#DDE2DF] pb-2">
-            <div className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-[#00A879]" />
-              <h2 className="text-[22px] sm:text-[24px] font-extrabold text-[#17262E]">
-                📸 Photo Size &amp; KB Tools
-              </h2>
+        {/* 3. FEATURED TOOLS SECTION (2 COLUMNS DESKTOP) */}
+        {selectedCategory === 'all' && !searchQuery && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between border-b border-[#DDE2DF] pb-2">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-[#00A879]" />
+                <h2 className="text-[20px] sm:text-[22px] font-extrabold text-[#17262E]">
+                  ⚡ Featured &amp; Most Used Tools
+                </h2>
+              </div>
+              <span className="text-[11px] text-[#008760] font-bold px-2.5 py-0.5 rounded-lg bg-[#00C98B]/15 border border-[#00C98B]/30 font-mono">
+                Top Presets
+              </span>
             </div>
-            <span className="text-[11px] text-[#008760] font-bold px-2.5 py-0.5 rounded-lg bg-[#00C98B]/15 border border-[#00C98B]/30 font-mono">
-              6 Preset Sizes
-            </span>
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { kb: 20, label: '< 20 KB', title: 'Photo Resizer', slug: '/photo-resizer-20kb', desc: 'Strict SSC & Police' },
-              { kb: 30, label: '< 30 KB', title: 'Photo Resizer', slug: '/photo-resizer-30kb', desc: 'Bank & State PSC' },
-              { kb: 50, label: '< 50 KB', title: 'Photo Resizer', slug: '/photo-resizer-50kb', desc: 'Universal Standard' },
-              { kb: 100, label: '< 100 KB', title: 'Photo Resizer', slug: '/photo-resizer-100kb', desc: 'High-Res Docs' },
-              { kb: 150, label: '< 150 KB', title: 'Photo Resizer', slug: '/photo-resizer-150kb', desc: 'JEE, NEET & NTA' },
-              { kb: 200, label: '< 200 KB', title: 'Postcard Photo', slug: '/photo-resizer-200kb', desc: '4x6 Postcard (NEET)' },
-            ].map((tool) => (
-              <Link
-                key={tool.kb}
-                href={tool.slug}
-                className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition flex flex-col justify-between gap-3 text-center group"
-              >
-                <div className="space-y-1">
-                  <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-black font-mono bg-[#00C98B]/15 text-[#008760] border border-[#00C98B]/30">
-                    {tool.label}
-                  </span>
-                  <h3 className="text-[13px] font-bold text-[#17262E] group-hover:text-[#00A879] transition-colors pt-1">
-                    {tool.title}
-                  </h3>
-                  <p className="text-[11px] text-[#53636A] line-clamp-1">{tool.desc}</p>
-                </div>
-                <span className="text-[12px] font-bold text-[#00A879] flex items-center justify-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-                  <span>Open</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {popularTools.slice(0, 6).map((tool) => (
+                <ToolCard
+                  key={`popular-${tool.id}`}
+                  title={tool.title}
+                  description={tool.description}
+                  slug={tool.slug}
+                  badge={tool.badge}
+                  category={tool.category}
+                  targetKB={tool.targetKB}
+                  dimensions={tool.width && tool.height ? `${tool.width} × ${tool.height} px` : undefined}
+                  popular={tool.popular}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
-        {/* 4. DYNAMIC CATEGORY TABS & MAIN TOOLS GRID */}
+        {/* 4. DYNAMIC CATEGORY TABS & MAIN 2-COLUMN TOOLS GRID */}
         <section className="space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#DDE2DF]">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -326,24 +316,25 @@ export default function HomePage() {
             </span>
           </div>
 
-          {/* Tools Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTools.slice(0, 15).map((tool) => (
+          {/* 2-Column Responsive Grid on Desktop, 1-Column on Mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredTools.slice(0, 16).map((tool) => (
               <ToolCard
                 key={tool.id}
                 title={tool.title}
                 description={tool.description}
                 slug={tool.slug}
                 badge={tool.badge}
+                category={tool.category}
                 targetKB={tool.targetKB}
-                dimensions={tool.width && tool.height ? `${tool.width}×${tool.height} px` : undefined}
+                dimensions={tool.width && tool.height ? `${tool.width} × ${tool.height} px` : undefined}
                 popular={tool.popular}
               />
             ))}
           </div>
 
-          {filteredTools.length > 15 && (
-            <div className="text-center pt-2">
+          {filteredTools.length > 16 && (
+            <div className="text-center pt-3">
               <Link
                 href="/tools"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#FFFFFF] border border-[#DDE2DF] hover:border-[#00C98B] text-[13px] font-bold text-[#17262E] hover:text-[#00A879] shadow-sm transition"
@@ -354,11 +345,11 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 5. EXAM FORM PRESETS */}
+        {/* 5. EXAM FORM PRESETS (2 COLUMNS DESKTOP) */}
         <section id="exam-presets" className="space-y-4">
           <div className="flex items-center justify-between border-b border-[#DDE2DF] pb-2">
             <div>
-              <h2 className="text-[22px] sm:text-[24px] font-extrabold text-[#17262E] flex items-center gap-2">
+              <h2 className="text-[20px] sm:text-[22px] font-extrabold text-[#17262E] flex items-center gap-2">
                 <GraduationCap className="w-6 h-6 text-[#00A879]" />
                 <span>🎓 Popular Exam Form Presets</span>
               </h2>
@@ -366,18 +357,22 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {examsData.slice(0, 6).map((exam) => (
-              <Link
+              <div
                 key={exam.id}
-                href={`/exam/${exam.id}-passport-size-photo-resizer`}
-                className="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition flex flex-col justify-between gap-4"
+                className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 border border-[#DDE2DF] hover:border-[#00C98B] shadow-sm hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition flex flex-col justify-between min-h-[180px] gap-3.5"
               >
                 <div className="space-y-1.5">
-                  <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#F0F3F2] text-[#46565C] border border-[#D8DEDC]">
-                    {exam.board}
-                  </span>
-                  <h3 className="font-bold text-[16px] text-[#17262E] group-hover:text-[#00A879] transition-colors leading-snug">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#F0F3F2] text-[#46565C] border border-[#D8DEDC]">
+                      {exam.board}
+                    </span>
+                    <span className="text-[11px] font-mono text-[#66777D]">
+                      Photo • Sign • Thumb
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-[16px] text-[#17262E] leading-snug pt-1">
                     {exam.title} Tools Suite
                   </h3>
                   <p className="text-[13px] text-[#53636A] line-clamp-2 leading-relaxed">
@@ -385,14 +380,16 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-[#E8EBE9] text-xs">
-                  <span className="text-[11px] font-mono text-[#66777D] font-medium">Photo • Sign • Thumb</span>
-                  <span className="text-[12px] font-bold text-[#00A879] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                    <span>Open Kit</span>
+                <div className="pt-1">
+                  <Link
+                    href={`/exam/${exam.id}-passport-size-photo-resizer`}
+                    className="w-full h-[42px] sm:h-[44px] rounded-xl bg-[#138F79] hover:bg-[#0E7764] text-white font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <span>Open Exam Kit</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
+                  </Link>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
