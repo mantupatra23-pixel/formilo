@@ -8,9 +8,9 @@ interface AdSlotProps {
 export default function AdSlot({ slotId = 'default', className = '' }: AdSlotProps) {
   return (
     <div
-      className={`w-full h-24 sm:h-28 rounded-2xl bg-[#FFFFFF] border border-[#DDE2DF] flex flex-col items-center justify-center text-center p-4 shadow-sm ${className}`}
+      className={`w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4 ${className}`}
     >
-      <span className="text-[10px] font-mono tracking-widest text-[#718087] uppercase">
+      <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
         Sponsored / Advertisement
       </span>
     </div>

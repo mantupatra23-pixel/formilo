@@ -92,7 +92,6 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
   const dimensions = customConfig?.dimensions || (matchedTool?.width && matchedTool?.height ? `${matchedTool.width} × ${matchedTool.height} px` : undefined);
   const examName = customConfig?.examName || matchedTool?.exam;
 
-  // Category Friendly Name
   const categoryMap: Record<string, string> = {
     photo: 'Photo Resizers',
     signature: 'Signature Tools',
@@ -106,45 +105,48 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
   let howToSteps: string[] = [];
   if (toolType === 'photo-resizer' || toolType === 'exam-preset') {
     howToSteps = [
-      `Tap "Choose Photo" to upload your candidate image from your device.`,
-      `Verify the target limit (${targetKB ? `< ${targetKB} KB` : 'preset dimensions'}).`,
-      `Allow the browser canvas engine to crop and downscale to standard dimensions.`,
-      `Preview the output size and click "Download Ready Document".`,
+      'Select or upload your photo using the Choose Photo button.',
+      `Set or verify your required target file size (${targetKB ? `< ${targetKB} KB` : 'preset dimensions'}).`,
+      'Adjust framing or alignment controls to center your subject.',
+      'Click "Resize & Download" to process your image locally in browser memory.',
+      'Preview the verified file size and download your compliant document.',
     ];
   } else if (toolType === 'signature-tool') {
     howToSteps = [
-      `Select your scanned signature or thumb impression image.`,
-      `Adjust framing, background contrast, or size limit (< ${targetKB} KB).`,
-      `Process the signature locally inside your browser memory.`,
-      `Download the clean file ready for recruitment form upload.`,
+      'Upload your scanned signature or left thumb impression image.',
+      `Select your target size limit (${targetKB ? `< ${targetKB} KB` : 'standard limit'}) and framing options.`,
+      'Clean background shadows or adjust contrast if needed.',
+      'Process the signature locally inside device memory.',
+      'Download your final compliant signature file.',
     ];
   } else if (toolType === 'pdf-converter' || toolType === 'pdf-compressor' || toolType === 'pdf-tool') {
     howToSteps = [
-      `Select single or multiple document pages from your device.`,
-      `Choose target PDF page layout (Standard A4) or target KB reduction limit.`,
-      `Start the client-side compilation and page rasterization.`,
-      `Download the generated multi-page or compressed PDF instantly.`,
+      'Select single or multiple JPG, PNG, or PDF files from your device.',
+      'Choose standard A4 page fitting, margin, or target KB size limit.',
+      'Reorder pages in sequential order if required.',
+      'Start client-side document rasterization and PDF generation.',
+      'Download your merged or compressed PDF document ready for upload.',
     ];
   } else if (toolType === 'calculator') {
     howToSteps = [
-      `Enter your base numerical inputs into the respective input fields.`,
-      `Review real-time computed outputs and breakdown metrics.`,
-      `Adjust parameters to compare alternative financial or mathematical scenarios.`,
-      `Save or copy the final calculated figures for your reference.`,
+      'Enter the required initial values into the input fields.',
+      'Review the calculated results and breakdown figures.',
+      'Adjust inputs to compare different financial or numerical scenarios.',
+      'Use the final verified estimates for your planning.',
     ];
   } else if (toolType === 'converter') {
     howToSteps = [
-      `Input the source magnitude or numerical value.`,
-      `Choose the source unit and destination target unit.`,
-      `View instant high-precision conversion results.`,
-      `Copy the converted metric directly to your clipboard.`,
+      'Enter the source magnitude or numerical value.',
+      'Select your source unit and destination target unit.',
+      'View instant high-precision conversion results.',
+      'Copy the converted metric for your application or form.',
     ];
   } else {
     howToSteps = [
-      `Upload your file or enter the required parameters.`,
-      `Review output specifications and formatting options.`,
-      `Execute processing directly within your browser.`,
-      `Download or save your verified result.`,
+      'Upload your file or select the required settings.',
+      'Verify target specifications and document parameters.',
+      'Process the file directly within your web browser.',
+      'Download the final verified result.',
     ];
   }
 
@@ -152,53 +154,53 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
   let bestFor: string[] = [];
   if (toolType === 'photo-resizer' || toolType === 'exam-preset') {
     bestFor = [
-      'Central & State Government recruitment application portals',
-      'Banking & Insurance recruitment uploads (IBPS, SBI, RBI)',
-      'National entrance examination registrations (NTA NEET, JEE Main, CUET)',
-      'State Police, Defence & Public Service Commission portals',
+      'Central & State Government recruitment applications (SSC, UPSC, Railway, Police)',
+      'Banking & Insurance recruitment portals (IBPS, SBI, RBI, LIC)',
+      'National entrance examination registrations (NTA NEET UG, JEE Main, CUET)',
+      'Passport size photo formatting for state scholarship and admission forms',
     ];
   } else if (toolType === 'signature-tool') {
     bestFor = [
-      'Official examination signature submission (< 20 KB limit)',
-      'Left thumb impression uploads for technical & police tests',
-      'PAN Card application & correction forms (400 × 200 px, 300 DPI)',
-      'Digital document signing and declaration forms',
+      'Recruitment portal signature uploads requiring strict 10 KB – 20 KB limit',
+      'Left thumb impression formatting for technical & defence examinations',
+      'PAN Card application & correction forms (400 × 200 px at 300 DPI)',
+      'Digital application forms and handwritten declarations',
     ];
   } else if (toolType === 'pdf-converter' || toolType === 'pdf-compressor' || toolType === 'pdf-tool') {
     bestFor = [
-      'Marksheet and degree certificate attachment under 200 KB',
-      'Caste, domicile, and income certificate submissions',
-      'Multi-image document stitching into single A4 PDF files',
-      'Cyber Cafe & CSC operator high-speed customer document handling',
+      'Marksheet and degree certificate attachment under 100 KB / 200 KB',
+      'Caste, income, and domicile certificate uploads',
+      'Multi-image document stitching into standardized A4 PDF files',
+      'Cyber Cafe & CSC center high-speed customer document formatting',
     ];
   } else if (toolType === 'calculator') {
     bestFor = [
-      'Personal financial planning and loan repayment estimation',
-      'Accurate tax, interest, and investment return projections',
-      'Everyday business, commercial, and mathematical evaluations',
+      'Personal finance planning and loan repayment estimation',
+      'Quick numerical projections and scenario comparisons',
+      'Educational and everyday business calculations',
     ];
   } else {
     bestFor = [
-      'Official form application formatting and verification',
-      'Educational and institutional document submissions',
-      'Digital service center quick workflows',
+      'Online application form document preparation',
+      'Educational and institutional uploads',
+      'High-speed digital service center workflows',
     ];
   }
 
-  // 3. Methodology / Formula / Processing
+  // 3. Methodology / Processing Details
   let methodology = {
-    heading: 'Browser-Native Processing Method',
-    description: 'This tool uses client-side HTML5 Canvas and memory rasterization to downscale images with bi-cubic interpolation, ensuring facial features and ink strokes remain sharp while strictly respecting target file byte limits.',
+    heading: 'In-Browser Image Processing Method',
+    description: 'This tool uses client-side HTML5 Canvas and bi-cubic downscaling interpolation within your browser RAM. It iteratively optimizes compression quality and dimensions to hit exact byte restrictions without sending uncompressed binaries across the network.',
   };
   if (toolType === 'calculator') {
     methodology = {
       heading: 'Standard Calculation Methodology',
-      description: 'Calculations utilize standard financial and mathematical formula models based on compound interest, periodic amortization, or linear percentage multipliers without approximations.',
+      description: 'Calculations follow established mathematical and financial amortization algorithms with precision floating-point evaluation to provide reliable estimates.',
     };
   } else if (toolType === 'pdf-converter' || toolType === 'pdf-compressor') {
     methodology = {
-      heading: 'In-Memory PDF Vector & Raster Assembly',
-      description: 'PDF structures are rendered and assembled entirely within browser RAM using client-side WebAssembly and jsPDF streams, maintaining uniform A4 margins without sending uncompressed binaries across the network.',
+      heading: 'Client-Side PDF Rasterization & Assembly',
+      description: 'PDF structures are rendered and compiled in-memory using client-side JavaScript streams. Pages are fitted to standard international A4 dimensions with optimized JPEG compression.',
     };
   }
 
@@ -206,96 +208,92 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
   let importantNotes: string[] = [];
   if (toolType === 'calculator') {
     importantNotes = [
-      'Calculations provide analytical estimates based on user-supplied parameters.',
-      'Actual bank or tax rates may vary depending on policy changes and institution-specific fees.',
-      'Verify important financial decisions with verified official institution schedules.',
+      'Results are analytical estimates based on entered parameters.',
+      'Actual bank interest rates, taxes, or charges may vary based on institutional terms.',
+      'Verify important financial decisions with official institution schedules.',
     ];
   } else {
     importantNotes = [
-      'Output byte weight can slightly vary depending on image complexity and contrast.',
-      'Always inspect the downloaded file to verify that candidate details, dates, or signatures are clearly legible.',
-      'Final submission acceptance depends on the rules published in the active notification of the respective recruitment board.',
+      'Output file size can slightly vary depending on original image detail, contrast, and color distribution.',
+      'Compression balances file weight and clarity; verify candidate facial features, name strips, and signatures before submission.',
+      'Always verify latest document instructions on the official notification of the respective examination authority.',
     ];
   }
 
-  // 5. Privacy Message
-  const privacyMessage = 'Files are processed locally in your browser memory (RAM) when supported. Files are not uploaded, indexed, or stored on remote Formilo servers.';
+  // 5. Truthful Privacy Statement
+  const privacyMessage = 'Files are processed locally inside your web browser memory (RAM) using client-side HTML5 APIs. Files are not uploaded, saved, or indexed on remote Formilo servers.';
 
   // 6. FAQs (Tool-Type Adaptive)
   let faqs: { q: string; a: string }[] = [];
   if (toolType === 'photo-resizer' || toolType === 'exam-preset') {
     faqs = [
       {
-        q: `How do I compress my photo strictly under ${targetKB} KB?`,
-        a: `Upload your photo, select the < ${targetKB} KB option, and the engine will downscale the file using bi-cubic interpolation to fit the required file size while retaining aspect ratio.`,
+        q: `How do I resize my photo to strictly under ${targetKB} KB?`,
+        a: `Upload your photo, select the < ${targetKB} KB limit, and the canvas engine will automatically downscale and compress the image to fit strictly within the required byte limit while preserving aspect ratio.`,
       },
       {
-        q: 'Will reducing the file size make facial features blurry?',
-        a: 'No. Formilo applies multi-step canvas downscaling that preserves sharp facial boundaries, contrast, and candidate name/date strips.',
+        q: 'Will reducing file size make facial features blurry or cause form rejection?',
+        a: 'No. Formilo uses step-down bi-cubic downscaling that preserves sharp facial boundaries, contrast, and candidate name/date strips.',
       },
       {
-        q: 'Are candidate photos uploaded to any external server?',
-        a: 'No. All image operations execute 100% inside your browser memory (RAM). Zero files are transmitted over the internet.',
+        q: 'Can I use this tool on Android and iPhone mobile browsers?',
+        a: 'Yes. Formilo is fully mobile-optimized and allows you to select photos directly from your camera gallery or file manager.',
       },
       {
-        q: 'Can I use this tool on Android or iPhone mobile devices?',
-        a: 'Yes. Formilo is fully responsive and supports direct photo uploads and downloads on all modern mobile web browsers.',
+        q: 'Are my confidential photographs uploaded to a server?',
+        a: 'No. All image cropping and compression operations run 100% locally inside your device RAM.',
       },
     ];
   } else if (toolType === 'signature-tool') {
     faqs = [
       {
-        q: `What is the standard size limit for recruitment signatures?`,
-        a: `Most government examination portals (SSC, UPSC, Railway, State Police) require candidate signatures to be between 10 KB and 20 KB on a clear white background.`,
+        q: 'What is the official size limit for signature uploads in online forms?',
+        a: 'Most government examination portals (SSC, UPSC, Railway, State Police) mandate candidate signatures to be strictly between 10 KB and 20 KB on a clear white background.',
       },
       {
-        q: 'How can I whiten a grey paper background on my signature photo?',
-        a: 'You can use the Signature Background Whitener tool to remove background shadows and convert paper scans to crisp black ink on pure white paper.',
+        q: 'How can I clean grey paper shadows from my signature photo?',
+        a: 'Use the Signature Background Whitener tool to remove scanner shadows and convert grey paper scans to high-contrast black ink on pure white paper.',
       },
       {
-        q: 'Is my scanned signature saved on any database?',
-        a: 'No. All cropping and contrast adjustments happen locally on your device. Your signatures are never stored.',
+        q: 'Is my signature stored in any external database?',
+        a: 'No. All signature crops and brightness adjustments execute strictly within your local browser memory.',
       },
     ];
   } else if (toolType === 'pdf-converter' || toolType === 'pdf-compressor') {
     faqs = [
       {
-        q: 'How many pages can I stitch into a single PDF?',
-        a: 'You can combine unlimited pages in your session. All pages are formatted into standardized A4 portrait or landscape sheets.',
+        q: 'How many images can I combine into a single PDF document?',
+        a: 'You can combine multiple pages in a single conversion session. Pages are automatically formatted into standardized A4 sheets.',
       },
       {
-        q: 'Will marksheet text and official stamps remain readable after compression?',
-        a: 'Yes. The compression engine balances canvas DPI and JPEG quality to keep roll numbers, grades, and official signatures legible.',
+        q: 'Will marksheet text and roll numbers remain readable after compression?',
+        a: 'Yes. The engine balances canvas DPI and JPEG quality to ensure certificate marks, roll numbers, and authority stamps remain sharp.',
       },
       {
-        q: 'Are confidential government marksheets safe to process?',
-        a: 'Yes. Processing runs client-side using JavaScript libraries. No document data leaves your device.',
+        q: 'Is it safe to convert confidential marksheet and caste certificates?',
+        a: 'Yes. All PDF generation and compression takes place client-side. No document files leave your device.',
       },
     ];
   } else if (toolType === 'calculator') {
     faqs = [
       {
-        q: 'How accurate are the calculated figures?',
-        a: 'Calculations follow verified mathematical and financial amortization algorithms with full decimal precision.',
+        q: 'How is the result calculated?',
+        a: 'Calculations utilize standard financial and mathematical formula models based on periodic compounding and amortization.',
       },
       {
-        q: 'Can I test multiple scenarios by changing input values?',
-        a: 'Yes. Results update instantly as you adjust numbers, tenure, or interest rates.',
-      },
-      {
-        q: 'Can I use this calculator offline?',
-        a: 'Yes. Once loaded in your browser, all calculation logic operates locally without needing constant internet connectivity.',
+        q: 'Can I test multiple scenarios by adjusting inputs?',
+        a: 'Yes. The calculation engine updates instantly in real time whenever you change input parameters.',
       },
     ];
   } else {
     faqs = [
       {
-        q: 'How does this tool format files?',
-        a: 'The tool reads your input parameters and processes the data locally using browser-native APIs.',
+        q: 'How does this tool process files?',
+        a: 'The tool uses browser-native APIs to format and process your inputs locally.',
       },
       {
-        q: 'Is there any daily limit on tool usage?',
-        a: 'No. Formilo tools are completely free to use without queue limits or daily quotas.',
+        q: 'Is there any daily limit on using this tool?',
+        a: 'No. Formilo tools are completely free to use without queues or daily limits.',
       },
     ];
   }
@@ -305,7 +303,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     .filter((t) => t.slug !== cleanSlug && (t.category === category || t.popular))
     .slice(0, 4);
 
-  // 8. Category Discovery (4–8 Tools)
+  // 8. Category Discovery Tools (4–8 Tools)
   const categoryTools = allTools
     .filter((t) => t.slug !== cleanSlug && t.category === category)
     .slice(0, 6);
@@ -317,7 +315,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     category,
     categoryName,
     toolType,
-    description: customConfig?.description || matchedTool?.description || `Format and prepare compliant documents strictly for official portal submission.`,
+    description: customConfig?.description || matchedTool?.description || 'Format and prepare compliant documents strictly for official portal submission.',
     badge: matchedTool?.badge || customConfig?.badge,
     targetKB,
     minKB,

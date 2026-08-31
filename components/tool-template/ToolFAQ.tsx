@@ -13,36 +13,34 @@ export default function ToolFAQ({ faqs }: ToolFAQProps) {
   if (!faqs || faqs.length === 0) return null;
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-5 sm:p-7 space-y-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <HelpCircle className="w-5 h-5 text-[#00A879]" />
-        <h3 className="font-extrabold text-[18px] sm:text-[20px] text-[#17262E]">
-          Frequently Asked Questions
-        </h3>
+    <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
+      <div className="flex items-center gap-2 font-bold text-white text-sm">
+        <HelpCircle className="w-4 h-4 text-emerald-400" />
+        <span>Frequently Asked Questions</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 text-xs text-zinc-400">
         {faqs.map((faq, idx) => {
           const isOpen = openIndex === idx;
           return (
             <div
               key={idx}
-              className="bg-[#F7F7F3] border border-[#DDE2DF] rounded-xl overflow-hidden transition"
+              className="p-3.5 rounded-2xl bg-black border border-zinc-850 space-y-1 transition"
             >
               <button
                 type="button"
                 onClick={() => setOpenIndex(isOpen ? null : idx)}
-                className="w-full p-4 text-left text-[13.5px] font-bold text-[#17262E] hover:text-[#00A879] flex justify-between items-center transition cursor-pointer"
+                className="w-full text-left font-bold text-white text-[13px] hover:text-emerald-400 flex justify-between items-center transition cursor-pointer"
                 aria-expanded={isOpen}
               >
                 <span className="pr-2">{faq.q}</span>
-                <span className="text-[#66777D] text-lg font-mono ml-2 shrink-0">
+                <span className="text-zinc-500 font-mono text-base ml-2 shrink-0">
                   {isOpen ? '−' : '+'}
                 </span>
               </button>
 
               {isOpen && (
-                <div className="p-4 pt-0 text-[13px] text-[#53636A] border-t border-[#DDE2DF] leading-relaxed">
+                <div className="pt-2 border-t border-zinc-800 text-xs text-zinc-400 leading-relaxed">
                   {faq.a}
                 </div>
               )}

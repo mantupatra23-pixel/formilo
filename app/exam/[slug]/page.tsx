@@ -27,11 +27,9 @@ export default async function ExamPage({ params }: PageProps) {
     redirect('/pdf-compressor');
   }
 
-  // Resolve Tool Data using Global Intelligence
   const toolData = resolveToolPageData(`exam/${slug}`);
   const isPanPhotoTool = slug.includes('pan-card-photo');
 
-  // Generate Google Schema
   const faqSchema = generateFAQSchema({
     toolName: toolData.title,
     slug: `/exam/${slug}`,
@@ -46,7 +44,6 @@ export default async function ExamPage({ params }: PageProps) {
     description: toolData.description,
   });
 
-  // Mock Preset object for existing legacy engine compatibility
   const legacyPreset = {
     id: toolData.id,
     slug: toolData.slug,
@@ -78,17 +75,13 @@ export default async function ExamPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }}
       />
 
-      <main className="min-h-screen bg-[#F7F7F3] text-[#17262E] py-8 px-4 sm:px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <GlobalToolPageTemplate data={toolData}>
-            {isPanPhotoTool ? (
-              <PanCardPhotoChecker />
-            ) : (
-              <ExamResizerTool preset={legacyPreset} config={legacyPreset} />
-            )}
-          </GlobalToolPageTemplate>
-        </div>
-      </main>
+      <GlobalToolPageTemplate data={toolData}>
+        {isPanPhotoTool ? (
+          <PanCardPhotoChecker />
+        ) : (
+          <ExamResizerTool preset={legacyPreset} config={legacyPreset} />
+        )}
+      </GlobalToolPageTemplate>
     </>
   );
 }

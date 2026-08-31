@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import GlobalToolPageTemplate from '@/components/tool-template/GlobalToolPageTemplate';
-import ToolWorkspace from '@/components/tools/ToolWorkspace';
+import ExamResizerTool from '@/components/ExamResizerTool';
 import { resolveToolPageData } from '@/lib/toolPageHelper';
 
 export const metadata: Metadata = {
@@ -21,23 +21,29 @@ export default function PhotoResizer50KbPage() {
     description: 'Universal government application passport photo compressor (< 50 KB). Calibrated for SSC, UPSC, Railway RRB, and Banking portals.',
   });
 
+  const preset = {
+    id: 'photo-50kb',
+    slug: 'photo-resizer-50kb',
+    baseSlug: 'photo-50kb',
+    title: 'Photo Resizer Under 50 KB',
+    examName: 'Government Forms',
+    boardName: 'Official Examination Authority',
+    docType: 'Passport Size Photo',
+    targetKB: 50,
+    maxKB: 50,
+    minKB: 20,
+    width: 350,
+    height: 450,
+    dpi: 300,
+    dimensionText: '350 × 450 px',
+    aspectRatio: '3.5:4.5',
+    format: 'JPG / JPEG',
+    bgColor: 'Light / Crisp White Background',
+  };
+
   return (
-    <main className="min-h-screen bg-[#F7F7F3] text-[#17262E] py-8 px-4 sm:px-6">
-      <div className="max-w-[1200px] mx-auto">
-        <GlobalToolPageTemplate data={toolData}>
-          <ToolWorkspace
-            config={{
-              title: 'Photo Resizer Under 50 KB',
-              categoryName: 'Photo Tools',
-              targetKB: 50,
-              minKB: 20,
-              defaultWidth: 350,
-              defaultHeight: 450,
-              description: toolData.description,
-            }}
-          />
-        </GlobalToolPageTemplate>
-      </div>
-    </main>
+    <GlobalToolPageTemplate data={toolData}>
+      <ExamResizerTool preset={preset} config={preset} />
+    </GlobalToolPageTemplate>
   );
 }
