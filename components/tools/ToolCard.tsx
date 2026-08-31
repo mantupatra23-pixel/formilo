@@ -1,32 +1,69 @@
+import React from 'react';
 import Link from 'next/link';
-import { Tool } from '@/lib/tools';
+import { ArrowRight, Zap } from 'lucide-react';
+import Badge from '@/components/common/Badge';
 
 interface ToolCardProps {
-  tool: Tool | any;
+  title: string;
+  description: string;
+  slug: string;
+  badge?: string;
+  targetKB?: number;
+  dimensions?: string;
+  format?: string;
+  popular?: boolean;
 }
 
-export default function ToolCard({ tool }: ToolCardProps) {
+export default function ToolCard({
+  title,
+  description,
+  slug,
+  badge,
+  targetKB,
+  dimensions,
+  format = 'JPG',
+  popular,
+}: ToolCardProps) {
+  const href = slug.startsWith('/') ? slug : `/${slug}`;
+
   return (
     <Link
-      href={`/tools/${tool.slug}`}
-      className="group block p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 transition shadow-sm hover:shadow-md"
+      href={href}
+      className="group bg-white rounded-card p-5 border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between gap-4 relative"
     >
-      <div className="flex items-start justify-between">
-        <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-          {tool.name}
-        </h3>
-        <span className="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full capitalize font-medium">
-          {tool.category}
-        </span>
+      {/* Top Meta Badges */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          {badge && <Badge label={badge} variant={popular ? 'orange' : 'green'} />}
+          {targetKB && <Badge label={`< ${targetKB} KB`} variant="neutral" />}
+        </div>
+        {popular && (
+          <span className="text-[10px] font-bold text-[#c97b40] flex items-center gap-1">
+            <Zap className="w-3 h-3 fill-[#EBAA78] text-[#EBAA78]" />
+            POPULAR
+          </span>
+        )}
       </div>
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-        {tool.shortDescription || tool.description}
-      </p>
-      <div className="mt-4 flex items-center text-xs font-semibold text-blue-600 dark:text-blue-400">
-        Use Tool
-        <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-        </svg>
+
+      {/* Main Title & Description */}
+      <div className="space-y-1.5">
+        <h3 className="font-bold text-sm text-[#162630] group-hover:text-[#00C98B] transition-colors line-clamp-1">
+          {title}
+        </h3>
+        <p className="text-xs text-[#65737A] leading-relaxed line-clamp-2">
+          {description}
+        </p>
+      </div>
+
+      {/* Bottom Specs & Action Row */}
+      <div className="flex items-center justify-between pt-3 border-t border-[#E8EBE9] text-xs">
+        <span className="text-[11px] font-mono text-[#89959A]">
+          {dimensions || format}
+        </span>
+        <span className="text-xs font-bold text-[#00C98B] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+          <span>Open Tool</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </span>
       </div>
     </Link>
   );
