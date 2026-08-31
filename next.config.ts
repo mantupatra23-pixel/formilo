@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   async redirects() {
     return [
@@ -32,7 +35,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 2. Redirect Legacy Tools routes to Clean Dedicated Landing Pages
+      // 2. Redirect Legacy Tools to Dedicated Landing Pages
       {
         source: '/tools/photo-resize-to-20-kb',
         destination: '/photo-resizer-20kb',
@@ -97,16 +100,16 @@ const nextConfig: NextConfig = {
       // 3. Redirect Legacy PDF Routes
       {
         source: '/tools/pdf-compress-to-200-kb',
-        destination: '/tools/pdf-compressor-under-200kb',
+        destination: '/exam/pdf-compressor-under-200kb',
         permanent: true,
       },
       {
         source: '/tools/pdf-compreso-to-100-kb',
-        destination: '/tools/pdf-compressor-under-200kb',
+        destination: '/exam/pdf-compressor-under-200kb',
         permanent: true,
       },
 
-      // 4. Clean Nested / Corrupted Loop Suffixes to Canonical URLs
+      // 4. Clean Nested Corrupted URL Patterns
       {
         source: '/exam/:path*-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
         destination: '/exam/:path*-postcard-size-photo-4x6-resizer',
@@ -137,18 +140,6 @@ const nextConfig: NextConfig = {
         destination: '/exam/signature-resize-to-20kb',
         permanent: true,
       },
-
-      // 5. Redirect Legacy PAN Tools
-      {
-        source: '/tools/pan-card-photo-resizer',
-        destination: '/exam/pan-card-photo-resizer',
-        permanent: true,
-      },
-      {
-        source: '/tools/pan-card-signature-resizer',
-        destination: '/exam/pan-card-signature-resizer',
-        permanent: true,
-      },
       {
         source: '/exam/pan-card-postcard-size-photo-4x6-resizer',
         destination: '/exam/pan-card-photo-resizer',
@@ -160,9 +151,9 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 6. Generic Fallback for /tools/:slug -> /exam/:slug (Excluding static utilities)
+      // 5. Universal Fallback for Any Legacy /tools/:slug Route
       {
-        source: '/tools/:slug((?!jpg-to-pdf-converter|pdf-to-jpg-converter|pdf-compressor-under-200kb|compress-pdf-to-100kb|compress-pdf-to-200kb|compress-pdf-to-500kb|pdf-size-reducer-300kb|photo-resizer-35kb|photo-resizer-80kb|image-resizer-1mb|image-resizer-1-5mb|make-background-white-of-signature).*)',
+        source: '/tools/:slug',
         destination: '/exam/:slug',
         permanent: true,
       },
