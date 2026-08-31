@@ -34,17 +34,14 @@ export default function Header() {
     >
       <div className="max-w-[1200px] mx-auto h-[60px] sm:h-[66px] px-4 sm:px-6 flex items-center justify-between gap-4">
         
-        {/* Left: Brand Logo with Official Image */}
+        {/* Left: Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center bg-zinc-900 border border-zinc-800">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
               alt="Formilo Logo"
               className="w-full h-full object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
             />
           </div>
           <div className="flex flex-col">
@@ -87,7 +84,6 @@ export default function Header() {
             <span>20 KB Preset</span>
           </Link>
 
-          {/* Mobile Menu Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, Mail } from 'lucide-react';
@@ -13,15 +15,12 @@ export default function Footer() {
           {/* Col 1: Brand Info with Logo */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-zinc-900 border border-zinc-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/logo.png"
                   alt="Formilo Logo"
                   className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
                 />
               </div>
               <div className="flex flex-col">
@@ -78,7 +77,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Company & Legal Pages */}
+          {/* Col 4: Company & Legal */}
           <div className="space-y-2.5 text-[13px]">
             <h4 className="font-bold text-[#FFFFFF] uppercase tracking-wider text-[12px]">Company &amp; Legal</h4>
             <ul className="space-y-2 text-[#C4D0D3]">
