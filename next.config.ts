@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 
   async redirects() {
     return [
@@ -35,31 +32,19 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 2. Direct All Variations of JPG-to-PDF to Dedicated Multi-Select Engine
+      // 2. Direct Dedicated Root Engine Routes
       {
-        source: '/exam/:path*jpg-to-pdf:path*',
+        source: '/tools/jpg-to-pdf-converter',
         destination: '/jpg-to-pdf-converter',
         permanent: true,
       },
       {
-        source: '/tools/:path*jpg-to-pdf:path*',
-        destination: '/jpg-to-pdf-converter',
-        permanent: true,
-      },
-
-      // 3. Direct All Variations of PDF-to-JPG to Dedicated Engine
-      {
-        source: '/exam/:path*pdf-to-jpg:path*',
-        destination: '/pdf-to-jpg-converter',
-        permanent: true,
-      },
-      {
-        source: '/tools/:path*pdf-to-jpg:path*',
+        source: '/tools/pdf-to-jpg-converter',
         destination: '/pdf-to-jpg-converter',
         permanent: true,
       },
 
-      // 4. Redirect Legacy Tools to Dedicated Landing Pages
+      // 3. Redirect Legacy Tools to Dedicated Landing Pages
       {
         source: '/tools/photo-resize-to-20-kb',
         destination: '/photo-resizer-20kb',
@@ -121,34 +106,34 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 5. Clean Nested Corrupted URL Patterns
+      // 4. Clean Nested Corrupted URL Patterns
       {
-        source: '/exam/:path*-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
-        destination: '/exam/:path*-postcard-size-photo-4x6-resizer',
+        source: '/exam/:slug*-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
+        destination: '/exam/:slug*-postcard-size-photo-4x6-resizer',
         permanent: true,
       },
       {
-        source: '/exam/:path*-postcard-photo-4x6-passport-size-photo-resizer',
-        destination: '/exam/:path*-passport-size-photo-resizer',
+        source: '/exam/:slug*-postcard-photo-4x6-passport-size-photo-resizer',
+        destination: '/exam/:slug*-passport-size-photo-resizer',
         permanent: true,
       },
       {
-        source: '/exam/:path*-postcard-photo-4x6-signature-crop-compress',
-        destination: '/exam/:path*-signature-crop-compress',
+        source: '/exam/:slug*-postcard-photo-4x6-signature-crop-compress',
+        destination: '/exam/:slug*-signature-crop-compress',
         permanent: true,
       },
       {
-        source: '/exam/:path*-postcard-photo-4x6-left-thumb-impression-resizer',
-        destination: '/exam/:path*-left-thumb-impression-resizer',
+        source: '/exam/:slug*-postcard-photo-4x6-left-thumb-impression-resizer',
+        destination: '/exam/:slug*-left-thumb-impression-resizer',
         permanent: true,
       },
       {
-        source: '/exam/:path*-left-left-thumb-impression-resizer',
-        destination: '/exam/:path*-left-thumb-impression-resizer',
+        source: '/exam/:slug*-left-left-thumb-impression-resizer',
+        destination: '/exam/:slug*-left-thumb-impression-resizer',
         permanent: true,
       },
       {
-        source: '/exam/:path*-signature-resize-to-20kb-signature-crop-compress',
+        source: '/exam/:slug*-signature-resize-to-20kb-signature-crop-compress',
         destination: '/exam/signature-resize-to-20kb',
         permanent: true,
       },
@@ -163,7 +148,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 6. Universal Fallback for Any Legacy /tools/:slug Route
+      // 5. Universal Fallback for /tools/:slug Route
       {
         source: '/tools/:slug',
         destination: '/exam/:slug',
