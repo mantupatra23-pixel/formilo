@@ -1,4 +1,4 @@
-import { examsData } from '@/data/exams';
+import { examsData, ExamItem } from '@/data/exams';
 
 export interface ToolItem {
   id: string;
@@ -17,7 +17,6 @@ export interface ToolItem {
   exam?: string;
 }
 
-// 1. Core Base Static Tools
 export const staticTools: ToolItem[] = [
   // Photo Resizers
   { id: 'photo-20kb', slug: 'photo-resizer-20kb', title: 'Photo Resizer Under 20 KB', description: 'Compress passport photos strictly under 20 KB with verified aspect ratio.', category: 'photo', targetKB: 20, minKB: 5, width: 350, height: 450, popular: true, badge: '< 20 KB' },
@@ -40,17 +39,15 @@ export const staticTools: ToolItem[] = [
   { id: 'pdf-compress-200', slug: 'pdf-compressor', title: 'PDF Compressor (< 200 KB)', description: 'Compress marksheet, caste certificate & form PDFs strictly under 200 KB.', category: 'pdf', popular: true, badge: 'SAFE' },
 ];
 
-// 2. Generate Full Dynamic Registry by combining Exams + Tools
 export function getAllTools(): ToolItem[] {
   const generated: ToolItem[] = [...staticTools];
 
   if (Array.isArray(examsData)) {
-    examsData.forEach((exam) => {
-      // Photo Tool
+    examsData.forEach((exam: ExamItem) => {
       generated.push({
         id: `${exam.id}-photo`,
         slug: `exam/${exam.id}-passport-size-photo-resizer`,
-        title: `${exam.title || exam.id} Photo Resizer`,
+        title: `${exam.title} Photo Resizer`,
         description: `Resize candidate passport photo strictly for ${exam.title} application.`,
         category: 'photo',
         targetKB: 50,
@@ -60,11 +57,10 @@ export function getAllTools(): ToolItem[] {
         exam: exam.title,
       });
 
-      // Signature Tool
       generated.push({
         id: `${exam.id}-sign`,
         slug: `exam/${exam.id}-signature-crop-compress`,
-        title: `${exam.title || exam.id} Signature Compressor`,
+        title: `${exam.title} Signature Compressor`,
         description: `Crop and compress candidate signature for ${exam.title} recruitment portal.`,
         category: 'signature',
         targetKB: 20,
@@ -74,11 +70,10 @@ export function getAllTools(): ToolItem[] {
         exam: exam.title,
       });
 
-      // Left Thumb Impression
       generated.push({
         id: `${exam.id}-thumb`,
         slug: `exam/${exam.id}-left-thumb-impression-resizer`,
-        title: `${exam.title || exam.id} Thumb Impression Resizer`,
+        title: `${exam.title} Thumb Impression Resizer`,
         description: `Format clear left thumb impression for ${exam.title} verification.`,
         category: 'signature',
         targetKB: 20,
@@ -88,11 +83,10 @@ export function getAllTools(): ToolItem[] {
         exam: exam.title,
       });
 
-      // Postcard Tool (if applicable)
       generated.push({
         id: `${exam.id}-postcard`,
         slug: `exam/${exam.id}-postcard-size-photo-4x6-resizer`,
-        title: `${exam.title || exam.id} Postcard Photo (4x6)`,
+        title: `${exam.title} Postcard Photo (4x6)`,
         description: `Format 4x6 inch postcard size photo under 200 KB for ${exam.title}.`,
         category: 'photo',
         targetKB: 200,
@@ -107,7 +101,6 @@ export function getAllTools(): ToolItem[] {
   return generated;
 }
 
-// 3. Dynamic Registry Counts
 export function getRegistryStats() {
   const all = getAllTools();
   return {
@@ -115,7 +108,7 @@ export function getRegistryStats() {
     totalDisplay: `${all.length}+`,
     photoCount: all.filter((t) => t.category === 'photo').length,
     signatureCount: all.filter((t) => t.category === 'signature').length,
-    pdfCount: all.filter((t) => t.category === 'pdf').length + 191, // including sub-variants
+    pdfCount: all.filter((t) => t.category === 'pdf').length + 191,
     convertersCount: 2,
     presetsCount: 7,
   };
