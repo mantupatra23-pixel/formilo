@@ -43,10 +43,8 @@ export interface ExamPresetConfig {
   bgColor: string;
 }
 
-// 1. Recursive Slug Sanitizer to Eliminate Corrupted & Nested Suffix Loops
 function cleanBaseSlug(raw: string): string {
   let s = String(raw || '').toLowerCase().trim();
-  
   const suffixes = [
     '-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
     '-postcard-size-photo-4x6-postcard-size-photo-4x6-resizer',
@@ -108,7 +106,6 @@ function cleanBaseSlug(raw: string): string {
   return s.replace(/-(left|postcard|photo|sign|pre)$/gi, '').replace(/^-+|-+$/g, '');
 }
 
-// 2. Normalizes Any Malformed URL into the Clean Standard Variant
 function getCanonicalNormalizedSlug(rawSlug: string): string {
   const clean = decodeURIComponent(rawSlug || '').toLowerCase().trim();
 
@@ -319,17 +316,19 @@ export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
   const rawSlug = String(slug || '').toLowerCase();
 
-  // Instant Intercept & Redirect for all JPG-to-PDF / PDF-to-JPG requests
+  // Instant Intercept & Redirect to Dedicated File Engines
   if (rawSlug.includes('jpg-to-pdf')) {
     redirect('/jpg-to-pdf-converter');
   }
   if (rawSlug.includes('pdf-to-jpg')) {
     redirect('/pdf-to-jpg-converter');
   }
+  if (rawSlug.includes('pdf-compress') || rawSlug.includes('compress-pdf') || rawSlug.includes('pdf-size-reducer')) {
+    redirect('/pdf-compressor');
+  }
 
   const canonicalSlug = getCanonicalNormalizedSlug(slug);
 
-  // Auto 301 Permanent Redirect for any malformed or corrupted slugs
   if (slug !== canonicalSlug) {
     redirect(`/exam/${canonicalSlug}`);
   }
@@ -337,7 +336,6 @@ export default async function ExamPage({ params }: PageProps) {
   const preset = resolveExamPreset(canonicalSlug);
   const isPanPhotoTool = preset.slug === 'pan-card-photo-resizer' || preset.slug.includes('pan-card-photo');
 
-  // Automated Google Rich Snippet Schemas (Position 0 & WebApplication)
   const faqSchema = generateFAQSchema({
     toolName: `${preset.examName} ${preset.docType}`,
     slug: `/exam/${canonicalSlug}`,
@@ -376,7 +374,6 @@ export default async function ExamPage({ params }: PageProps) {
 
   return (
     <>
-      {/* Structured Google Search JSON-LD Schemas */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -389,7 +386,6 @@ export default async function ExamPage({ params }: PageProps) {
       <main className="w-full min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-6">
           
-          {/* 1. Breadcrumb Navigation */}
           <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium overflow-x-auto pb-1">
             <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">Home</Link>
             <span>/</span>
@@ -398,7 +394,6 @@ export default async function ExamPage({ params }: PageProps) {
             <span className="text-emerald-400 font-semibold truncate">{preset.examName}</span>
           </nav>
 
-          {/* 2. Header Section with Spec Badge */}
           <div className="space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
               <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
@@ -414,28 +409,24 @@ export default async function ExamPage({ params }: PageProps) {
             </p>
           </div>
 
-          {/* 3. Top Ad Container */}
           <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
             <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
               Sponsored / Advertisement
             </span>
           </div>
 
-          {/* 4. Interactive Tool Box */}
           {isPanPhotoTool ? (
             <PanCardPhotoChecker />
           ) : (
             <ExamResizerTool preset={preset} config={preset} />
           )}
 
-          {/* 5. Bottom Ad Container */}
           <div className="w-full h-24 rounded-2xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-center p-4">
             <span className="text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
               Sponsored / Advertisement
             </span>
           </div>
 
-          {/* 6. Official Upload Guidelines Specifications */}
           <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
             <div className="flex items-center gap-2 font-bold text-white text-sm">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -470,7 +461,6 @@ export default async function ExamPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* 7. Step-by-Step Instructions & Privacy Guarantee */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
               <div className="flex items-center gap-2 font-bold text-white text-sm">
@@ -495,7 +485,6 @@ export default async function ExamPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* 8. Related Format Presets */}
           {relatedFormats.length > 0 && (
             <div className="space-y-4 pt-2">
               <div className="flex items-center justify-between">
@@ -533,7 +522,6 @@ export default async function ExamPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* 9. Frequently Asked Questions Section */}
           <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
             <div className="flex items-center gap-2 font-bold text-white text-sm">
               <HelpCircle className="w-4 h-4 text-emerald-400" />
@@ -550,7 +538,6 @@ export default async function ExamPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* 10. Telegram Conversion Banner */}
           <TelegramBanner />
 
         </div>

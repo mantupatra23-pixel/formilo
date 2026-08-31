@@ -32,7 +32,32 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 2. Direct Dedicated Root Engine Routes
+      // 2. Dedicated PDF & Document Tool Routing
+      {
+        source: '/tools/pdf-compressor-under-200kb',
+        destination: '/pdf-compressor',
+        permanent: true,
+      },
+      {
+        source: '/tools/compress-pdf-to-100kb',
+        destination: '/pdf-compressor',
+        permanent: true,
+      },
+      {
+        source: '/tools/compress-pdf-to-200kb',
+        destination: '/pdf-compressor',
+        permanent: true,
+      },
+      {
+        source: '/tools/compress-pdf-to-500kb',
+        destination: '/pdf-compressor',
+        permanent: true,
+      },
+      {
+        source: '/tools/pdf-size-reducer-300kb',
+        destination: '/pdf-compressor',
+        permanent: true,
+      },
       {
         source: '/tools/jpg-to-pdf-converter',
         destination: '/jpg-to-pdf-converter',
@@ -148,7 +173,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 5. Universal Fallback for /tools/:slug Route
+      // 5. Universal Fallback
       {
         source: '/tools/:slug',
         destination: '/exam/:slug',
