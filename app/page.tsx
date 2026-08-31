@@ -6,7 +6,6 @@ import {
   Search, 
   X, 
   Zap, 
-  Sparkles, 
   ArrowRight, 
   CheckCircle2, 
   ShieldCheck, 
@@ -16,16 +15,11 @@ import {
   FileText, 
   Image as ImageIcon, 
   PenTool, 
-  RefreshCw, 
-  Calendar, 
-  Fingerprint, 
-  SlidersHorizontal, 
-  Flame, 
-  Lock, 
   Layers 
 } from 'lucide-react';
 import { getAllTools, getRegistryStats, ToolItem } from '@/lib/toolsData';
 import { examsData } from '@/data/exams';
+import ToolCard from '@/components/tools/ToolCard';
 
 interface ExamRule {
   name: string;
@@ -47,7 +41,7 @@ const CHECKER_RULES: Record<string, ExamRule> = {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'photo' | 'signature' | 'pdf' | 'exam'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'presets' | 'photo' | 'signature' | 'pdf'>('all');
   const [selectedCheckerKey, setSelectedCheckerKey] = useState('ssc-photo');
   const [checkerFile, setCheckerFile] = useState<{
     name: string;
@@ -60,11 +54,11 @@ export default function HomePage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const checkerInputRef = useRef<HTMLInputElement>(null);
 
-  // Dynamic Registry Integration
+  // Dynamic 1,017+ Registry Evaluation
   const allTools = useMemo(() => getAllTools(), []);
   const stats = useMemo(() => getRegistryStats(), []);
 
-  // Keyboard shortcut '/' to search
+  // Keyboard shortcut '/'
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '/' && document.activeElement !== searchInputRef.current) {
@@ -76,7 +70,7 @@ export default function HomePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Filter Tools
+  // Filter Tools Dynamically
   const filteredTools = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
@@ -91,16 +85,12 @@ export default function HomePage() {
       if (!matchesQuery) return false;
 
       if (selectedCategory === 'all') return true;
-      if (selectedCategory === 'exam') return tool.slug.startsWith('exam/');
+      if (selectedCategory === 'presets') return tool.slug.startsWith('exam/');
       return tool.category === selectedCategory;
     });
   }, [allTools, searchQuery, selectedCategory]);
 
-  const popularTools = useMemo(() => {
-    return allTools.filter((t) => t.popular);
-  }, [allTools]);
-
-  // Checker Validation Logic
+  // Checker Validation
   const activeRule = CHECKER_RULES[selectedCheckerKey];
   const isSizeValid = checkerFile ? checkerFile.sizeKB >= activeRule.minKB && checkerFile.sizeKB <= activeRule.maxKB : false;
   const isReady = checkerFile && isSizeValid;
@@ -134,65 +124,67 @@ export default function HomePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#F7F7F3] text-[#162630] py-6 px-4 sm:px-6">
+    <main className="min-h-screen bg-[#F7F7F3] text-[#17262E] py-6 px-4 sm:px-6">
       <div className="max-w-[1200px] mx-auto space-y-10">
 
         {/* 1. HERO & INSTANT SEARCH */}
-        <section className="text-center space-y-5 pt-4 sm:pt-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#DDE2DF] shadow-sm text-[#162630] text-xs font-semibold">
+        <section className="text-center space-y-4 pt-4 sm:pt-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFFFFF] border border-[#DDE2DF] shadow-sm text-[#17262E] text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-[#00C98B] animate-pulse"></span>
             <span>⚡ 100% Free &amp; Privacy-Focused • <strong>{stats.totalDisplay}</strong> Form Tools</span>
           </div>
 
           <div className="space-y-2 max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-[#162630] tracking-tight leading-[1.15]">
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-[#17262E] tracking-tight leading-[1.15]">
               Government Form Photos, Signatures &amp; PDFs{' '}
               <span className="bg-gradient-to-r from-[#00C98B] to-[#00C7D9] bg-clip-text text-transparent">
                 Ready in Seconds
               </span>
             </h1>
-            <p className="text-xs sm:text-sm text-[#65737A] leading-relaxed max-w-2xl mx-auto">
+            <p className="text-[13.5px] sm:text-[14px] text-[#53636A] leading-relaxed max-w-2xl mx-auto">
               Resize, compress, and format photos, signatures, and PDF documents to the required KB, dimensions, and formats for online applications and government recruitment forms.
             </p>
           </div>
 
           {/* Search Box */}
           <div className="max-w-2xl mx-auto relative px-2">
-            <div className="relative flex items-center bg-white border border-[#DDE2DF] focus-within:border-[#00C98B] focus-within:ring-2 focus-within:ring-[#00C98B]/20 rounded-2xl shadow-card transition-all">
-              <Search className="w-5 h-5 text-[#89959A] ml-4 shrink-0" />
+            <div className="relative flex items-center bg-[#FFFFFF] border border-[#D5DCDA] focus-within:border-[#00B987] focus-within:ring-[3px] focus-within:ring-[#00C98B]/10 rounded-2xl shadow-card transition-all">
+              <Search className="w-5 h-5 text-[#66777D] ml-4 shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Search across ${stats.totalDisplay} Form Tools (e.g. SSC CGL, 20 KB Photo, Signature, PDF...)`}
-                className="w-full py-3.5 sm:py-4 px-3 text-xs sm:text-sm text-[#162630] bg-transparent focus:outline-none placeholder-[#89959A]"
+                className="w-full py-3.5 sm:py-4 px-3 text-[13px] sm:text-[14px] text-[#17262E] bg-transparent focus:outline-none placeholder-[#718087]"
               />
               {searchQuery ? (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery('')}
-                  className="p-2 mr-2 text-[#89959A] hover:text-[#162630] transition"
+                  className="p-2 mr-2 text-[#66777D] hover:text-[#17262E] transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block mr-4 px-2 py-0.5 text-[11px] font-mono text-[#89959A] bg-[#F7F7F3] border border-[#DDE2DF] rounded-md">
+                <kbd className="hidden sm:inline-block mr-4 px-2 py-0.5 text-[11px] font-mono text-[#66777D] bg-[#F7F7F3] border border-[#DDE2DF] rounded-md">
                   /
                 </kbd>
               )}
             </div>
 
-            {/* Quick Chips */}
+            {/* Quick Filter Chips */}
             <div className="flex items-center justify-center gap-1.5 flex-wrap pt-3">
-              <span className="text-[11px] font-semibold text-[#89959A] mr-1 hidden sm:inline">Quick:</span>
+              <span className="text-[11px] font-semibold text-[#66777D] mr-1 hidden sm:inline">Quick:</span>
               {quickPresets.map((chip, idx) => (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => setSearchQuery(chip.query)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition shadow-sm ${
+                  className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition shadow-sm cursor-pointer ${
                     searchQuery === chip.query
                       ? 'bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white border-transparent'
-                      : 'bg-white border-[#DDE2DF] text-[#65737A] hover:border-[#00C98B] hover:text-[#00C98B]'
+                      : 'bg-[#FFFFFF] border-[#D8DEDC] text-[#46565C] hover:border-[#00C98B] hover:text-[#00A879]'
                   }`}
                 >
                   {chip.label}
@@ -203,32 +195,32 @@ export default function HomePage() {
         </section>
 
         {/* 2. CYBER CAFE & CSC CENTER WORKSPACE */}
-        <section className="bg-white border border-[#DDE2DF] rounded-card p-5 sm:p-7 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+        <section className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-5 sm:p-7 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="space-y-2.5 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#00C98B]/10 text-[#00a874] border border-[#00C98B]/20 text-[11px] font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#00C98B]/15 text-[#008760] border border-[#00C98B]/30 text-[11px] font-bold uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5 fill-[#00C98B]" />
               <span>CYBER CAFE &amp; CSC CENTER WORKSPACE</span>
             </div>
 
-            <h2 className="text-lg sm:text-xl font-extrabold text-[#162630] tracking-tight">
+            <h2 className="text-[20px] sm:text-[22px] font-extrabold text-[#17262E] tracking-tight">
               Fast Form Document Formatting for Cyber Cafes
             </h2>
 
-            <p className="text-xs text-[#65737A] leading-relaxed">
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
               Prepare candidate photos, signatures, handwritten declarations, and marksheets quickly from one high-speed browser-based workspace.
             </p>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              <Link href="/exam/ssc-cgl-passport-size-photo-resizer" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#162630] text-[11px] font-semibold border border-[#DDE2DF] transition">
+              <Link href="/exam/ssc-cgl-passport-size-photo-resizer" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#17262E] text-[12px] font-semibold border border-[#DDE2DF] transition">
                 SSC CGL Photo &rarr;
               </Link>
-              <Link href="/name-date-on-photo" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#162630] text-[11px] font-semibold border border-[#DDE2DF] transition">
+              <Link href="/name-date-on-photo" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#17262E] text-[12px] font-semibold border border-[#DDE2DF] transition">
                 Name &amp; Date DOP &rarr;
               </Link>
-              <Link href="/exam/pan-card-photo-resizer" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#162630] text-[11px] font-semibold border border-[#DDE2DF] transition">
+              <Link href="/exam/pan-card-photo-resizer" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#17262E] text-[12px] font-semibold border border-[#DDE2DF] transition">
                 PAN 213×213 px &rarr;
               </Link>
-              <Link href="/exam/rrb-ntpc-passport-size-photo-resizer" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#162630] text-[11px] font-semibold border border-[#DDE2DF] transition">
+              <Link href="/exam/rrb-ntpc-passport-size-photo-resizer" className="px-2.5 py-1 rounded-lg bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#17262E] text-[12px] font-semibold border border-[#DDE2DF] transition">
                 Railway NTPC &rarr;
               </Link>
             </div>
@@ -237,31 +229,31 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
             <Link
               href="/cyber-cafe"
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white font-bold text-xs sm:text-sm text-center shadow-md shadow-[#00C98B]/20 hover:opacity-95 transition flex items-center justify-center gap-2"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white font-bold text-[13px] sm:text-[14px] text-center shadow-md shadow-[#00C98B]/20 hover:opacity-95 transition flex items-center justify-center gap-2"
             >
               <span>Open Cyber Cafe Hub</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <button
               type="button"
-              onClick={() => { setSelectedCategory('exam'); setSearchQuery(''); }}
-              className="px-5 py-2.5 rounded-xl bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#162630] font-bold text-xs text-center border border-[#DDE2DF] transition cursor-pointer"
+              onClick={() => { setSelectedCategory('presets'); setSearchQuery(''); }}
+              className="px-5 py-2.5 rounded-xl bg-[#F7F7F3] hover:bg-[#E8EBE9] text-[#17262E] font-bold text-[12px] text-center border border-[#DDE2DF] transition cursor-pointer"
             >
-              View Exam Presets
+              View Exam Presets ({stats.presetsCount})
             </button>
           </div>
         </section>
 
         {/* 3. DEDICATED PHOTO SIZE & KB TOOLS ROW */}
-        <section className="space-y-4">
+        <section id="photo-tools" className="space-y-4">
           <div className="flex items-center justify-between border-b border-[#DDE2DF] pb-2">
             <div className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-[#00C98B]" />
-              <h2 className="text-lg font-extrabold text-[#162630]">
+              <ImageIcon className="w-5 h-5 text-[#00A879]" />
+              <h2 className="text-[22px] sm:text-[24px] font-extrabold text-[#17262E]">
                 📸 Photo Size &amp; KB Tools
               </h2>
             </div>
-            <span className="text-xs text-[#00a874] font-bold px-2.5 py-0.5 rounded-lg bg-[#00C98B]/10 border border-[#00C98B]/20 font-mono">
+            <span className="text-[11px] text-[#008760] font-bold px-2.5 py-0.5 rounded-lg bg-[#00C98B]/15 border border-[#00C98B]/30 font-mono">
               6 Preset Sizes
             </span>
           </div>
@@ -278,20 +270,20 @@ export default function HomePage() {
               <Link
                 key={tool.kb}
                 href={tool.slug}
-                className="p-4 rounded-card bg-white border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-card-hover transition flex flex-col justify-between gap-3 text-center group"
+                className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition flex flex-col justify-between gap-3 text-center group"
               >
                 <div className="space-y-1">
-                  <span className="inline-block px-2.5 py-0.5 rounded-md text-xs font-black font-mono bg-[#00C98B]/10 text-[#00a874] border border-[#00C98B]/25">
+                  <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-black font-mono bg-[#00C98B]/15 text-[#008760] border border-[#00C98B]/30">
                     {tool.label}
                   </span>
-                  <h3 className="text-xs font-bold text-[#162630] group-hover:text-[#00C98B] transition-colors pt-1">
+                  <h3 className="text-[13px] font-bold text-[#17262E] group-hover:text-[#00A879] transition-colors pt-1">
                     {tool.title}
                   </h3>
-                  <p className="text-[10px] text-[#65737A] line-clamp-1">{tool.desc}</p>
+                  <p className="text-[11px] text-[#53636A] line-clamp-1">{tool.desc}</p>
                 </div>
-                <span className="text-[11px] font-bold text-[#00C98B] flex items-center justify-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                <span className="text-[12px] font-bold text-[#00A879] flex items-center justify-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                   <span>Open</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </span>
               </Link>
             ))}
@@ -303,24 +295,25 @@ export default function HomePage() {
           <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#DDE2DF]">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
-                { id: 'all', label: '🔥 All Tools', count: stats.total },
-                { id: 'exam', label: '🪪 Exam Presets', count: examsData.length * 4 },
-                { id: 'photo', label: '📸 Photo Resizers', count: stats.photoCount },
-                { id: 'signature', label: '✍️ Signatures', count: stats.signatureCount },
-                { id: 'pdf', label: '📄 PDF Suite', count: stats.pdfCount },
+                { id: 'all', label: 'All Tools', count: stats.total },
+                { id: 'presets', label: 'Exam Presets', count: stats.presetsCount },
+                { id: 'photo', label: 'Photo Resizers', count: stats.photoCount },
+                { id: 'signature', label: 'Signature Tools', count: stats.signatureCount },
+                { id: 'pdf', label: 'PDF Tools', count: stats.pdfCount },
               ].map((cat) => (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => { setSelectedCategory(cat.id as any); setSearchQuery(''); }}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl text-[13px] font-semibold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     selectedCategory === cat.id
-                      ? 'bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white shadow-sm shadow-[#00C98B]/20'
-                      : 'bg-white text-[#65737A] hover:text-[#162630] border border-[#DDE2DF]'
+                      ? 'bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white shadow-sm font-bold'
+                      : 'bg-[#FFFFFF] text-[#46565C] hover:text-[#17262E] border border-[#D8DEDC]'
                   }`}
                 >
                   <span>{cat.label}</span>
                   <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
-                    selectedCategory === cat.id ? 'bg-white/25 text-white' : 'bg-[#F7F7F3] text-[#89959A]'
+                    selectedCategory === cat.id ? 'bg-white/25 text-white' : 'bg-[#F0F3F2] text-[#66777D]'
                   }`}>
                     {cat.count}
                   </span>
@@ -328,72 +321,32 @@ export default function HomePage() {
               ))}
             </div>
 
-            <span className="text-xs text-[#89959A] font-mono">
+            <span className="text-[12px] text-[#66777D] font-mono">
               {filteredTools.length} Tools Available
             </span>
           </div>
 
           {/* Tools Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTools.slice(0, 15).map((tool) => {
-              const href = tool.slug.startsWith('/') ? tool.slug : `/${tool.slug}`;
-              return (
-                <Link
-                  key={tool.id}
-                  href={href}
-                  className="group bg-white rounded-card p-5 border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between gap-4 relative"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      {tool.badge && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold border ${
-                          tool.popular ? 'bg-[#EBAA78]/15 text-[#c97b40] border-[#EBAA78]/35 font-bold' : 'bg-[#00C98B]/10 text-[#00a874] border-[#00C98B]/25'
-                        }`}>
-                          {tool.badge}
-                        </span>
-                      )}
-                      {tool.targetKB && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold border bg-[#F7F7F3] text-[#65737A] border-[#DDE2DF]">
-                          &lt; {tool.targetKB} KB
-                        </span>
-                      )}
-                    </div>
-                    {tool.popular && (
-                      <span className="text-[10px] font-bold text-[#c97b40] flex items-center gap-1">
-                        <Zap className="w-3 h-3 fill-[#EBAA78] text-[#EBAA78]" />
-                        POPULAR
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <h3 className="font-bold text-sm text-[#162630] group-hover:text-[#00C98B] transition-colors line-clamp-1">
-                      {tool.title}
-                    </h3>
-                    <p className="text-xs text-[#65737A] leading-relaxed line-clamp-2">
-                      {tool.description}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-[#E8EBE9] text-xs">
-                    <span className="text-[11px] font-mono text-[#89959A]">
-                      {tool.width && tool.height ? `${tool.width}×${tool.height} px` : 'Aspect-Safe'}
-                    </span>
-                    <span className="text-xs font-bold text-[#00C98B] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                      <span>Open Tool</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+            {filteredTools.slice(0, 15).map((tool) => (
+              <ToolCard
+                key={tool.id}
+                title={tool.title}
+                description={tool.description}
+                slug={tool.slug}
+                badge={tool.badge}
+                targetKB={tool.targetKB}
+                dimensions={tool.width && tool.height ? `${tool.width}×${tool.height} px` : undefined}
+                popular={tool.popular}
+              />
+            ))}
           </div>
 
           {filteredTools.length > 15 && (
             <div className="text-center pt-2">
               <Link
                 href="/tools"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#DDE2DF] hover:border-[#00C98B] text-xs font-bold text-[#162630] hover:text-[#00C98B] shadow-sm transition"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#FFFFFF] border border-[#DDE2DF] hover:border-[#00C98B] text-[13px] font-bold text-[#17262E] hover:text-[#00A879] shadow-sm transition"
               >
                 <span>Browse All {stats.totalDisplay} Tools &rarr;</span>
               </Link>
@@ -405,11 +358,11 @@ export default function HomePage() {
         <section id="exam-presets" className="space-y-4">
           <div className="flex items-center justify-between border-b border-[#DDE2DF] pb-2">
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-[#162630] flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-[#00C98B]" />
+              <h2 className="text-[22px] sm:text-[24px] font-extrabold text-[#17262E] flex items-center gap-2">
+                <GraduationCap className="w-6 h-6 text-[#00A879]" />
                 <span>🎓 Popular Exam Form Presets</span>
               </h2>
-              <p className="text-xs text-[#65737A]">Standardized specifications for active recruitment portals</p>
+              <p className="text-[13px] text-[#53636A]">Pre-calibrated specifications for active recruitment portals</p>
             </div>
           </div>
 
@@ -418,23 +371,23 @@ export default function HomePage() {
               <Link
                 key={exam.id}
                 href={`/exam/${exam.id}-passport-size-photo-resizer`}
-                className="group bg-white rounded-card p-5 border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-card-hover transition flex flex-col justify-between gap-4"
+                className="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition flex flex-col justify-between gap-4"
               >
                 <div className="space-y-1.5">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#F7F7F3] text-[#65737A] border border-[#DDE2DF]">
+                  <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#F0F3F2] text-[#46565C] border border-[#D8DEDC]">
                     {exam.board}
                   </span>
-                  <h3 className="font-bold text-sm text-[#162630] group-hover:text-[#00C98B] transition-colors">
+                  <h3 className="font-bold text-[16px] text-[#17262E] group-hover:text-[#00A879] transition-colors leading-snug">
                     {exam.title} Tools Suite
                   </h3>
-                  <p className="text-xs text-[#65737A] line-clamp-2">
+                  <p className="text-[13px] text-[#53636A] line-clamp-2 leading-relaxed">
                     {exam.description}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-[#E8EBE9] text-xs">
-                  <span className="text-[11px] font-mono text-[#89959A]">Photo • Sign • Thumb</span>
-                  <span className="text-xs font-bold text-[#00C98B] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                  <span className="text-[11px] font-mono text-[#66777D] font-medium">Photo • Sign • Thumb</span>
+                  <span className="text-[12px] font-bold text-[#00A879] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                     <span>Open Kit</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
@@ -444,27 +397,27 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 6. FORM FILE CHECKER (IS YOUR FILE READY?) */}
-        <section className="bg-white border border-[#DDE2DF] rounded-card p-5 sm:p-8 shadow-card space-y-6">
+        {/* 6. FORM FILE CHECKER */}
+        <section className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-5 sm:p-8 shadow-card space-y-6">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00C98B]">
+            <div className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#008760]">
               <CheckCircle2 className="w-4 h-4" />
               <span>INSTANT REQUIREMENT VALIDATOR</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#162630] tracking-tight">
+            <h2 className="text-[22px] sm:text-[24px] font-extrabold text-[#17262E] tracking-tight">
               Is Your Form File Ready?
             </h2>
-            <p className="text-xs sm:text-sm text-[#65737A]">
+            <p className="text-[13px] sm:text-[14px] text-[#53636A]">
               Select your exam and upload your candidate photo or signature to verify size and format requirements before final submission.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <label className="text-xs font-bold text-[#162630] shrink-0">Select Target Form Requirement:</label>
+            <label className="text-[13px] font-bold text-[#17262E] shrink-0">Select Target Form Requirement:</label>
             <select
               value={selectedCheckerKey}
               onChange={(e) => setSelectedCheckerKey(e.target.value)}
-              className="w-full sm:w-auto flex-1 bg-[#F7F7F3] border border-[#DDE2DF] rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#162630] focus:outline-none focus:border-[#00C98B]"
+              className="w-full sm:w-auto flex-1 bg-[#F7F7F3] border border-[#D5DCDA] rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-[#17262E] focus:outline-none focus:border-[#00B987]"
             >
               {Object.entries(CHECKER_RULES).map(([key, rule]) => (
                 <option key={key} value={key}>
@@ -485,25 +438,25 @@ export default function HomePage() {
           {!checkerFile ? (
             <div
               onClick={() => checkerInputRef.current?.click()}
-              className="border-2 border-dashed border-[#DDE2DF] hover:border-[#00C98B] rounded-2xl p-6 sm:p-8 text-center bg-[#F7F7F3] cursor-pointer transition flex flex-col items-center justify-center gap-2 group"
+              className="border-2 border-dashed border-[#D5DCDA] hover:border-[#00C98B] rounded-2xl p-6 sm:p-8 text-center bg-[#F7F7F3] cursor-pointer transition flex flex-col items-center justify-center gap-2 group"
             >
-              <UploadCloud className="w-10 h-10 text-[#89959A] group-hover:text-[#00C98B] transition-colors" />
-              <p className="text-xs sm:text-sm font-bold text-[#162630]">
+              <UploadCloud className="w-10 h-10 text-[#53636A] group-hover:text-[#00A879] transition-colors" />
+              <p className="text-[14px] font-bold text-[#17262E]">
                 Tap to Upload Photo or Signature to Test
               </p>
-              <p className="text-[11px] text-[#89959A]">100% Client-Side Instant Rule Validation</p>
+              <p className="text-[12px] text-[#66777D]">Supports JPG, JPEG, PNG • 100% Client-Side Instant Validation</p>
             </div>
           ) : (
             <div className="bg-[#F7F7F3] border border-[#DDE2DF] rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#DDE2DF]">
-                <span className="text-xs font-bold text-[#162630] truncate max-w-xs">{checkerFile.name}</span>
+                <span className="text-[13px] font-bold text-[#17262E] truncate max-w-xs">{checkerFile.name}</span>
                 {isReady ? (
-                  <span className="px-3 py-1 rounded-full bg-[#00C98B]/15 text-[#00a874] border border-[#00C98B]/30 text-xs font-extrabold flex items-center gap-1">
+                  <span className="px-3 py-1 rounded-full bg-[#00C98B]/15 text-[#008760] border border-[#00C98B]/30 text-[12px] font-extrabold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>✓ READY TO UPLOAD</span>
                   </span>
                 ) : (
-                  <span className="px-3 py-1 rounded-full bg-[#EBAA78]/20 text-[#c97b40] border border-[#EBAA78]/40 text-xs font-extrabold flex items-center gap-1">
+                  <span className="px-3 py-1 rounded-full bg-[#FDF2E9] text-[#A85A20] border border-[#EBAA78]/50 text-[12px] font-extrabold flex items-center gap-1">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>⚠ NEEDS FIXING</span>
                   </span>
@@ -511,41 +464,42 @@ export default function HomePage() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 bg-white rounded-xl border border-[#DDE2DF]">
-                  <span className="text-[10px] text-[#89959A] block">Current File Size</span>
-                  <span className={`font-bold font-mono text-sm ${isSizeValid ? 'text-[#00C98B]' : 'text-[#c97b40]'}`}>
+                <div className="p-3 bg-[#FFFFFF] rounded-xl border border-[#DDE2DF]">
+                  <span className="text-[11px] text-[#66777D] block">Current File Size</span>
+                  <span className={`font-bold font-mono text-[14px] ${isSizeValid ? 'text-[#008760]' : 'text-[#A85A20]'}`}>
                     {checkerFile.sizeKB} KB
                   </span>
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-[#DDE2DF]">
-                  <span className="text-[10px] text-[#89959A] block">Allowed Rule Limit</span>
-                  <span className="font-bold text-[#162630] font-mono text-sm">
+                <div className="p-3 bg-[#FFFFFF] rounded-xl border border-[#DDE2DF]">
+                  <span className="text-[11px] text-[#66777D] block">Allowed Rule Limit</span>
+                  <span className="font-bold text-[#17262E] font-mono text-[14px]">
                     {activeRule.minKB}–{activeRule.maxKB} KB
                   </span>
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-[#DDE2DF]">
-                  <span className="text-[10px] text-[#89959A] block">Image Resolution</span>
-                  <span className="font-bold text-[#162630] font-mono text-sm">
+                <div className="p-3 bg-[#FFFFFF] rounded-xl border border-[#DDE2DF]">
+                  <span className="text-[11px] text-[#66777D] block">Image Resolution</span>
+                  <span className="font-bold text-[#17262E] font-mono text-[14px]">
                     {checkerFile.width}×{checkerFile.height} px
                   </span>
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-[#DDE2DF]">
-                  <span className="text-[10px] text-[#89959A] block">File Format</span>
-                  <span className="font-bold text-[#00C98B] font-mono text-sm">{checkerFile.format}</span>
+                <div className="p-3 bg-[#FFFFFF] rounded-xl border border-[#DDE2DF]">
+                  <span className="text-[11px] text-[#66777D] block">File Format</span>
+                  <span className="font-bold text-[#008760] font-mono text-[14px]">{checkerFile.format}</span>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                 <button
+                  type="button"
                   onClick={() => checkerInputRef.current?.click()}
-                  className="text-xs font-semibold text-[#65737A] hover:underline cursor-pointer"
+                  className="text-[12px] font-semibold text-[#53636A] hover:underline cursor-pointer"
                 >
                   Check Another File
                 </button>
                 {!isReady && (
                   <Link
                     href={activeRule.fixUrl}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-[#00C98B]/20"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white font-bold text-[12px] flex items-center justify-center gap-1.5 shadow-sm shadow-[#00C98B]/20"
                   >
                     <span>Fix &amp; Compress to &lt; {activeRule.maxKB} KB Automatically</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -556,42 +510,42 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 7. TRUST & PRIVACY GUARANTEE */}
+        {/* 7. TRUST & PRIVACY */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white border border-[#DDE2DF] rounded-card p-6 shadow-card space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#00C98B]">
+          <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#00A879]">
               <Zap className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-[#162630]">Browser-Native Engine</h3>
-            <p className="text-xs text-[#65737A] leading-relaxed">
-              Fast image downscaling and bi-cubic rendering executed directly within device RAM with zero server processing delay.
+            <h3 className="font-bold text-[15px] text-[#17262E]">Browser-Native</h3>
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
+              Fast processing directly in your browser where supported with zero server queuing.
             </p>
           </div>
 
-          <div className="bg-white border border-[#DDE2DF] rounded-card p-6 shadow-card space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#00C7D9]">
+          <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#007D8B]">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-[#162630]">Privacy First Guarantee</h3>
-            <p className="text-xs text-[#65737A] leading-relaxed">
-              No registration or account needed. Client-side tools do not store or transmit confidential identity files to external servers.
+            <h3 className="font-bold text-[15px] text-[#17262E]">Privacy First</h3>
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
+              No account required for basic tools. Client-side tools do not need remote file storage.
             </p>
           </div>
 
-          <div className="bg-white border border-[#DDE2DF] rounded-card p-6 shadow-card space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#EBAA78]">
+          <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#A85A20]">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-[#162630]">Requirement Focused</h3>
-            <p className="text-xs text-[#65737A] leading-relaxed">
-              Presets calibrated to verified official recruitment standards across SSC, UPSC, Railway, Banking, Police, and NTA portals.
+            <h3 className="font-bold text-[15px] text-[#17262E]">Requirement Focused</h3>
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
+              Tools designed and calibrated around real government form-upload requirements.
             </p>
           </div>
         </section>
 
-        {/* 8. SEO INFORMATION & RECRUITMENT GUIDANCE */}
-        <section className="bg-white border border-[#DDE2DF] rounded-card p-6 sm:p-8 space-y-4 text-xs text-[#65737A] leading-relaxed">
-          <h3 className="text-sm font-bold text-[#162630]">
+        {/* 8. STRUCTURED SEO INFORMATION */}
+        <section className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 sm:p-8 space-y-4 text-[13px] text-[#53636A] leading-relaxed">
+          <h3 className="text-[16px] font-bold text-[#17262E]">
             About Formilo Government Form Document Preparation Platform
           </h3>
           <p>

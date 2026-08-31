@@ -8,15 +8,15 @@ interface BadgeProps {
 
 export default function Badge({ label, variant = 'neutral', className = '' }: BadgeProps) {
   const styles = {
-    green: 'bg-[#00C98B]/10 text-[#00a874] border-[#00C98B]/25',
-    orange: 'bg-[#EBAA78]/15 text-[#c97b40] border-[#EBAA78]/35 font-bold',
-    cyan: 'bg-[#00C7D9]/10 text-[#009fb0] border-[#00C7D9]/25',
-    neutral: 'bg-[#F7F7F3] text-[#65737A] border-[#DDE2DF]',
+    green: 'bg-[#00C98B]/15 text-[#008760] border-[#00C98B]/35 font-bold',
+    orange: 'bg-[#FDF2E9] text-[#A85A20] border-[#EBAA78]/50 font-bold',
+    cyan: 'bg-[#00C7D9]/15 text-[#007D8B] border-[#00C7D9]/35 font-bold',
+    neutral: 'bg-[#F0F3F2] text-[#46565C] border-[#D8DEDC] font-semibold',
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold border ${styles[variant]} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-mono border ${styles[variant]} ${className}`}
     >
       {label}
     </span>

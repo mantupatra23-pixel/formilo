@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, FileText, Image as ImageIcon, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
+import { Menu, X, Zap, ArrowRight } from 'lucide-react';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,16 +19,16 @@ export default function Header() {
   }, []);
 
   const navLinks = [
-    { label: 'Photo Tools', href: '/#photo-tools' },
+    { label: 'Photo Resizers', href: '/#photo-tools' },
     { label: 'Signature Tools', href: '/#signature-tools' },
-    { label: 'PDF Suite', href: '/#pdf-tools' },
+    { label: 'PDF Tools', href: '/#pdf-tools' },
     { label: 'Exam Presets', href: '/#exam-presets' },
     { label: 'Cyber Cafe Hub', href: '/cyber-cafe' },
   ];
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full bg-white transition-shadow duration-200 border-b ${
+      className={`sticky top-0 z-50 w-full bg-[#FFFFFF] transition-shadow duration-200 border-b ${
         scrolled ? 'shadow-sm border-[#DDE2DF]' : 'border-[#E8EBE9]'
       }`}
     >
@@ -36,31 +36,31 @@ export default function Header() {
         
         {/* Left: Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00C98B] to-[#00C7D9] flex items-center justify-center text-white font-black text-lg shadow-sm shadow-[#00C98B]/20 group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00C98B] to-[#00C7D9] flex items-center justify-center text-white font-black text-lg shadow-sm group-hover:scale-105 transition-transform">
             F
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-base tracking-tight text-[#162630] leading-none">
+            <span className="font-extrabold text-[17px] tracking-tight text-[#17262E] leading-none">
               FORMILO
             </span>
-            <span className="text-[9px] font-bold text-[#65737A] tracking-wider uppercase mt-0.5">
-              Document & Photo Tools
+            <span className="text-[10px] font-bold text-[#66777D] tracking-wider uppercase mt-0.5">
+              Document &amp; Photo Tools
             </span>
           </div>
         </Link>
 
         {/* Center: Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+        <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.label}
                 href={link.href}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
                   isActive
-                    ? 'text-[#00C98B] bg-[#F7F7F3]'
-                    : 'text-[#65737A] hover:text-[#162630] hover:bg-[#F7F7F3]'
+                    ? 'text-[#00A879] bg-[#F7F7F3] font-semibold'
+                    : 'text-[#34454C] hover:text-[#17262E] hover:bg-[#F7F7F3]'
                 }`}
               >
                 {link.label}
@@ -73,7 +73,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <Link
             href="/photo-resizer-20kb"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white text-xs font-bold shadow-sm shadow-[#00C98B]/20 hover:opacity-95 transition"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white text-[12px] font-bold shadow-sm shadow-[#00C98B]/20 hover:opacity-95 transition"
           >
             <Zap className="w-3.5 h-3.5 fill-white" />
             <span>20 KB Preset</span>
@@ -83,7 +83,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl text-[#162630] hover:bg-[#F7F7F3] border border-[#DDE2DF] transition"
+            className="md:hidden p-2 rounded-xl text-[#17262E] hover:bg-[#F7F7F3] border border-[#DDE2DF] transition cursor-pointer"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -92,19 +92,19 @@ export default function Header() {
 
       </div>
 
-      {/* Mobile Slide-down Menu */}
+      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#DDE2DF] px-4 py-4 space-y-2 shadow-lg animate-in slide-in-from-top-2">
+        <div className="md:hidden bg-[#FFFFFF] border-b border-[#DDE2DF] px-4 py-4 space-y-2 shadow-lg animate-in slide-in-from-top-2">
           <div className="grid grid-cols-1 gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2.5 rounded-xl text-xs font-semibold text-[#162630] hover:bg-[#F7F7F3] transition flex items-center justify-between"
+                className="px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-[#17262E] hover:bg-[#F7F7F3] transition flex items-center justify-between"
               >
                 <span>{link.label}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#89959A]" />
+                <ArrowRight className="w-4 h-4 text-[#66777D]" />
               </Link>
             ))}
           </div>
@@ -113,7 +113,7 @@ export default function Header() {
             <Link
               href="/photo-resizer-20kb"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-white text-[13px] font-bold flex items-center justify-center gap-1.5 shadow-sm"
             >
               <Zap className="w-3.5 h-3.5 fill-white" />
               <span>Quick 20 KB Photo Resizer</span>
