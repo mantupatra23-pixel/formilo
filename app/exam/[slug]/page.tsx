@@ -142,7 +142,7 @@ function getCanonicalNormalizedSlug(rawSlug: string): string {
 
 function resolveExamPreset(rawSlug: string): ExamPresetConfig {
   const cleanSlug = getCanonicalNormalizedSlug(rawSlug);
-  const matchedTool = getToolBySlug(cleanSlug);
+  const matchedTool = typeof getToolBySlug === 'function' ? getToolBySlug(cleanSlug) : null;
 
   let targetKB = matchedTool?.targetKB || 50;
   let minKB = matchedTool?.minKB || 20;
@@ -317,9 +317,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ExamPage({ params }: PageProps) {
   const { slug } = await params;
+  const rawSlug = String(slug || '').toLowerCase();
+
+  // Instant Intercept & Redirect for all JPG-to-PDF / PDF-to-JPG requests
+  if (rawSlug.includes('jpg-to-pdf')) {
+    redirect('/jpg-to-pdf-converter');
+  }
+  if (rawSlug.includes('pdf-to-jpg')) {
+    redirect('/pdf-to-jpg-converter');
+  }
+
   const canonicalSlug = getCanonicalNormalizedSlug(slug);
 
-  // Auto 301 Permanent Redirect for any duplicate or corrupted slugs
+  // Auto 301 Permanent Redirect for any malformed or corrupted slugs
   if (slug !== canonicalSlug) {
     redirect(`/exam/${canonicalSlug}`);
   }
@@ -425,7 +435,7 @@ export default async function ExamPage({ params }: PageProps) {
             </span>
           </div>
 
-          {/* 6. Official Upload Guidelines Specifications (4-Box Grid) */}
+          {/* 6. Official Upload Guidelines Specifications */}
           <div className="p-6 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-4 shadow-xl">
             <div className="flex items-center gap-2 font-bold text-white text-sm">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -460,7 +470,7 @@ export default async function ExamPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* 7. Step-by-Step Instructions & Privacy Guarantee (2-Box Grid) */}
+          {/* 7. Step-by-Step Instructions & Privacy Guarantee */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
               <div className="flex items-center gap-2 font-bold text-white text-sm">
