@@ -34,10 +34,18 @@ export default function Header() {
     >
       <div className="max-w-[1200px] mx-auto h-[60px] sm:h-[66px] px-4 sm:px-6 flex items-center justify-between gap-4">
         
-        {/* Left: Brand Logo */}
+        {/* Left: Brand Logo with Official Image */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00C98B] to-[#00C7D9] flex items-center justify-center text-white font-black text-lg shadow-sm group-hover:scale-105 transition-transform">
-            F
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="Formilo Logo"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
           <div className="flex flex-col">
             <span className="font-extrabold text-[17px] tracking-tight text-[#17262E] leading-none">
@@ -92,7 +100,7 @@ export default function Header() {
 
       </div>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-[#FFFFFF] border-b border-[#DDE2DF] px-4 py-4 space-y-2 shadow-lg animate-in slide-in-from-top-2">
           <div className="grid grid-cols-1 gap-1">

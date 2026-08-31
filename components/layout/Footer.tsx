@@ -10,11 +10,19 @@ export default function Footer() {
         {/* Top Brand Grid */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           
-          {/* Col 1: Brand Info */}
+          {/* Col 1: Brand Info with Logo */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00C98B] to-[#00C7D9] flex items-center justify-center text-white font-black text-base shadow-sm">
-                F
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo.png"
+                  alt="Formilo Logo"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-[17px] tracking-tight text-[#FFFFFF] leading-none">
