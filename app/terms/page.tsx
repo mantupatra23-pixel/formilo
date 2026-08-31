@@ -1,43 +1,73 @@
-// app/terms/page.tsx
+import React from 'react';
+import Link from 'next/link';
 import { Metadata } from 'next';
-import { FileText, CheckCircle2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Formilo',
-  description: 'Terms and conditions governing the usage of Formilo browser formatting tools.',
+  title: 'Terms of Service | Formilo',
+  description: 'Terms and Conditions for using Formilo document and photo preparation tools.',
+  alternates: {
+    canonical: 'https://www.formilo.in/terms',
+  },
 };
 
 export default function TermsPage() {
   return (
-    <main className="min-h-[80vh] bg-[#09090b] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <main className="min-h-screen bg-[#F7F7F3] text-[#17262E] py-8 px-4 sm:px-6">
+      <div className="max-w-[900px] mx-auto space-y-8">
         
-        <div className="border-b border-zinc-800 pb-6">
-          <h1 className="text-3xl font-extrabold text-white">Terms of Service</h1>
-          <p className="text-xs text-zinc-400 mt-1">Effective Date: August 2026</p>
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-[13px] text-[#53636A]">
+          <Link href="/" className="hover:text-[#00A879] transition">Home</Link>
+          <span>/</span>
+          <span className="text-[#17262E] font-bold">Terms of Service</span>
+        </nav>
+
+        {/* Title */}
+        <div className="space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#17262E] tracking-tight">
+            Terms and Conditions
+          </h1>
+          <p className="text-[12px] text-[#66777D] font-mono">Effective Date: August 2026</p>
         </div>
 
-        <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
-            <h2 className="text-lg font-bold text-white">1. Acceptance of Terms</h2>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              By accessing and using Formilo, you accept and agree to be bound by these terms. If you disagree with any part, you may discontinue use of the platform.
+        {/* Body */}
+        <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 sm:p-8 space-y-6 shadow-card text-[13.5px] text-[#53636A] leading-relaxed">
+          
+          <section className="space-y-2">
+            <h2 className="text-[17px] font-bold text-[#17262E]">1. Acceptance of Terms</h2>
+            <p>
+              By accessing and using Formilo (https://www.formilo.in), you accept and agree to be bound by the terms and provisions of this agreement.
             </p>
-          </div>
+          </section>
 
-          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
-            <h2 className="text-lg font-bold text-white">2. User Responsibility</h2>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              Formilo provides conversion presets matching common examination board guidelines. However, users are strictly responsible for verifying final file clarity, dimensions, and size before official portal submissions.
+          <section className="space-y-2">
+            <h2 className="text-[17px] font-bold text-[#17262E]">2. Use of Online Tools</h2>
+            <p>
+              Formilo provides free browser-based tools to help users format, resize, compress, and convert photos, signatures, and document files. You agree to use these tools only for lawful purposes.
             </p>
-          </div>
+          </section>
 
-          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
-            <h2 className="text-lg font-bold text-white">3. Service Availability</h2>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              Formilo tools are provided on an "as is" and "as available" basis without warranties of any kind. We reserve the right to improve, modify, or update tool presets at any time.
+          <section className="space-y-2">
+            <h2 className="text-[17px] font-bold text-[#17262E]">3. User Responsibility &amp; Verification</h2>
+            <p>
+              While Formilo strives to keep all exam dimensions and KB limits updated according to official exam notifications, guidelines can change. Users are solely responsible for verifying their resized documents with the official recruitment board instructions prior to submission.
             </p>
-          </div>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-[17px] font-bold text-[#17262E]">4. Disclaimer of Warranties</h2>
+            <p>
+              The tools and services on Formilo are provided &quot;as is&quot; without warranties of any kind, either express or implied. Formilo does not guarantee that resized documents will be accepted by third-party government application portals.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-[17px] font-bold text-[#17262E]">5. Contact Us</h2>
+            <p>
+              For any questions regarding these Terms, please email us at <strong>formilohelp@gmail.com</strong>.
+            </p>
+          </section>
+
         </div>
 
       </div>

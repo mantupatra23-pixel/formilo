@@ -1,61 +1,99 @@
-// app/about/page.tsx
+import React from 'react';
+import Link from 'next/link';
 import { Metadata } from 'next';
-import { ShieldCheck, Zap, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Zap, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'About Us — Formilo',
-  description: 'Learn about Formilo, the 100% private, client-side photo, signature, and PDF processing engine.',
+  title: 'About Us | Formilo Document & Photo Tools',
+  description: 'Learn about Formilo — free, high-speed, browser-native document formatting and image resizing platform for online government job applications.',
+  alternates: {
+    canonical: 'https://www.formilo.in/about',
+  },
 };
 
 export default function AboutPage() {
   return (
-    <main className="min-h-[80vh] bg-[#09090b] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-10">
+    <main className="min-h-screen bg-[#F7F7F3] text-[#17262E] py-8 px-4 sm:px-6">
+      <div className="max-w-[1000px] mx-auto space-y-8">
         
-        {/* Header */}
-        <div className="text-center sm:text-left border-b border-zinc-800 pb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> High Speed In-Browser Engine
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-[13px] text-[#53636A]">
+          <Link href="/" className="hover:text-[#00A879] transition">Home</Link>
+          <span>/</span>
+          <span className="text-[#17262E] font-bold">About Us</span>
+        </nav>
+
+        {/* Hero */}
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00C98B]/15 border border-[#00C98B]/30 text-[#008760] text-xs font-bold">
+            <Zap className="w-3.5 h-3.5 fill-[#00C98B]" />
+            <span>ABOUT FORMILO PLATFORM</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            About <span className="text-emerald-400">Formilo</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#17262E] tracking-tight">
+            Empowering Candidates with Fast, Private Document Tools
           </h1>
-          <p className="mt-3 text-base text-zinc-300 leading-relaxed max-w-3xl">
-            Formilo is a specialized client-side file formatting engine built for students, competitive exam candidates, and cyber cafes across India. We ensure your photos, signatures, and PDFs match exact government portal specifications on the first attempt.
+          <p className="text-[14px] text-[#53636A] leading-relaxed">
+            Formilo is a modern web-based document processing utility built to simplify candidate file preparation for online examinations, recruitment applications, and entrance portals across India.
           </p>
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid sm:grid-cols-2 gap-5">
-          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 shadow-lg space-y-3">
-            <div className="p-3 w-fit rounded-xl bg-emerald-500/10 text-emerald-400">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-white">100% Client-Side Privacy</h3>
-            <p className="text-sm text-zinc-400 leading-relaxed">
-              Your sensitive documents never get uploaded to any server. Everything is processed directly inside your browser memory using WebAssembly and HTML5 Canvas.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 shadow-lg space-y-3">
-            <div className="p-3 w-fit rounded-xl bg-emerald-500/10 text-emerald-400">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Exact KB & Pixel Presets</h3>
-            <p className="text-sm text-zinc-400 leading-relaxed">
-              Preset ratios and byte boundaries for SSC, UPSC, IBPS, State Police, Railway, and NTA forms to eliminate portal upload rejections.
-            </p>
-          </div>
         </div>
 
         {/* Mission Card */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 space-y-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Our Mission
-          </h2>
-          <p className="text-sm text-zinc-300 leading-relaxed">
-            Filling government application forms is stressful when portals reject images for being 21 KB instead of 20 KB. Formilo eliminates software hurdles with instant, free, zero-upload tools accessible directly from any mobile or desktop.
+        <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 sm:p-8 space-y-4 shadow-card">
+          <h2 className="text-[20px] font-bold text-[#17262E]">Our Mission</h2>
+          <p className="text-[13.5px] text-[#53636A] leading-relaxed">
+            Applying for government and entrance examinations often requires strictly bounded file weights (such as under 20 KB, 50 KB, or 200 KB), specific pixel ratios, and formatted signatures. Many candidates face form rejections due to minor file formatting errors.
           </p>
+          <p className="text-[13.5px] text-[#53636A] leading-relaxed">
+            Formilo eliminates this friction by offering pre-calibrated, 1-click tools for passport photos, signatures, handwritten declarations, thumb impressions, and multi-page PDF documents.
+          </p>
+        </div>
+
+        {/* 3 Core Pillars */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#00A879]">
+              <Zap className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-[15px] text-[#17262E]">Instant &amp; Free</h3>
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
+              No subscription, registration, or hidden paywalls. Unlimited document preparation directly in your browser.
+            </p>
+          </div>
+
+          <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#007D8B]">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-[15px] text-[#17262E]">Client-Side Privacy</h3>
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
+              All image resizing and PDF compilation runs locally inside your device RAM. Your identity documents are never uploaded to remote servers.
+            </p>
+          </div>
+
+          <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F7F3] border border-[#E8EBE9] flex items-center justify-center text-[#A85A20]">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-[15px] text-[#17262E]">Requirement Accurate</h3>
+            <p className="text-[13px] text-[#53636A] leading-relaxed">
+              Calibrated strictly to technical specifications published in official recruitment guidelines.
+            </p>
+          </div>
+        </div>
+
+        {/* Contact Banner */}
+        <div className="bg-[#FFFFFF] border border-[#DDE2DF] rounded-2xl p-6 shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-[16px] font-bold text-[#17262E]">Have feedback or questions?</h3>
+            <p className="text-[13px] text-[#53636A]">Reach out to our support desk directly via email.</p>
+          </div>
+          <Link
+            href="/contact"
+            className="px-5 py-2.5 rounded-xl bg-[#138F79] hover:bg-[#0E7764] text-white font-bold text-[13px] transition flex items-center gap-1.5"
+          >
+            <span>Contact Support</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
       </div>

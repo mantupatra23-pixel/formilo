@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -30,13 +30,21 @@ export default function Footer() {
               Free, browser-native photo, signature, and PDF formatting tools designed for government recruitment forms, online entrance exams, and Cyber Cafe operators.
             </p>
 
-            <div className="flex items-center gap-2 text-[12px] text-[#00C98B] pt-1 font-semibold">
-              <ShieldCheck className="w-4 h-4" />
-              <span>100% Client-Side In-Browser Processing</span>
+            <div className="space-y-1 pt-1">
+              <div className="flex items-center gap-2 text-[12px] text-[#00C98B] font-semibold">
+                <ShieldCheck className="w-4 h-4" />
+                <span>100% Client-Side In-Browser Processing</span>
+              </div>
+              <div className="flex items-center gap-2 text-[12px] text-[#B8C5C9]">
+                <Mail className="w-3.5 h-3.5 text-[#00C98B]" />
+                <a href="mailto:formilohelp@gmail.com" className="hover:text-white transition">
+                  formilohelp@gmail.com
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* Col 2: Photo Tools */}
+          {/* Col 2: Photo Resizers */}
           <div className="space-y-2.5 text-[13px]">
             <h4 className="font-bold text-[#FFFFFF] uppercase tracking-wider text-[12px]">Photo Resizers</h4>
             <ul className="space-y-2 text-[#C4D0D3]">
@@ -49,7 +57,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 3: Document & PDF */}
+          {/* Col 3: PDF Suite */}
           <div className="space-y-2.5 text-[13px]">
             <h4 className="font-bold text-[#FFFFFF] uppercase tracking-wider text-[12px]">PDF Tools</h4>
             <ul className="space-y-2 text-[#C4D0D3]">
@@ -62,15 +70,15 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Exam Categories */}
+          {/* Col 4: Company & Legal Pages */}
           <div className="space-y-2.5 text-[13px]">
-            <h4 className="font-bold text-[#FFFFFF] uppercase tracking-wider text-[12px]">Exam Presets</h4>
+            <h4 className="font-bold text-[#FFFFFF] uppercase tracking-wider text-[12px]">Company &amp; Legal</h4>
             <ul className="space-y-2 text-[#C4D0D3]">
-              <li><Link href="/#exam-presets" className="hover:text-[#00C98B] transition">SSC (CGL, CHSL, GD)</Link></li>
-              <li><Link href="/#exam-presets" className="hover:text-[#00C98B] transition">Railway (RRB NTPC, Group D)</Link></li>
-              <li><Link href="/#exam-presets" className="hover:text-[#00C98B] transition">Banking (IBPS, SBI PO)</Link></li>
-              <li><Link href="/#exam-presets" className="hover:text-[#00C98B] transition">NTA (NEET UG, JEE Main)</Link></li>
-              <li><Link href="/#exam-presets" className="hover:text-[#00C98B] transition">State Police Recruitment</Link></li>
+              <li><Link href="/about" className="hover:text-[#00C98B] transition">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-[#00C98B] transition">Contact Us</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-[#00C98B] transition">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-[#00C98B] transition">Terms &amp; Conditions</Link></li>
+              <li><Link href="/disclaimer" className="hover:text-[#00C98B] transition">Disclaimer</Link></li>
             </ul>
           </div>
 
@@ -78,20 +86,22 @@ export default function Footer() {
 
         {/* Disclaimer Box */}
         <div className="p-4 rounded-xl bg-[#0C1D26] border border-[#1f3847] text-[12px] text-[#B8C5C9] leading-relaxed">
-          <strong className="text-[#FFFFFF]">Disclaimer:</strong> Formilo helps prepare documents according to standard technical specifications published in official recruitment guidelines. Requirements can change by board or application cycle. Always verify the latest notification on the respective official recruitment portal prior to final submission.
+          <strong className="text-[#FFFFFF]">Disclaimer:</strong> Formilo is an independent platform and is not affiliated with any government recruitment board or examination authority. Guidelines are provided for preparation assistance. Always verify the latest official notification on the destination portal prior to submission.
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-4 border-t border-[#1f3847] flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-[#B8C5C9]">
           <div>
-            © 2026 <strong>Formilo</strong>. All rights reserved. Built for fast client-side performance.
+            © 2026 <strong>Formilo</strong>. All rights reserved. Support: <a href="mailto:formilohelp@gmail.com" className="text-white underline">formilohelp@gmail.com</a>
           </div>
           <div className="flex items-center gap-4 text-[12px]">
-            <Link href="/" className="hover:text-white transition">Privacy Policy</Link>
+            <Link href="/privacy-policy" className="hover:text-white transition">Privacy Policy</Link>
             <span>•</span>
-            <Link href="/" className="hover:text-white transition">Terms of Service</Link>
+            <Link href="/terms" className="hover:text-white transition">Terms of Service</Link>
             <span>•</span>
-            <Link href="/cyber-cafe" className="hover:text-white transition">CSC Center Portal</Link>
+            <Link href="/disclaimer" className="hover:text-white transition">Disclaimer</Link>
+            <span>•</span>
+            <Link href="/contact" className="hover:text-white transition">Contact</Link>
           </div>
         </div>
 

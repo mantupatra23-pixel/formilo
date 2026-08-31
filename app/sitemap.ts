@@ -14,6 +14,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticPages = [
     { url: `${siteUrl}`, lastModified: new Date('2026-08-31'), changeFrequency: 'daily' as const, priority: 1.0 },
+    { url: `${siteUrl}/about`, lastModified: new Date('2026-08-31'), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${siteUrl}/contact`, lastModified: new Date('2026-08-31'), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${siteUrl}/privacy-policy`, lastModified: new Date('2026-08-31'), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${siteUrl}/terms`, lastModified: new Date('2026-08-31'), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${siteUrl}/disclaimer`, lastModified: new Date('2026-08-31'), changeFrequency: 'monthly' as const, priority: 0.7 },
     { url: `${siteUrl}/tools`, lastModified: new Date('2026-08-31'), changeFrequency: 'daily' as const, priority: 0.9 },
     { url: `${siteUrl}/cyber-cafe`, lastModified: new Date('2026-08-31'), changeFrequency: 'weekly' as const, priority: 0.85 },
     { url: `${siteUrl}/photo-resizer-20kb`, lastModified: new Date('2026-08-31'), changeFrequency: 'weekly' as const, priority: 0.95 },
