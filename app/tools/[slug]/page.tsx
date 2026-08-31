@@ -1,5 +1,12 @@
-import ExamPage, { generateMetadata as getMetadata, generateStaticParams as getStaticParams } from '../../exam/[slug]/page';
+import { redirect } from 'next/navigation';
 
-export const generateMetadata = getMetadata;
-export const generateStaticParams = getStaticParams;
-export default ExamPage;
+export const dynamic = 'force-dynamic';
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function ToolsRedirectPage({ params }: PageProps) {
+  const { slug } = await params;
+  redirect(`/exam/${slug}`);
+}

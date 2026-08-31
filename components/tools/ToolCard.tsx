@@ -6,7 +6,7 @@ import Badge from '@/components/common/Badge';
 interface ToolCardProps {
   title: string;
   description: string;
-  slug: string;
+  slug?: string;
   badge?: string;
   targetKB?: number;
   dimensions?: string;
@@ -17,18 +17,19 @@ interface ToolCardProps {
 export default function ToolCard({
   title,
   description,
-  slug,
+  slug = '',
   badge,
   targetKB,
   dimensions,
   format = 'JPG',
   popular,
 }: ToolCardProps) {
-  const href = slug.startsWith('/') ? slug : `/${slug}`;
+  const safeSlug = String(slug || '').trim();
+  const href = safeSlug.startsWith('/') ? safeSlug : `/${safeSlug}`;
 
   return (
     <Link
-      href={href}
+      href={href || '/'}
       className="group bg-white rounded-card p-5 border border-[#DDE2DF] hover:border-[#00C98B] hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between gap-4 relative"
     >
       {/* Top Meta Badges */}

@@ -1,25 +1,48 @@
-import { TOOL_REGISTRY } from '@/config/tools';
+import React from 'react';
+import Link from 'next/link';
+import { getAllTools } from '@/lib/toolsData';
 import ToolCard from '@/components/tools/ToolCard';
-import SearchBar from '@/components/ui/SearchBar';
+import { ArrowLeft } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 export default function AllToolsPage() {
-  const activeTools = TOOL_REGISTRY.filter((t) => t.enabled);
+  const allTools = getAllTools();
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white">All Online Utilities</h1>
-        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-xl mx-auto">
-          Browse our complete library of free photo, image, PDF, and form tools.
-        </p>
-      </div>
+    <main className="min-h-screen bg-[#F7F7F3] text-[#162630] py-8 px-4 sm:px-6">
+      <div className="max-w-[1200px] mx-auto space-y-6">
+        <div className="flex items-center gap-2 text-xs text-[#65737A]">
+          <Link href="/" className="hover:text-[#00C98B] flex items-center gap-1">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+          </Link>
+          <span>/</span>
+          <span className="text-[#162630] font-semibold">All Tools</span>
+        </div>
 
-      <SearchBar />
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#162630]">
+            All Formilo Tools ({allTools.length}+)
+          </h1>
+          <p className="text-xs sm:text-sm text-[#65737A]">
+            Browse all photo, signature, and PDF formatting presets.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {activeTools.map((tool) => (
-          <ToolCard key={tool.slug} tool={tool} />
-        ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allTools.map((tool) => (
+            <ToolCard
+              key={tool.id}
+              title={tool.title}
+              description={tool.description}
+              slug={tool.slug}
+              badge={tool.badge}
+              targetKB={tool.targetKB}
+              dimensions={tool.width && tool.height ? `${tool.width}×${tool.height} px` : undefined}
+              popular={tool.popular}
+            />
+          ))}
+        </div>
       </div>
     </main>
   );
