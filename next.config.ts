@@ -35,7 +35,24 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 2. Redirect Legacy Tools to Dedicated Landing Pages
+      // 2. Direct PDF-to-JPG Dedicated Routes
+      {
+        source: '/tools/pdf-to-jpg-converter',
+        destination: '/pdf-to-jpg-converter',
+        permanent: true,
+      },
+      {
+        source: '/exam/pdf-to-jpg-converter',
+        destination: '/pdf-to-jpg-converter',
+        permanent: true,
+      },
+      {
+        source: '/exam/pdf-to-jpg-converter-passport-size-photo-resizer',
+        destination: '/pdf-to-jpg-converter',
+        permanent: true,
+      },
+
+      // 3. Redirect Legacy Tools to Dedicated Landing Pages
       {
         source: '/tools/photo-resize-to-20-kb',
         destination: '/photo-resizer-20kb',
@@ -97,61 +114,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // 3. Redirect Legacy PDF Routes
-      {
-        source: '/tools/pdf-compress-to-200-kb',
-        destination: '/exam/pdf-compressor-under-200kb',
-        permanent: true,
-      },
-      {
-        source: '/tools/pdf-compreso-to-100-kb',
-        destination: '/exam/pdf-compressor-under-200kb',
-        permanent: true,
-      },
-
-      // 4. Clean Nested Corrupted URL Patterns
-      {
-        source: '/exam/:path*-postcard-photo-4x6-postcard-size-photo-4x6-resizer',
-        destination: '/exam/:path*-postcard-size-photo-4x6-resizer',
-        permanent: true,
-      },
-      {
-        source: '/exam/:path*-postcard-photo-4x6-passport-size-photo-resizer',
-        destination: '/exam/:path*-passport-size-photo-resizer',
-        permanent: true,
-      },
-      {
-        source: '/exam/:path*-postcard-photo-4x6-signature-crop-compress',
-        destination: '/exam/:path*-signature-crop-compress',
-        permanent: true,
-      },
-      {
-        source: '/exam/:path*-postcard-photo-4x6-left-thumb-impression-resizer',
-        destination: '/exam/:path*-left-thumb-impression-resizer',
-        permanent: true,
-      },
-      {
-        source: '/exam/:path*-left-left-thumb-impression-resizer',
-        destination: '/exam/:path*-left-thumb-impression-resizer',
-        permanent: true,
-      },
-      {
-        source: '/exam/:path*-signature-resize-to-20kb-signature-crop-compress',
-        destination: '/exam/signature-resize-to-20kb',
-        permanent: true,
-      },
-      {
-        source: '/exam/pan-card-postcard-size-photo-4x6-resizer',
-        destination: '/exam/pan-card-photo-resizer',
-        permanent: true,
-      },
-      {
-        source: '/exam/pan-card-left-thumb-impression-resizer',
-        destination: '/exam/pan-card-signature-resizer',
-        permanent: true,
-      },
-
-      // 5. Universal Fallback for Any Legacy /tools/:slug Route
+      // 4. Universal Fallback for Any Legacy /tools/:slug Route
       {
         source: '/tools/:slug',
         destination: '/exam/:slug',
