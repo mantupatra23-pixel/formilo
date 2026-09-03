@@ -48,6 +48,19 @@ export interface ToolPageData {
   categoryTools: ToolItem[];
 }
 
+// Slug se readable title generate karne ka fallback function
+function formatSlugToTitle(slug: string): string {
+  const base = slug
+    .replace(/^\/+/, '')
+    .replace(/^(exam|tools)\//, '')
+    .replace(/-/g, ' ');
+  return base
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 export function detectToolType(slug: string, category: string, title: string): ToolType {
   const s = slug.toLowerCase();
   const t = title.toLowerCase();
@@ -81,16 +94,85 @@ export function detectToolType(slug: string, category: string, title: string): T
 
 export function resolveToolPageData(rawSlug: string, customConfig?: Partial<ToolPageData>): ToolPageData {
   const allTools = getAllTools();
-  const cleanSlug = rawSlug.replace(/^\//, '').trim();
-  const matchedTool = allTools.find((t) => t.slug === cleanSlug || t.slug.endsWith(cleanSlug) || t.id === cleanSlug);
+  
+  // Normalize input slug: remove leading/trailing slashes
+  const cleanSlug = (rawSlug || '').replace(/^\/+|\/+$/g, '').trim();
+  const slugBase = cleanSlug.replace(/^(exam|tools)\//, '');
 
-  const title = customConfig?.title || matchedTool?.title || 'Online Document Tool';
+  // Resilient multi-tier slug matching
+  const matchedTool = allTools.find((t: any) => {
+    const s = (t.slug || '').replace(/^\/+|\/+$/g, '').trim();
+    const sBase = s.replace(/^(exam|tools)\//, '');
+    const id = (t.id || '').replace(/^\/+|\/+$/g, '').trim();
+    const idBase = id.replace(/^(exam|tools)\//, '');
+
+    return (
+      s === cleanSlug ||
+      s === slugBase ||
+      sBase === cleanSlug ||
+      sBase === slugBase ||
+      id === cleanSlug ||
+      id === slugBase ||
+      idBase === slugBase
+    );
+  }) as any;
+
+  // Title fallback: customConfig -> matchedTool.title -> matchedTool.name -> dynamic generated title
+  const title =
+    customConfig?.title ||
+    matchedTool?.title ||
+    matchedTool?.name ||
+    formatSlugToTitle(cleanSlug) ||
+    'Online Document Tool';
+
   const category = matchedTool?.category || customConfig?.category || 'photo';
   const toolType = customConfig?.toolType || detectToolType(cleanSlug, category, title);
-  const targetKB = customConfig?.targetKB || matchedTool?.targetKB || 50;
-  const minKB = customConfig?.minKB || matchedTool?.minKB || (targetKB ? Math.max(5, Math.round(targetKB * 0.2)) : undefined);
-  const dimensions = customConfig?.dimensions || (matchedTool?.width && matchedTool?.height ? `${matchedTool.width} × ${matchedTool.height} px` : undefined);
-  const examName = customConfig?.examName || matchedTool?.exam;
+
+  // Target KB auto-resolution (Data property -> Slug extraction -> Default 50 KB)
+  let resolvedTargetKB =
+    customConfig?.targetKB ||
+    matchedTool?.targetKB ||
+    matchedTool?.photoKb ||
+    matchedTool?.signKb ||
+    matchedTool?.maxKb;
+
+  if (!resolvedTargetKB) {
+    const kbMatch = cleanSlug.match(/(\d+)\s*kb/i);
+    if (kbMatch) {
+      resolvedTargetKB = parseInt(kbMatch[1], 10);
+    }
+  }
+  const targetKB = resolvedTargetKB || 50;
+
+  const minKB =
+    customConfig?.minKB ||
+    matchedTool?.minKB ||
+    matchedTool?.minKb ||
+    (targetKB ? Math.max(5, Math.round(targetKB * 0.2)) : undefined);
+
+  // Dimensions auto-resolution
+  let dimensions = customConfig?.dimensions;
+  if (!dimensions) {
+    if (matchedTool?.width && matchedTool?.height) {
+      dimensions = `${matchedTool.width} × ${matchedTool.height} px`;
+    } else if (matchedTool?.dimensionText) {
+      dimensions = matchedTool.dimensionText;
+    } else if (cleanSlug.includes('signature') || category === 'signature') {
+      dimensions = '280 × 120 px';
+    } else if (cleanSlug.includes('postcard') || cleanSlug.includes('4x6')) {
+      dimensions = '400 × 720 px (4 × 6 Inch)';
+    } else if (cleanSlug.includes('pan-card')) {
+      dimensions = '213 × 213 px (300 DPI)';
+    } else {
+      dimensions = '350 × 450 px';
+    }
+  }
+
+  const examName =
+    customConfig?.examName ||
+    matchedTool?.exam ||
+    matchedTool?.examName ||
+    matchedTool?.board;
 
   const categoryMap: Record<string, string> = {
     photo: 'Photo Resizers',
@@ -298,14 +380,20 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     ];
   }
 
-  // 7. Dynamic Related Tools (3–6 Tools)
+  // 7. Dynamic Related Tools
   const relatedTools = allTools
-    .filter((t) => t.slug !== cleanSlug && (t.category === category || t.popular))
+    .filter((t: any) => {
+      const s = (t.slug || '').replace(/^\/+|\/+$/g, '');
+      return s !== cleanSlug && s !== slugBase && (t.category === category || t.popular);
+    })
     .slice(0, 4);
 
-  // 8. Category Discovery Tools (4–8 Tools)
+  // 8. Category Discovery Tools
   const categoryTools = allTools
-    .filter((t) => t.slug !== cleanSlug && t.category === category)
+    .filter((t: any) => {
+      const s = (t.slug || '').replace(/^\/+|\/+$/g, '');
+      return s !== cleanSlug && s !== slugBase && t.category === category;
+    })
     .slice(0, 6);
 
   return {
@@ -315,7 +403,10 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     category,
     categoryName,
     toolType,
-    description: customConfig?.description || matchedTool?.description || 'Format and prepare compliant documents strictly for official portal submission.',
+    description:
+      customConfig?.description ||
+      matchedTool?.description ||
+      `Format and prepare compliant documents for ${title} strictly for official portal submission.`,
     badge: matchedTool?.badge || customConfig?.badge,
     targetKB,
     minKB,
@@ -323,7 +414,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     aspectRatioText: customConfig?.aspectRatioText,
     format: customConfig?.format || 'JPG / JPEG',
     examName,
-    boardName: customConfig?.boardName,
+    boardName: customConfig?.boardName || matchedTool?.board,
     formula: customConfig?.formula,
     howToSteps: customConfig?.howToSteps || howToSteps,
     bestFor: customConfig?.bestFor || bestFor,
