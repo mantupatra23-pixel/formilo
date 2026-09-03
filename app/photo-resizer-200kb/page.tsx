@@ -1,63 +1,84 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import GenericPhotoKbResizer from '@/components/GenericPhotoKbResizer';
-import TelegramBanner from '@/components/TelegramBanner';
+import GlobalToolPageTemplate from '@/components/tool-template/GlobalToolPageTemplate';
+import { resolveToolPageData } from '@/lib/toolPageHelper';
+import { generateFAQSchema, generateAppSchema } from '@/lib/schema';
 import { KB_PRESETS_DATA } from '@/data/kbPresetsData';
-import { Zap, Layers } from 'lucide-react';
 
-const data = KB_PRESETS_DATA[200];
+export const dynamic = 'force-dynamic';
+
+const SLUG = 'photo-resizer-200kb';
+const preset = (KB_PRESETS_DATA as any)?.[200];
+
+const pageData = resolveToolPageData(SLUG, {
+  title: preset?.h1 || 'Photo Resizer Under 200 KB Online',
+  targetKB: 200,
+  category: 'photo',
+  description:
+    preset?.intro ||
+    'Format large 4x6 inch postcard photos, full document pages, and high-resolution certificates strictly under 200 KB.',
+  bestFor: preset?.bestFor || [
+    'Postcard size (4x6 inch) photograph for NEET and NTA exams',
+    'High-resolution candidate certificate and marksheet attachments',
+    'Defence, UPSC, and State PSC portal document submissions',
+    'Bank loan and admission registration attachments',
+  ],
+});
 
 export const metadata: Metadata = {
-  title: data.seoTitle,
-  description: data.metaDescription,
-  alternates: { canonical: `https://www.formilo.in/${data.slug}` }
+  title: preset?.seoTitle || 'Photo Resizer Under 200 KB Online (4x6 & Postcard Lock) - Formilo',
+  description:
+    preset?.metaDescription ||
+    'Resize and compress photos strictly under 200 KB online. Verified for NEET 4x6 postcards, marksheets, and official forms.',
+  alternates: {
+    canonical: `https://www.formilo.in/${SLUG}`,
+  },
+  openGraph: {
+    title: preset?.seoTitle || 'Photo Resizer Under 200 KB Online - Formilo',
+    description: 'Compress photos and certificates under 200 KB with zero server uploads.',
+    url: `https://www.formilo.in/${SLUG}`,
+    siteName: 'Formilo',
+    images: [{ url: 'https://www.formilo.in/logo.png', width: 512, height: 512 }],
+    locale: 'en_IN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: preset?.seoTitle || 'Photo Resizer Under 200 KB Online - Formilo',
+    description: 'Compress photos strictly under 200 KB online with client-side privacy.',
+    images: ['https://www.formilo.in/logo.png'],
+  },
 };
 
 export default function PhotoResizer200KbPage() {
-  const otherSizes = [20, 30, 50, 100, 150];
+  const faqSchema = generateFAQSchema({
+    toolName: pageData.title,
+    slug: `/${SLUG}`,
+    targetKB: 200,
+    dimensions: pageData.dimensions || '350 × 450 px',
+    description: pageData.description,
+  });
+
+  const appSchema = generateAppSchema({
+    toolName: pageData.title,
+    slug: `/${SLUG}`,
+    description: pageData.description,
+  });
 
   return (
-    <main className="min-h-screen bg-[#050505] text-zinc-100 py-6 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
-          <Link href="/" className="hover:text-emerald-400">Home</Link>
-          <span>/</span>
-          <Link href="/#photo-resizers" className="hover:text-emerald-400">Photo Tools</Link>
-          <span>/</span>
-          <span className="text-emerald-400 font-semibold">{data.h1}</span>
-        </nav>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }}
+      />
 
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5 fill-emerald-400" />
-            <span>Postcard (4×6) &amp; Full Document Lock: &le; 200 KB</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">{data.h1}</h1>
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-3xl">{data.intro}</p>
-        </div>
-
+      <GlobalToolPageTemplate data={pageData}>
         <GenericPhotoKbResizer initialTargetKB={200} />
-
-        <div className="p-5 rounded-3xl bg-[#0c0d0e] border border-zinc-800 space-y-3">
-          <div className="flex items-center gap-2 font-bold text-white text-xs">
-            <Layers className="w-4 h-4 text-emerald-400" />
-            <span>Other Photo Size Presets</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            {otherSizes.map((kb) => (
-              <Link
-                key={kb}
-                href={`/photo-resizer-${kb}kb`}
-                className="px-3.5 py-1.5 rounded-xl bg-black hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-emerald-400 text-xs font-mono font-bold transition-all"
-              >
-                Photo &le; {kb} KB &rarr;
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <TelegramBanner />
-      </div>
-    </main>
+      </GlobalToolPageTemplate>
+    </>
   );
 }
