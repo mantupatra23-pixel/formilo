@@ -1,65 +1,95 @@
-// app/name-date-on-photo/page.tsx
 import { Metadata } from 'next';
-import Link from 'next/link';
 import NameDatePhotoTool from '@/components/NameDatePhotoTool';
-import TelegramBanner from '@/components/TelegramBanner';
-import { ArrowLeft, FileCheck, CheckCircle2, AlertCircle, HelpCircle, Cpu } from 'lucide-react';
+import GlobalToolPageTemplate from '@/components/tool-template/GlobalToolPageTemplate';
+import { resolveToolPageData } from '@/lib/toolPageHelper';
+import { generateFAQSchema, generateAppSchema } from '@/lib/schema';
+
+export const dynamic = 'force-dynamic';
+
+const SLUG = 'name-date-on-photo';
+
+const pageData = resolveToolPageData(SLUG, {
+  title: 'Add Name & Date of Photo (DOP) Online for Govt Exams',
+  targetKB: 50,
+  category: 'photo',
+  dimensions: '350 × 450 px',
+  description:
+    'Add official candidate name and Date of Photograph (DOP) bottom bar on passport photos strictly under 50 KB for SSC, Railway, and State Bharti forms.',
+  bestFor: [
+    'SSC CGL, CHSL, MTS & GD Constable application photo requirements',
+    'Railway RRB NTPC, ALP & Group D recruitment photo verification',
+    'State Police and PSC bharti forms requiring Date of Photo (DOP)',
+    'National entrance tests requiring stamped candidate name & date',
+  ],
+  faqs: [
+    {
+      q: 'What is the official rule for Date of Photo (DOP) in SSC exams?',
+      a: 'The date printed on the photograph must generally not be older than 3 months from the application release date. The candidate name and date should appear clearly in black capital letters over a solid white bottom strip.',
+    },
+    {
+      q: 'Will adding candidate name and date make the photo exceed 50 KB?',
+      a: 'No. Formilo canvas engine automatically draws the bottom text bar and compresses the final output strictly within 20 KB to 50 KB limits.',
+    },
+    {
+      q: 'Is my photo or candidate name uploaded to any external server?',
+      a: 'No. All font rendering, cropping, and compression run 100% locally in your web browser memory (RAM).',
+    },
+  ],
+});
 
 export const metadata: Metadata = {
-  title: 'Add Name and Date on Photo Online Free (DOP Resizer Under 50 KB)',
-  description: 'Add candidate name and date of photo (DOP) on passport size photo for SSC CGL, GD, RRB, and Police recruitment forms. 100% private in-browser generator.',
+  title: 'Add Name & Date on Photo (DOP) Online for SSC & Govt Exams - Formilo',
+  description:
+    'Free online tool to add candidate Name and Date of Photograph (DOP) at the bottom of passport photos. Strictly complies with SSC, Railway & State police portal guidelines.',
   alternates: {
-    canonical: 'https://www.formilo.in/name-date-on-photo',
+    canonical: `https://www.formilo.in/${SLUG}`,
+  },
+  openGraph: {
+    title: 'Add Name & Date on Photo (DOP) Online - Formilo',
+    description: 'Add official name and DOP bottom strip strictly under 50 KB with zero server uploads.',
+    url: `https://www.formilo.in/${SLUG}`,
+    siteName: 'Formilo',
+    images: [{ url: 'https://www.formilo.in/logo.png', width: 512, height: 512 }],
+    locale: 'en_IN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Add Name & Date on Photo (DOP) Online - Formilo',
+    description: 'Stamp candidate name and date on passport photo online strictly under 50 KB.',
+    images: ['https://www.formilo.in/logo.png'],
   },
 };
 
 export default function NameDatePhotoPage() {
+  const faqSchema = generateFAQSchema({
+    toolName: pageData.title,
+    slug: `/${SLUG}`,
+    targetKB: 50,
+    dimensions: '350 × 450 px',
+    description: pageData.description,
+  });
+
+  const appSchema = generateAppSchema({
+    toolName: pageData.title,
+    slug: `/${SLUG}`,
+    description: pageData.description,
+  });
+
   return (
-    <div className="w-full min-h-screen bg-[#050505] text-zinc-100 py-8 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-emerald-400 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to All Tools</span>
-          </Link>
-          <div className="flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>100% Private (No Upload)</span>
-          </div>
-        </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }}
+      />
 
-        <div className="text-center space-y-2 pt-2">
-          <span className="px-3 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-emerald-400 uppercase">
-            Sarkari Form Requirement
-          </span>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white">
-            Add <span className="text-emerald-400">Name &amp; Date of Photo (DOP)</span> on Photo
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
-            Stamp official Name &amp; Date bottom bar and compress strictly under 50 KB for SSC, Railway, and State Bharti forms.
-          </p>
-        </div>
-
+      <GlobalToolPageTemplate data={pageData}>
         <NameDatePhotoTool />
-
-        <TelegramBanner />
-
-        {/* Guidelines */}
-        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 text-xs">
-          <div className="flex items-center gap-2 font-bold text-white text-sm">
-            <FileCheck className="w-4 h-4 text-emerald-400" />
-            <span>Official Photo Guidelines</span>
-          </div>
-          <ul className="space-y-2 list-disc list-inside text-zinc-400">
-            <li>The date mentioned on the photograph must not be more than 3 months old from notification release date.</li>
-            <li>The candidate name should be clearly visible in capital letters on a clean white strip.</li>
-            <li>The face must cover at least 70% to 80% of the photograph area.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+      </GlobalToolPageTemplate>
+    </>
   );
 }
