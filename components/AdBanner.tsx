@@ -1,4 +1,3 @@
-// components/AdBanner.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -10,11 +9,16 @@ interface AdBannerProps {
 }
 
 export default function AdBanner({
-  slotId = '1234567890', // AdSense approve hone par custom Slot ID yahan daal sakte hain
+  slotId,
   format = 'auto',
   className = '',
 }: AdBannerProps) {
+  // Jab tak AdSense approve hokar valid slotId pass na ho, screen par khali jagah mat dikhao
+  const isAdActive = Boolean(slotId && slotId !== '1234567890');
+
   useEffect(() => {
+    if (!isAdActive) return;
+
     try {
       if (typeof window !== 'undefined') {
         const adsbygoogle = (window as any).adsbygoogle || [];
@@ -23,14 +27,18 @@ export default function AdBanner({
     } catch (err) {
       console.error('AdSense banner execution notice:', err);
     }
-  }, []);
+  }, [isAdActive]);
+
+  if (!isAdActive) {
+    return null;
+  }
 
   return (
-    <div className={`w-full my-6 text-center overflow-hidden ${className}`}>
+    <div className={`w-full my-4 text-center overflow-hidden ${className}`}>
       <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-600 block mb-1">
         Sponsored / Advertisement
       </span>
-      <div className="min-h-[100px] w-full bg-zinc-900/50 border border-zinc-800/80 rounded-2xl flex items-center justify-center p-1">
+      <div className="w-full flex items-center justify-center">
         <ins
           className="adsbygoogle"
           style={{ display: 'block', minWidth: '280px', width: '100%' }}
