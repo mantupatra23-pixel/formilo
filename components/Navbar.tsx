@@ -15,6 +15,7 @@ export default function Navbar() {
     { label: 'PDF Tools', href: '/pdf-tools' },
     { label: 'Image Tools', href: '/image-tools' },
     { label: 'Exam Presets', href: '/form-tools' },
+    { label: 'Blog & Guides', href: '/blog' },
   ];
 
   return (
