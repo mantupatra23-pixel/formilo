@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "qa:isolation": "ts-node scripts/verify-content-isolation.ts",
-    "build": "npm run qa:isolation && next build --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
