@@ -14,7 +14,8 @@ import {
   GraduationCap, 
   FileText, 
   Image as ImageIcon, 
-  Layers 
+  Layers,
+  BookOpen
 } from 'lucide-react';
 import { getAllTools, getRegistryStats } from '@/lib/toolsData';
 import { examsData } from '@/data/exams';
@@ -195,6 +196,29 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+        </section>
+
+        {/* PROMINENT BLOG & GUIDES BANNER */}
+        <section className="bg-gradient-to-r from-[#17262E] to-[#101C22] rounded-2xl p-5 sm:p-6 text-white shadow-card flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#23353D]">
+          <div className="space-y-1.5 text-center sm:text-left">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#00C98B]/20 text-[#00C98B] border border-[#00C98B]/40 text-[11px] font-bold uppercase tracking-wider">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Candidate Knowledge Hub</span>
+            </div>
+            <h2 className="text-[18px] sm:text-[20px] font-extrabold tracking-tight">
+              Exam Document Preparation Guides &amp; Tutorials
+            </h2>
+            <p className="text-[13px] text-[#A2B1B7] max-w-xl">
+              Read step-by-step tutorials on SSC photo dimensions, bank exam signature rules, and PDF certificate compression.
+            </p>
+          </div>
+          <Link
+            href="/blog"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#00C98B] to-[#00C7D9] text-[#17262E] font-extrabold text-[13px] sm:text-[14px] text-center shadow-md hover:opacity-95 transition shrink-0 flex items-center gap-2"
+          >
+            <span>Explore Blog Guides</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </section>
 
         {/* 2. CYBER CAFE & CSC CENTER WORKSPACE */}
