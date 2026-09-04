@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Zap } from 'lucide-react';
+import { Menu, X, Zap, BookOpen } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,11 +15,10 @@ export default function Navbar() {
     { label: 'PDF Tools', href: '/pdf-tools' },
     { label: 'Image Tools', href: '/image-tools' },
     { label: 'Exam Presets', href: '/form-tools' },
-    { label: 'Blog & Guides', href: '/blog' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80">
+    <header className="sticky top-0 z-50 w-full bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo Section */}
@@ -46,7 +45,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1.5">
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -56,9 +55,18 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          
+          {/* Dedicated Blog Button */}
+          <Link
+            href="/blog"
+            className="text-xs font-bold px-3 py-2 rounded-lg text-emerald-400 hover:bg-emerald-950/40 border border-emerald-500/30 transition-all flex items-center gap-1.5 ml-1"
+          >
+            <BookOpen className="w-3.5 h-3.5" /> Blog Guides
+          </Link>
+
           <Link
             href="/tools/photo-resize-20kb"
-            className="ml-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all shadow-md shadow-emerald-500/10"
+            className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all shadow-md shadow-emerald-500/10"
           >
             <Zap className="w-3.5 h-3.5 fill-black" /> 20 KB Preset
           </Link>
@@ -87,6 +95,13 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/blog"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 transition-colors"
+          >
+            <BookOpen className="w-4 h-4" /> Exam Guides &amp; Blog
+          </Link>
           <div className="pt-2">
             <Link
               href="/tools/photo-resize-20kb"
