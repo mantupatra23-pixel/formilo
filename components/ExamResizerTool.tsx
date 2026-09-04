@@ -34,6 +34,7 @@ interface ExamResizerToolProps {
     dpi?: number;
     dimensionText?: string;
     bgColor?: string;
+    toolType?: string;
   };
   config?: any;
 }
@@ -47,6 +48,11 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   const docType = activeConfig.docType || 'Document / Photo';
   const examName = activeConfig.examName || 'Official Exam';
   const dimensionText = activeConfig.dimensionText || `${targetWidth} × ${targetHeight} px`;
+
+  const isSignature =
+    docType?.toLowerCase().includes('signature') ||
+    activeConfig.toolType?.toLowerCase().includes('signature') ||
+    activeConfig.slug?.includes('signature');
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
@@ -272,19 +278,34 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
   return (
     <div className="w-full bg-[#0c0d0e] border border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-6">
       
+      {/* Target Lock Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-black/70 rounded-2xl border border-zinc-800 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-zinc-400">Lock Target:</span>
-          <span className="font-bold text-white uppercase">{docType}</span>
+          <span className="text-zinc-400 font-mono font-semibold uppercase tracking-wider">
+            Lock Target:{' '}
+            <strong className="text-white">
+              {isSignature ? 'SIGNATURE' : 'PHOTO RESIZER'}
+            </strong>
+          </span>
         </div>
         <div className="flex items-center gap-3 font-mono text-[11px]">
-          <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-emerald-400 font-bold">
-            &lt; {targetKB} KB
+          <span className="px-2.5 py-1 rounded-md bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 font-bold">
+            &le; {targetKB} KB
           </span>
-          <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
-            {dimensionText}
-          </span>
+          <button
+            type="button"
+            onClick={() =>
+              alert(
+                `Dimensions are locked to ${dimensionText} to comply with official recruitment portal standards.`
+              )
+            }
+            className="px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-700 text-zinc-300 font-mono hover:border-emerald-500/50 cursor-pointer flex items-center gap-1"
+            title="Click to view dimension specifications"
+          >
+            <span>🔒</span>
+            <span>{dimensionText}</span>
+          </button>
         </div>
       </div>
 
@@ -300,7 +321,6 @@ export default function ExamResizerTool({ preset, config }: ExamResizerToolProps
           htmlFor="exam-file-input"
           className="relative w-full py-12 px-4 rounded-3xl border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 bg-zinc-950/50 transition-all flex flex-col items-center justify-center text-center space-y-3 cursor-pointer select-none group"
         >
-          {/* Native Semantic File Input with Wildcard image/* */}
           <input
             id="exam-file-input"
             type="file"

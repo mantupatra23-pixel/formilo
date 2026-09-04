@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "qa:isolation": "ts-node scripts/verify-content-isolation.ts",
+    "build": "npm run qa:isolation && next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
@@ -26,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
