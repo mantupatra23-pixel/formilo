@@ -41,6 +41,7 @@ export default function Footer() {
               <li><Link href="/pdf-tools" className="hover:text-emerald-400 transition-colors">PDF Conversion Suite</Link></li>
               <li><Link href="/image-tools" className="hover:text-emerald-400 transition-colors">Image Utilities & Formats</Link></li>
               <li><Link href="/form-tools" className="hover:text-emerald-400 transition-colors">Government Exam Presets</Link></li>
+              <li><Link href="/blog" className="hover:text-emerald-400 transition-colors">Exam Guides &amp; Blog</Link></li>
             </ul>
           </div>
 
