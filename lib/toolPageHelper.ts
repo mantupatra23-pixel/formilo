@@ -48,7 +48,7 @@ export interface ToolPageData {
   categoryTools: ToolItem[];
 }
 
-// Slug se readable title generate karne ka fallback function
+// Slug se clean readable title generate karne ka fallback
 function formatSlugToTitle(slug: string): string {
   const base = slug
     .replace(/^\/+/, '')
@@ -99,7 +99,45 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
   const cleanSlug = (rawSlug || '').replace(/^\/+|\/+$/g, '').trim();
   const slugBase = cleanSlug.replace(/^(exam|tools)\//, '');
 
-  // Resilient multi-tier slug matching
+  // 1. Specific High-Priority Presets (RBI Grade B Officer Official Specs)
+  if (cleanSlug.includes('rbi-grade-b')) {
+    customConfig = {
+      title: 'RBI Grade B Passport Size Photo Resizer',
+      examName: 'RBI Grade B Officer Recruitment',
+      boardName: 'Reserve Bank of India (RBI)',
+      dimensions: '200 × 230 px',
+      targetKB: 50,
+      minKB: 20,
+      format: 'JPG / JPEG',
+      description: 'Prepare, crop, and compress your photograph strictly to official 200 × 230 px and 20–50 KB limits for RBI Grade B Officer application portals.',
+      bestFor: [
+        'RBI Grade B Officers (DR - General / DEPR / DSIM) registration',
+        'Official IBPS candidate photo gateway compliance',
+        'Pre-submission photograph dimension & byte verification',
+      ],
+      faqs: [
+        {
+          q: 'What is the required photo size for RBI Grade B Officer recruitment?',
+          a: 'The official guideline specifies dimensions of 200 × 230 pixels (width × height) with a required file size strictly between 20 KB and 50 KB in JPG/JPEG format.',
+        },
+        {
+          q: 'What is the maximum and minimum photo file size permitted?',
+          a: 'The photo file must be a minimum of 20 KB and cannot exceed 50 KB. Files larger than 50 KB are automatically rejected by the RBI/IBPS application portal.',
+        },
+        {
+          q: 'Which image format is accepted on the RBI portal?',
+          a: 'Only JPG or JPEG image formats are accepted. Files in PNG, WEBP, or PDF will fail during upload in the photograph field.',
+        },
+        {
+          q: 'Does Formilo upload my photo to any server?',
+          a: 'No. All image resizing, cropping, and compression run 100% locally within your device RAM using client-side HTML5 Canvas APIs.',
+        },
+      ],
+      ...customConfig,
+    };
+  }
+
+  // 2. Resilient multi-tier slug matching against static & auto-generated data
   const matchedTool = allTools.find((t: any) => {
     const s = (t.slug || '').replace(/^\/+|\/+$/g, '').trim();
     const sBase = s.replace(/^(exam|tools)\//, '');
@@ -117,7 +155,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     );
   }) as any;
 
-  // Title fallback: customConfig -> matchedTool.title -> matchedTool.name -> dynamic generated title
+  // Title fallback hierarchy: customConfig -> matchedTool.title -> matchedTool.name -> dynamic generated title
   const title =
     customConfig?.title ||
     matchedTool?.title ||
@@ -183,7 +221,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
   };
   const categoryName = categoryMap[category] || 'Document Tools';
 
-  // 1. Dynamic How-To Steps
+  // 3. Dynamic How-To Steps
   let howToSteps: string[] = [];
   if (toolType === 'photo-resizer' || toolType === 'exam-preset') {
     howToSteps = [
@@ -232,7 +270,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     ];
   }
 
-  // 2. Best For / Use Cases
+  // 4. Best For / Use Cases
   let bestFor: string[] = [];
   if (toolType === 'photo-resizer' || toolType === 'exam-preset') {
     bestFor = [
@@ -269,7 +307,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     ];
   }
 
-  // 3. Methodology / Processing Details
+  // 5. Methodology / Processing Details
   let methodology = {
     heading: 'In-Browser Image Processing Method',
     description: 'This tool uses client-side HTML5 Canvas and bi-cubic downscaling interpolation within your browser RAM. It iteratively optimizes compression quality and dimensions to hit exact byte restrictions without sending uncompressed binaries across the network.',
@@ -286,7 +324,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     };
   }
 
-  // 4. Important Notes / Assumptions
+  // 6. Important Notes / Assumptions
   let importantNotes: string[] = [];
   if (toolType === 'calculator') {
     importantNotes = [
@@ -302,10 +340,10 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     ];
   }
 
-  // 5. Truthful Privacy Statement
-  const privacyMessage = 'Files are processed locally inside your web browser memory (RAM) using client-side HTML5 APIs. Files are not uploaded, saved, or indexed on remote Formilo servers.';
+  // 7. Truthful Privacy Statement
+  const privacyMessage = 'Your image is processed locally inside your web browser memory (RAM) using client-side HTML5 Canvas APIs. Formilo does not upload, save, or index files on remote servers.';
 
-  // 6. FAQs (Tool-Type Adaptive)
+  // 8. Tool-Type Adaptive FAQs
   let faqs: { q: string; a: string }[] = [];
   if (toolType === 'photo-resizer' || toolType === 'exam-preset') {
     faqs = [
@@ -380,7 +418,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     ];
   }
 
-  // 7. Dynamic Related Tools
+  // 9. Dynamic Related Tools
   const relatedTools = allTools
     .filter((t: any) => {
       const s = (t.slug || '').replace(/^\/+|\/+$/g, '');
@@ -388,7 +426,7 @@ export function resolveToolPageData(rawSlug: string, customConfig?: Partial<Tool
     })
     .slice(0, 4);
 
-  // 8. Category Discovery Tools
+  // 10. Category Discovery Tools
   const categoryTools = allTools
     .filter((t: any) => {
       const s = (t.slug || '').replace(/^\/+|\/+$/g, '');
